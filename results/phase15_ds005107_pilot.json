@@ -1,0 +1,114 @@
+{
+  "race": {
+    "gate_passed": true,
+    "subjects": [
+      "sub-01",
+      "sub-02",
+      "sub-03"
+    ],
+    "simple_specialist": {
+      "scores": [
+        0.52734375,
+        0.5078125,
+        0.56640625
+      ],
+      "mean": 0.5338541666666666,
+      "ci_low": 0.5078125,
+      "ci_high": 0.56640625
+    },
+    "classical_decoder": {
+      "scores": [
+        0.55078125,
+        0.5078125,
+        0.5
+      ],
+      "mean": 0.51953125,
+      "ci_low": 0.5,
+      "ci_high": 0.55078125
+    }
+  },
+  "gender": {
+    "gate_passed": true,
+    "subjects": [
+      "sub-01",
+      "sub-02",
+      "sub-03"
+    ],
+    "simple_specialist": {
+      "scores": [
+        0.54296875,
+        0.53125,
+        0.5703125
+      ],
+      "mean": 0.5481770833333334,
+      "ci_low": 0.53125,
+      "ci_high": 0.5703125
+    },
+    "classical_decoder": {
+      "scores": [
+        0.5390625,
+        0.5,
+        0.50390625
+      ],
+      "mean": 0.5143229166666666,
+      "ci_low": 0.5,
+      "ci_high": 0.5390625
+    }
+  },
+  "age": {
+    "gate_passed": true,
+    "subjects": [
+      "sub-01",
+      "sub-02",
+      "sub-03"
+    ],
+    "simple_specialist": {
+      "scores": [
+        0.4921875,
+        0.49609375,
+        0.4609375
+      ],
+      "mean": 0.4830729166666667,
+      "ci_low": 0.4609375,
+      "ci_high": 0.49609375
+    },
+    "classical_decoder": {
+      "scores": [
+        0.546875,
+        0.5234375,
+        0.515625
+      ],
+      "mean": 0.5286458333333334,
+      "ci_low": 0.515625,
+      "ci_high": 0.546875
+    }
+  },
+  "emotion": {
+    "gate_passed": true,
+    "subjects": [
+      "sub-01",
+      "sub-02",
+      "sub-03"
+    ],
+    "simple_specialist": {
+      "scores": [
+        0.5078125,
+        0.55859375,
+        0.50390625
+      ],
+      "mean": 0.5234375,
+      "ci_low": 0.50390625,
+      "ci_high": 0.55859375
+    },
+    "classical_decoder": {
+      "scores": [
+        0.5,
+        0.484375,
+        0.484375
+      ],
+      "mean": 0.4895833333333333,
+      "ci_low": 0.484375,
+      "ci_high": 0.5
+    }
+  }
+}

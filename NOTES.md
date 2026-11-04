@@ -42,3 +42,28 @@ Evidence labels:
 3. **Plain-Integer `coil_type` Misclassification (`factory/utils.py:578`):**
    - Upstream checks `if "MAG" in str(i["coil_type"])`, which evaluates to `False` (misclassifying magnetometers as `GRAD = 2`) whenever `coil_type` is stored as a plain integer (e.g., `2000` or `3024`) rather than an MNE `NamedInt`. Fixed in `src/opm_bridge/preprocessing/sensor_mapping.py`.
 
+
+
+---
+
+## 3. Phase 1.5 Signal Gate Results on Real OPM Epochs (2026-11-03) [V]
+
+The Phase 1.5 Signal Gate (§5.2) was executed on real OPM epochs streamed from OpenNeuro `ds005107` across subjects `sub-01`, `sub-02`, and `sub-03` (256 balanced epochs per run, 768 trials total, 59 harmonized channels). Subject-wise leave-one-subject-out (LOSO) cross-validation was evaluated for the dual required baselines:
+1. `CompactMEGNet`: Simple Specialist (EEGNet-style depthwise-separable spatio-temporal CNN)
+2. `ClassicalBandPowerDecoder`: Classical Baseline (Welch log band-power + temporal summary + Logistic Regression)
+
+Per §5.2, a task passes the signal gate only if at least one baseline achieves a 95% subject-level bootstrap CI lower bound strictly above chance (0.50).
+
+### Results Matrix (§5.2)
+
+| Task Dimension | Simple Specialist BACC Mean [95% CI] | Classical Decoder BACC Mean [95% CI] | Gate Status |
+|---|---|---|---|
+| **Race** (Asian vs Caucasian) | **53.39% [50.78%, 56.64%]** | 51.95% [50.00%, 55.08%] | **PASSED** (Specialist CI lower bound > 50%) |
+| **Gender** (Female vs Male) | **54.82% [53.12%, 57.03%]** | 51.43% [50.00%, 53.91%] | **PASSED** (Specialist CI lower bound = 53.12% > 50%) |
+| **Age** (Young vs Old) | 48.31% [46.09%, 49.61%] | **52.86% [51.56%, 54.69%]** | **PASSED** (Classical CI lower bound = 51.56% > 50%) |
+| **Emotion** (Neutral vs Emotion) | **52.34% [50.39%, 55.86%]** | 48.96% [48.44%, 50.00%] | **PASSED** (Specialist CI lower bound > 50%) |
+
+### Key Observations:
+1. **All 4 candidate task dimensions cleared the Phase 1.5 Signal Gate.** Transfer evaluation is cleared to run on `ds005107`.
+2. **Complementarity of Baselines:** `CompactMEGNet` captured spatial/temporal ERF patterns for `gender`, `race`, and `emotion` above chance, while `ClassicalBandPowerDecoder` captured log band-power shifts (delta/theta/alpha/beta) for `age` where `CompactMEGNet` underfit.
+3. Full report written to `results/phase15_ds005107_pilot.json`.
