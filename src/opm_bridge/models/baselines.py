@@ -49,7 +49,7 @@ class CompactMEGNet(nn.Module):
             nn.Dropout(dropout),
         )
         self.separable_conv = nn.Sequential(
-            nn.Conv2d(f1 * d, f1 * d, kernel_size=(1, 16), padding=(0, 8), groups=f1 * d, bias=False),
+            nn.Conv2d(f1 * d, f1 * d, kernel_size=(1, 16), padding="same", groups=f1 * d, bias=False),
             nn.Conv2d(f1 * d, f2, kernel_size=(1, 1), bias=False),
             nn.BatchNorm2d(f2),
             nn.ELU(),

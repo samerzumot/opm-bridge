@@ -157,13 +157,14 @@ class SelfAttention(nn.Module):
         if mask != None:
             mask = mask.unsqueeze(1)
 
+        dropout_p = self.dropout if (self.training and q.device.type != "mps") else 0.0
         output = (
             F.scaled_dot_product_attention(
                 query=q,
                 key=k,
                 value=v,
                 attn_mask=mask,
-                dropout_p=self.dropout,
+                dropout_p=dropout_p,
                 is_causal=self.causal,
             )
             .transpose(1, 2)

@@ -48,9 +48,10 @@ class ForwardSolution(nn.Module):
         q = rearrange(sensor_embedding, "B T (H D) -> B H T D", H=self.n_head)
         k = rearrange(k, "B T (H D) -> B H T D", H=self.n_head)
         v = rearrange(v, "B T (H D) -> B H T D", H=self.n_head)
+        dropout_p = self.dropout if (self.training and q.device.type != "mps") else 0.0
         output = (
             F.scaled_dot_product_attention(
-                query=q, key=k, value=v, dropout_p=self.dropout, is_causal=False
+                query=q, key=k, value=v, dropout_p=dropout_p, is_causal=False
             )
             .transpose(1, 2)
             .contiguous()
@@ -74,9 +75,10 @@ class BackWardSolution(nn.Module):
         q = rearrange(neuros, "B T (H D) -> B H T D", H=self.n_head)
         k = rearrange(k, "B T (H D) -> B H T D", H=self.n_head)
         v = rearrange(self.v(x), "B T (H D) -> B H T D", H=self.n_head)
+        dropout_p = self.dropout if (self.training and q.device.type != "mps") else 0.0
         output = (
             F.scaled_dot_product_attention(
-                query=q, key=k, value=v, dropout_p=self.dropout, is_causal=False
+                query=q, key=k, value=v, dropout_p=dropout_p, is_causal=False
             )
             .transpose(1, 2)
             .contiguous()
