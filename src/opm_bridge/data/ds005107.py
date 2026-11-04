@@ -88,3 +88,4 @@ def align_ds005107_events(
     valid_events = stim_events[stim_events[:, 2] != 999].copy()
     valid_events[:, 0] += int(round(proj_latency_sec * sfreq))
     return valid_events
+

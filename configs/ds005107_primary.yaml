@@ -1,0 +1,42 @@
+# Primary Target 1: OpenNeuro ds005107 ("FACE-DEC", 64-ch Quanmag OPM-MEG)
+dataset:
+  name: ds005107
+  accession: ds005107
+  session: ses-01
+  n_subjects: 21
+  sfreq_raw: 1000.0
+  sfreq_target: 256.0
+  bandpass_hz: [1.0, 96.0]
+  notch_hz: [44.0, 50.0, 100.0]
+  proj_latency_sec: 0.033
+  epoch_window_sec: [-0.2, 1.8]  # 2.0s window = 512 samples at 256 Hz
+  coord_frame: approx_elekta
+  candidate_tasks:
+    - race
+    - gender
+    - age
+    - emotion
+
+protocol:
+  regime: cross_subject
+  n_folds: 5
+  val_subjects_per_fold: 3
+  budgets_n_subjects: [1, 2, 5, 10, 14]
+  primary_smallest_budget: 2
+  seeds: [42, 3407, 2026]
+  sesoi: 0.03
+  bootstrap_resamples: 10000
+
+model:
+  primary_size: tiny
+  primary_mode: backbone_ft
+  arms:
+    - frozen
+    - partial_ft
+    - backbone_ft
+    - end_to_end_ft
+    - control_a_random_e2e
+    - control_b_random_backbone
+    - simple_specialist
+    - classical_decoder
+

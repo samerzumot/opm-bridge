@@ -41,3 +41,4 @@ Evidence labels:
 
 3. **Plain-Integer `coil_type` Misclassification (`factory/utils.py:578`):**
    - Upstream checks `if "MAG" in str(i["coil_type"])`, which evaluates to `False` (misclassifying magnetometers as `GRAD = 2`) whenever `coil_type` is stored as a plain integer (e.g., `2000` or `3024`) rather than an MNE `NamedInt`. Fixed in `src/opm_bridge/preprocessing/sensor_mapping.py`.
+

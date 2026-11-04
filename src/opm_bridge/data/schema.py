@@ -86,3 +86,4 @@ class HarmonizedSample:
     dataset_name: str
     frame: CoordinateFrame
     metadata: Dict[str, Any] = field(default_factory=dict)
+

@@ -214,3 +214,4 @@ def test_baselines_and_statistical_protocol() -> None:
     # 4. Phase 1.5 signal gate
     passed, _ = check_phase15_signal_gate(pt_helped, ctrl_scores, chance_level=0.50)
     assert passed is True
+

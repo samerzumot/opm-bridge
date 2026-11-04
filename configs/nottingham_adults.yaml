@@ -1,0 +1,35 @@
+# Primary Target 2: Nottingham 192-ch Triaxial OPM-MEG Somatosensory (Zenodo 11126593, Adults)
+dataset:
+  name: nottingham_adults
+  zenodo_id: "11126593"
+  archive: Adults.zip
+  n_subjects: 26
+  sfreq_target: 256.0
+  bandpass_hz: [1.0, 96.0]
+  notch_hz: [50.0, 100.0]
+  epoch_window_sec: [0.0, 2.0]  # 2.0s window = 512 samples at 256 Hz
+  coord_frame: head
+  is_triaxial: true
+  candidate_tasks:
+    - index_vs_pinky
+    - stimulus_vs_baseline
+
+protocol:
+  regime: cross_subject
+  n_folds: 5
+  val_subjects_per_fold: 3
+  budgets_n_subjects: [1, 2, 5, 10, 18]
+  primary_smallest_budget: 2
+  seeds: [42, 3407, 2026]
+  sesoi: 0.03
+  bootstrap_resamples: 10000
+
+diagnostics:
+  mapping_ablations:
+    - default
+    - opm_as_grad
+    - zero_orientation
+    - flip_orientation
+    - radial_only
+    - scramble_channels
+

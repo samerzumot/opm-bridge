@@ -195,3 +195,4 @@ def compute_curve_summaries(
         "convergence_budget_descriptive": convergence_budget,
         "per_budget": comparisons,
     }
+

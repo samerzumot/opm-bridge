@@ -141,3 +141,4 @@ class ClassicalBandPowerDecoder:
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         feats = self.extract_features(X)
         return self.pipe.predict_proba(feats)
+
