@@ -1,4 +1,4 @@
-"""Pre-registered statistical evaluation, subject-level bootstrap CIs, and Phase 1.5 signal gate (§4.1, §5.2, §9)."""
+"""Statistical evaluation metrics, subject-level bootstrap confidence intervals, and hypothesis tests."""
 
 from __future__ import annotations
 
@@ -153,7 +153,7 @@ def check_phase15_signal_gate(
     n_resamples: int = 10_000,
     rng_seed: int = 42,
 ) -> Tuple[bool, Dict[str, BootstrapResult]]:
-    """Phase 1.5 signal gate (§5.2): at least one baseline must beat chance (95% CI > chance)."""
+    """Verify whether at least one baseline achieves above-chance decoding (95% CI lower bound > chance)."""
     spec_ci = subject_bootstrap_ci(specialist_scores, n_resamples=n_resamples, rng_seed=rng_seed)
     clas_ci = subject_bootstrap_ci(classical_scores, n_resamples=n_resamples, rng_seed=rng_seed + 1)
     passed = (spec_ci.ci_low > chance_level) or (clas_ci.ci_low > chance_level)

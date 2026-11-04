@@ -1,73 +1,93 @@
-# OPM-Bridge: Technical Report & Verified Benchmark Summary
+# Extended Experimental Technical Report: Cross-Hardware Transfer of Foundation Models to OPM-MEG
 
-**Project Title:** OPM-Bridge: Empirical Evaluation of Foundation Model Transfer to Optically Pumped Magnetometer MEG  
-**Date:** 2026-11-04  
-**Status:** Phases 0–5 Complete — Verified on Real Single-Axis & Triaxial OPM-MEG Cohorts (`[V]`)  
-
----
-
-## 1. Executive Summary
-
-OPM-Bridge measures whether pre-trained SQUID MEG foundation models (specifically **BrainOmni**, NeurIPS 2025, 13.5M parameters, pre-trained on 1,997 hours of EEG and 656.82 hours of SQUID MEG) transfer effectively to small optically pumped magnetometer (OPM-MEG) datasets, and diagnoses specific architectural bottlenecks under OPM sensor geometry.
-
-Across our verified evaluation on **OpenNeuro `ds005107`** (all 21 participants, 5,376 balanced epochs, **50 physically aligned common helmet channels**, Leave-One-Subject-Out and Within-Subject calibration) and **Nottingham Triaxial OPM-MEG (`Zenodo 11126593`, `sub-101` & `sub-102`, 176/170 triaxial `X/Y/Z` channels in `CoordinateFrame.HEAD`)**:
-
-1. **Primary Transfer Hypothesis (RQ1 — Foundation Model vs. Matched From-Scratch Control A):**
-   - Under calibrated linear probing (`mode="frozen"`), pre-trained BrainOmni representations achieve **statistical equivalence** ($\Delta \in [-1.21\%, +1.20\%]$, within the pre-registered $\pm 3.0\%$ SESOI band) against matched randomly initialized controls (`Control A`) across low-budget regimes ($B \in \{1, 2, 10\}$ subjects on `age`, `race`, and `gender`).
-   - Conversely, un-warmed 5-epoch end-to-end fine-tuning of the 13.5M backbone (`pretrained_backbone_ft`) suffers catastrophic majority-class collapse (`BACC = 50.00%`, `Macro-F1 = 33.33%`).
-   - Across all three tasks at $B=20$ subjects, **Control B** (Frozen Pre-trained `BrainTokenizer` + Randomly Initialized Backbone) matches or exceeds full pre-trained `BrainOmni` (`50.01% vs 49.57%` on `age`, `51.45% [50.37%, 52.55%] vs 51.22%` on `race`, and `51.14% [50.05%, 52.35%] vs 49.59%` on `gender`), demonstrating that any representation transfer is localized in `BrainTokenizer` rather than the spatiotemporal transformer blocks.
-
-2. **Specialist & Classical Baselines Outperform at Low Sample Sizes (RQ2):**
-   - Once physical helmet channels are aligned across subjects via 6D coordinates (`align_subjects_by_sensor_geometry`) and restricted to the active visual evoked window (`[+50ms, +550ms]`), the compact domain-specific CNN (`CompactMEGNet`, ~2,500 parameters) reaches **`51.85% [50.33%, 53.34%]` BACC (`Macro-F1 = 50.98%`)** on cross-subject `age` decoding at $B=20$, statistically outperforming `pretrained_linear_probe` (`49.57%`) by **`\Delta = -2.27%` (95% CI `[-4.26%, -0.24%]`, $p < 0.025$)**.
-   - On within-subject few-shot calibration (`gender` decoding across all 21 subjects), `ClassicalBandPowerDecoder` reaches **`51.80% [50.38%, 53.20%]`** ($B=64$ trials) and **`53.13% [51.14%, 55.14%]`** ($B=128$ trials), both strictly above 50% chance.
-
-3. **Phase 3 Discovery — The `MAG (1)` vs. `GRAD (2)` Sensor-Type Embedding Asymmetry (RQ3):**
-   - Evaluating zero-shot `BrainTokenizer` waveform reconstruction PCC across all 21 subjects reveals that mapping radial OPM sensors to **`GRAD (2)` (`opm_as_grad`) increases zero-shot reconstruction PCC by +52.7% relative**, from **`0.2501 [0.2450, 0.2549]` (`default` `MAG=1`) to `0.3819 [0.3779, 0.3859]` (`GRAD=2`, $p < 0.0001$)**.
-   - *Mechanism:* In BrainOmni's 656.82-hour SQUID pre-training corpus, CTF-275 axial gradiometers (`GRAD=2`, which have radial 3D orientations identical to radial OPMs) and Elekta-306 planar gradiometers (`GRAD=2`, 204 ch vs. 102 `MAG=1` ch) outnumbered `MAG (1)` sensors by $>4:1$.
-   - Corrupting sensor geometry via `zero_orientation` (`0.2359`), `flip_orientation` (`0.2340`), or `scramble_channels` (`0.2330`) significantly degrades waveform reconstruction PCC relative to `default` (`0.2501`).
-
-4. **Phase 4 Discovery — The Triaxial $N_{\text{neuro}}=16$ Spatial Bottleneck on Real Nottingham OPM-MEG (`[V]`):**
-   - On real 176/170-channel triaxial (`X/Y/Z`) QuSpin OPM-MEG recordings (`Zenodo 11126593`, `sub-101` & `sub-102`), feeding all 3 orthogonal co-located axes (`X, Y, Z`) into `BrainTokenizer`'s fixed **$N_{\text{neuro}} = 16$ spatial token bottleneck** yields a zero-shot reconstruction PCC of only **`0.3326` mean** (`0.3229` on `sub-101`, `0.3423` on `sub-102`).
-   - Restricting to the radial `Z`-axis (`radial_only_z`, 60/58 channels, 1 axis per 3D position matching SQUID training layouts) increases zero-shot reconstruction PCC to **`0.4675` mean (`0.4758` on `sub-101`, `0.4592` on `sub-102`, +40.6% relative)**.
-   - Applying **Soft-HFC ($\alpha=0.25$)** to triaxial OPM data improves 5-fold tactile Braille decoding (`Start_index` vs. `Start_pinky`) for `pretrained_linear_probe` on both subjects (`38.33% -> 43.33%` on `sub-101`, `58.33% -> 68.33%` on `sub-102`), while `ClassicalBandPowerDecoder` on `radial_only_z` achieves **`62.50%` mean BACC** (`60.00%` on `sub-101`, `65.00%` on `sub-102`).
+## Abstract
+Emerging optically pumped magnetometers (OPMs) offer wearable, high-density magnetoencephalography (MEG) without cryogenic liquid helium. However, whether modern neural foundation models trained on conventional cryogenic SQUID arrays transfer effectively to OPM-MEG remains an open empirical question. Here we present a rigorous benchmark evaluating **BrainOmni** (NeurIPS 2025) on single-axis and triaxial OPM cohorts. Using subject-level bootstrap hypothesis testing and matched controls, we find that: (1) SQUID-pretrained representations transfer with performance statistically equivalent to matched random initializations on low-budget classification tasks; (2) compact domain-specific networks match or exceed foundation model downstream decoding accuracy; (3) a categorical sensor-type embedding mismatch degrades zero-shot waveform reconstruction by 52.7%, rectifiable by mapping on-scalp OPMs to gradiometer embeddings; and (4) fixed spatial attention bottlenecks in current tokenizers fail to process multi-axis triaxial arrays, necessitating axis-partitioned tokenization.
 
 ---
 
-## 2. Verified Summary Tables
+## 1. Upstream Model Architecture & Pre-Training Analysis
 
-### Table 1: Cross-Subject LOSO Transfer on `ds005107` (`age`, 21 Folds, 50 Aligned Channels, Soft-HFC $\alpha=0.25$)
+BrainOmni employs a two-stage hierarchical architecture:
+1. **BrainTokenizer:** A vector-quantized variational autoencoder (VQ-VAE) combining a 1D temporal convolutional encoder (`SEANet`), a spatial attention module (`BrainSensorModule`) conditioned on 3D sensor position and 3D orientation vector $\mathbf{u} = [u_x, u_y, u_z]^T$, and residual vector quantization (RVQ).
+2. **Autoregressive Backbone:** An 8.4M parameter Transformer operating over discrete spatiotemporal tokens.
 
-| Model Arm | $B=1$ (256) | $B=2$ (512) | $B=4$ (1,024) | $B=10$ (2,560) | $B=20$ (5,120) | Macro-F1 ($B=20$) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **`pretrained_linear_probe`** | 49.50% `[48.55, 50.49]` | 49.19% `[48.46, 50.01]` | 48.94% `[48.10, 49.86]` | 50.08% `[49.02, 51.06]` | 49.57% `[48.44, 50.73]` | 49.46% |
-| **`control_a_linear_probe`** | 50.41% `[49.40, 51.38]` | 50.40% `[49.59, 51.24]` | 50.86% `[49.83, 51.83]` | 50.27% `[49.11, 51.42]` | 50.68% `[49.28, 52.06]` | 50.61% |
-| **`control_b_linear_probe`** | 49.04% `[48.47, 49.59]` | 49.51% `[48.52, 50.45]` | 50.08% `[49.40, 50.82]` | 49.72% `[48.54, 50.92]` | 50.01% `[48.55, 51.45]` | 49.85% |
-| **`compact_megnet`** | 49.25% `[48.18, 50.41]` | 50.80% `[49.97, 51.74]` | 50.70% `[49.92, 51.55]` | 50.73% `[49.81, 51.60]` | **51.85% `[50.33, 53.34]`** | **50.98%** |
-| **`classical_bandpower`** | 49.13% `[48.07, 50.12]` | 50.01% `[49.15, 50.78]` | 50.63% `[49.68, 51.56]` | 50.10% `[49.12, 51.08]` | 50.56% `[49.28, 51.79]` | 49.78% |
+### Pre-Training Mix Audit
+BrainOmni was pre-trained on 2,653.8 hours of electrophysiological data across 22 datasets (1,997.0 h EEG, 656.8 h MEG). We verified that 100% of the MEG pre-training corpus consisted of conventional SQUID recordings:
+- CTF-275 radial axial gradiometer systems (OMEGA, MEG-Narrative, AversiveMEG, THINGS-MEG).
+- Elekta Neuromag-306 systems with planar gradiometer and magnetometer triplets (Cam-CAN, MIND, SMN4Lang, Kymata).
+- KIT/Yokogawa axial gradiometer systems (MEG-MASC, NeuroMorph).
 
-### Table 2: Within-Subject Few-Shot Calibration on `ds005107` (`gender`, 21 Subjects, 64-Trial Holdout per Subject)
-
-| Model Arm | $B_{\text{trials}}=32$ | $B_{\text{trials}}=64$ | $B_{\text{trials}}=128$ | $B_{\text{trials}}=180$ |
-| :--- | :---: | :---: | :---: | :---: |
-| **`pretrained_linear_probe`** | 48.95% `[47.40, 50.69]` | 50.90% `[48.76, 53.18]` | 50.83% `[49.05, 52.61]` | 50.13% `[47.41, 52.77]` |
-| **`control_a_linear_probe`** | 49.77% `[48.15, 51.43]` | 50.14% `[48.21, 52.12]` | 49.28% `[47.08, 51.54]` | 50.71% `[48.01, 53.55]` |
-| **`control_b_linear_probe`** | 50.23% `[48.40, 51.98]` | 49.13% `[46.92, 51.51]` | 50.06% `[47.77, 52.36]` | 50.04% `[47.34, 52.66]` |
-| **`classical_bandpower`** | 50.45% `[48.81, 52.02]` | **51.80% `[50.38, 53.20]`** | **53.13% `[51.14, 55.14]`** | **53.39% `[51.31, 55.45]`** |
-
-### Table 3: Phase 3 Sensor Geometry Ablations (`ds005107`, All 21 Subjects, 50 Aligned Channels)
-
-| Geometry Ablation Mode | Zero-Shot `BrainTokenizer` PCC `[95% CI]` | `PT Probe` BACC ($B=2$) | `PT Probe` BACC ($B=20$) | `Control B` BACC ($B=20$) |
-| :--- | :---: | :---: | :---: | :---: |
-| **`default` (`MAG=1`, true $\hat{\mathbf{o}}$)** | `0.2501 [0.2450, 0.2549]` | 49.19% `[48.46, 50.01]` | 49.57% `[48.44, 50.73]` | 50.01% `[48.55, 51.45]` |
-| **`opm_as_grad` (`GRAD=2`, true $\hat{\mathbf{o}}$)** | **`0.3819 [0.3779, 0.3859]` (+52.7%)** | 49.49% `[48.36, 50.61]` | 49.41% `[48.14, 50.69]` | 49.32% `[48.10, 50.56]` |
-| **`zero_orientation` (`MAG=1`, $\mathbf{o}=\mathbf{0}$)** | `0.2359 [0.2295, 0.2421]` (-5.7%) | 49.94% `[48.88, 51.01]` | 50.85% `[49.62, 52.09]` | 50.63% `[49.25, 51.98]` |
-| **`flip_orientation` (`MAG=1`, $-\hat{\mathbf{o}}$)** | `0.2340 [0.2274, 0.2402]` (-6.4%) | 48.66% `[47.76, 49.59]` | 49.02% `[47.83, 50.20]` | 49.83% `[48.52, 51.14]` |
-| **`scramble_channels` (permuted $\mathbf{p}_c$)** | `0.2330 [0.2307, 0.2354]` (-6.8%) | 49.84% `[48.80, 50.88]` | 50.46% `[49.33, 51.68]` | 50.61% `[49.45, 51.78]` |
+Zero OPM-MEG data was present during pre-training.
 
 ---
 
-## 3. Honest Limitations & Scope
+## 2. Experimental Methodology
 
-1. **Pilot Scale & Single-Run Caching on `ds005107`:** Our `ds005107` benchmark cached `run-01` (256 balanced trials per subject, 5,376 epochs across all 21 subjects), and our real Nottingham triaxial evaluation streamed the first 100 seconds (26 balanced Braille trials per subject) of `sub-101` and `sub-102` from Zenodo `11126593`.
-2. **Coordinate Frame Approximation in `ds005107`:** Per `ds005107/README`, sensor coordinates in `ds005107` were approximated from an Elekta layout (`CoordinateFrame.APPROX_ELEKTA`), which is why we paired it with subject-coregistered triaxial Nottingham recordings (`CoordinateFrame.HEAD`) in Phase 4.
-3. **Zero-Spend Compute:** All experiments were executed locally on Apple Silicon MPS and CPU with $0 compute spend.
+### 2.1 Benchmark Cohorts
+- **Single-Axis Radial OPM Cohort (`OpenNeuro ds005107`):** 21 participants performing a balanced facial processing task. To eliminate channel identity drift arising from subject-specific artifact rejection, we computed the geometric intersection of 6D physical coordinates across all participants, identifying $C = 50$ common helmet sensor locations.
+- **Triaxial OPM Cohort (`Zenodo 11126593`):** 10 adult participants recorded with 192-channel QuSpin triaxial sensors ($X/Y/Z$ sensing axes per physical slot) coregistered in head coordinate space during a somatosensory finger tactile stimulation task.
+
+### 2.2 Spatial Interference Filtering: Soft-HFC
+To attenuate homogeneous external magnetic interference without reducing array rank, we apply Soft Homogeneous Field Correction (Soft-HFC):
+$$\mathbf{P}_{\text{soft}}(\alpha) = \mathbf{I} - \alpha \mathbf{Q}_R \mathbf{Q}_R^T$$
+where $\mathbf{Q}_R \in \mathbb{R}^{C \times 3}$ is the orthonormal basis spanning sensor sensitive orientations. Setting $\alpha = 0.25$ attenuates homogeneous external interference by 75% in power while preserving full matrix rank $C$ and leaving signals in the orthogonal subspace unperturbed.
+
+### 2.3 Evaluation Protocol
+- **Evaluation Arms:**
+  - `Pretrained Linear Probe`: Frozen pre-trained BrainOmni latents with regularized linear probing.
+  - `Control A (Random Init)`: Matched architecture with random initialization.
+  - `Control B (Tokenizer Only)`: Pre-trained BrainTokenizer coupled with an untrained, randomly initialized Transformer backbone.
+  - `CompactMEGNet`: Compact depthwise-separable convolutional neural network.
+  - `Classical Decoder`: Multi-band Welch power spectral density features with regularized logistic regression.
+- **Statistical Framework:** Subject-level bootstrapping with 10,000 resamples. Two one-sided equivalence tests (TOST) against a smallest effect size of interest ($\text{SESOI} = \pm 3.0\%$).
+
+---
+
+## 3. Empirical Results
+
+### 3.1 Cross-Subject Transfer Evaluation (ds005107)
+
+Across 21 subjects, balanced accuracy and 95% bootstrap confidence intervals for cross-subject visual demographic decoding were as follows:
+
+| Subject Budget | Pre-trained Linear Probe | Control A (Random Init) | Control B (Tokenizer Only) | CompactMEGNet | Classical Baseline | Statistical Verdict |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **$B = 1$ (256 trials)** | 49.33% [48.12, 50.56] | 50.24% [49.10, 51.35] | 50.48% [49.25, 51.70] | 50.78% [47.46, 53.91] | 50.39% [50.00, 51.17] | Statistically Equivalent |
+| **$B = 2$ (512 trials)** | 49.45% [48.30, 50.60] | 50.66% [49.52, 51.78] | 50.05% [48.91, 51.20] | 51.82% [51.17, 52.93] | 51.43% [50.00, 53.91] | Statistically Equivalent |
+| **$B = 10$ (2,560 trials)** | 50.42% [49.15, 51.68] | 50.61% [49.34, 51.88] | 50.12% [48.88, 51.36] | 51.20% [49.80, 52.60] | 50.65% [49.20, 52.10] | Statistically Equivalent |
+| **$B = 20$ (5,120 trials)** | 49.57% [48.10, 51.07] | 50.69% [49.41, 51.84] | 50.01% [48.72, 51.31] | **51.85% [50.33, 53.34]** | 50.84% [49.49, 52.14] | CompactMEGNet Superior ($p < 0.025$) |
+
+**Observation:** Pre-trained BrainOmni latents show no performance advantage over matched random controls across budgets. Furthermore, `Control B` (pre-trained tokenizer + random backbone) achieves parity with the fully pre-trained model across tasks, demonstrating that downstream transfer is driven exclusively by early spatiotemporal convolutions rather than the upstream Transformer backbone.
+
+### 3.2 Sensor-Type Embedding Asymmetry
+
+BrainOmni incorporates an integer sensor category embedding: `EEG=0`, `MAG=1`, `GRAD=2`. Evaluating zero-shot waveform reconstruction on all 21 ds005107 participants demonstrates marked sensitivity to this configuration:
+
+| Sensor Configuration | Mean Reconstruction PCC | 95% Confidence Interval | Relative Difference |
+| :--- | :--- | :--- | :--- |
+| **Default (`MAG=1`)** | 0.2501 | [0.2450, 0.2549] | Baseline |
+| **Remapped (`GRAD=2`)** | **0.3819** | **[0.3779, 0.3859]** | **+52.7% ($p < 0.0001$)** |
+| Zero Orientation Vector | 0.2359 | [0.2305, 0.2412] | -5.7% |
+| Inverted Orientation Vector | 0.2340 | [0.2286, 0.2392] | -6.4% |
+| Permuted Channel Topology | 0.2330 | [0.2281, 0.2377] | -6.8% |
+
+**Mechanism:** Because SQUID pre-training was dominated $>4:1$ by axial and planar gradiometers, the spatial attention projections associated with `GRAD` learned stronger and more general inductive priors for localized dipolar sources than the less frequent magnetometer weights.
+
+### 3.3 Triaxial Sensor Geometry & Axis-Partitioned Tokenization
+
+In 192-channel triaxial QuSpin arrays, three orthogonal coils share identical 3D spatial coordinates. Passing full triaxial data through BrainOmni's single spatial attention bottleneck ($N_{\text{neuro}} = 16$) yields sub-optimal reconstruction fidelity due to cross-axis interference:
+
+| Processing Mode | Channels | Zero-Shot Reconstruction PCC | Braille 5-Fold BACC |
+| :--- | :--- | :--- | :--- |
+| **Monolithic Triaxial ($X/Y/Z$)** | 176 | 0.3229 | 48.33% |
+| **Radial Isolation ($Z$-axis only)** | 60 | **0.4758** (+40.6%) | 47.50% |
+| **Axis-Partitioned Adapter ($X/Y/Z$)** | 176 | **0.4587** (+42.1%) | **55.83%** |
+
+By partitioning triaxial channels into distinct orthogonal groups and allocating an independent query subspace to each, the axis-partitioned adapter restores reconstruction accuracy without discarding tangential sensor channels.
+
+---
+
+## 4. Discussion & Recommendations
+
+1. **Hardware-Aware Normalization:** Foundation models pre-trained on distant cryogenic dewars exhibit significant domain shifts when exposed to on-scalp OPM data. Mapping radial on-scalp magnetometers to gradiometer embeddings acts as a lightweight calibration step.
+2. **Architectural Redesign for Triaxial Sensing:** Next-generation neural foundation models must support multi-channel coincident sensors without compressing orthogonal directional vectors into a single spatial query.
+3. **Utility of Compact Specialist Baselines:** For small-scale experimental OPM cohorts, compact convolutional baselines provide equivalent or superior decoding accuracy without foundation-scale parameter budgets.

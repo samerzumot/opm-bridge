@@ -1,4 +1,4 @@
-"""Simple specialist (EEGNet-style compact CNN) and classical baselines (§5.2, §6, FR5)."""
+"""Compact specialist convolutional networks and classical electrophysiology baselines."""
 
 from __future__ import annotations
 
@@ -17,10 +17,9 @@ class CompactMEGNet(nn.Module):
     """EEGNet-style depthwise-separable temporal-spatial CNN specialist for OPM/MEG epochs.
 
     Used in:
-      - Phase 1.5 Signal Gate (§5.2): must beat chance (95% subject-level bootstrap CI)
-        at the largest budget before any transfer experiment runs on a task.
-      - RQ2 Baseline (§6): guards against simple models trained from scratch matching
-        or beating foundation models at small OPM budgets.
+      - Validating task decodability across subjects.
+      - Providing a parameter-efficient (1.5k parameters vs 13.5M) depthwise-separable
+        spatio-temporal baseline.
     """
 
     def __init__(

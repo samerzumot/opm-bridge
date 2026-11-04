@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""Master verified benchmark runner for Phases 2, 3, and 4 of OPM-Bridge.
+"""Unified benchmark evaluation orchestrator for OPM-Bridge.
 
 Executes:
-  1. Phase 2: Full 21-subject physically aligned (`50` common helmet channels) transfer benchmark on
-     OpenNeuro `ds005107` across budgets B in {1, 2, 4, 10, 20} and seeds [42, 3407, 2025] for:
-       - Cross-subject LOSO decoding (`age`, `race`, `gender`)
-       - Within-subject few-shot calibration (`gender`, B_trials in {32, 64, 128, 180})
-  2. Phase 3: Genuine `BrainOmni` Sensor Geometry Ablations (`default`, `opm_as_grad`,
-     `zero_orientation`, `flip_orientation`, `scramble_channels`) on `pretrained_linear_probe`
-     + Zero-Shot `BrainTokenizer` waveform reconstruction PCC across all 21 subjects.
-  3. Phase 4: Real Nottingham Triaxial (`X/Y/Z`) QuSpin OPM-MEG evaluation (`Zenodo 11126593`,
-     `sub-101` & `sub-102`, `CoordinateFrame.HEAD`) comparing Full Triaxial (`X/Y/Z`) vs.
-     `radial_only` (`Z`-axis) on both zero-shot `BrainTokenizer` reconstruction PCC and
-     somatosensory Braille decoding (`Start_index` vs. `Start_pinky`).
+  1. Full 21-subject physically aligned (50 common helmet channels) transfer benchmark on
+     OpenNeuro ds005107 across budgets B in {1, 2, 4, 10, 20} and multiple random seeds for:
+       - Cross-subject LOSO decoding (age, race, gender)
+       - Within-subject few-shot calibration (gender, B_trials in {32, 64, 128, 180})
+  2. BrainOmni sensor geometry and embedding perturbation experiments (default, opm_as_grad,
+     zero_orientation, flip_orientation, scramble_channels) on linear probes and zero-shot
+     waveform reconstruction correlation.
+  3. Real Nottingham triaxial (X/Y/Z) QuSpin OPM-MEG evaluation (Zenodo 11126593,
+     sub-101..sub-110, CoordinateFrame.HEAD) comparing full triaxial (X/Y/Z), radial isolation (Z),
+     and axis-partitioned tokenization.
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ from opm_bridge.eval.metrics import (
 )
 from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
 from opm_bridge.models.vendor_brainomni.model_utils.loss import get_pcc
-from opm_bridge.models.wrapper import load_brainomni_backbone
+from opm_bridge.models.wrapper import OPMAwareBrainOmniAdapter, load_brainomni_backbone
 from opm_bridge.preprocessing.sensor_mapping import (
     align_subjects_by_sensor_geometry,
     apply_soft_hfc,
@@ -210,6 +209,16 @@ def run_phase4_real_nottingham_evaluation(
 
     subj_results = {}
     dec = ClassicalBandPowerDecoder(sfreq=256.0)
+    adapter_pt = OPMAwareBrainOmniAdapter(bb_pt, remap_to_grad=False, axis_split_triaxial=True)
+    adapter_rand = OPMAwareBrainOmniAdapter(bb_rand, remap_to_grad=False, axis_split_triaxial=True)
+
+    geom_modes = [
+        "triaxial_xyz_raw",
+        "triaxial_xyz_softhfc",
+        "radial_only_z",
+        "tangential_only_xy",
+        "phase5_axis_split_xyz",
+    ]
 
     for p in pt_files:
         d = torch.load(p, weights_only=False)
@@ -219,17 +228,22 @@ def run_phase4_real_nottingham_evaluation(
         meta = d["meta"]
 
         modes_out = {}
-        for geom_mode in ["triaxial_default", "triaxial_soft_hfc", "triaxial_opm_as_grad", "radial_only_z"]:
+        for geom_mode in geom_modes:
             if geom_mode == "radial_only_z":
-                map_arg = "radial_only"
-            elif geom_mode == "triaxial_opm_as_grad":
-                map_arg = "opm_as_grad"
+                pos_ori, st, keep_mask = normalize_sensor_positions(meta, mapping_mode="radial_only")
+                axis_sub = [a for a, k in zip(meta.axis_labels, keep_mask) if k]
+            elif geom_mode == "tangential_only_xy":
+                pos_all, st_all, _ = normalize_sensor_positions(meta, mapping_mode="default")
+                keep_mask = np.array([a in ("X", "Y") for a in meta.axis_labels], dtype=bool)
+                pos_ori, st = pos_all[keep_mask], st_all[keep_mask]
+                axis_sub = [a for a, k in zip(meta.axis_labels, keep_mask) if k]
             else:
-                map_arg = "default"
-            pos_ori, st, keep_mask = normalize_sensor_positions(meta, mapping_mode=map_arg)
+                pos_ori, st, keep_mask = normalize_sensor_positions(meta, mapping_mode="default")
+                axis_sub = list(meta.axis_labels)
+
             x_sel = x_raw_ft[:, keep_mask, :].copy()
 
-            if geom_mode in ("triaxial_soft_hfc", "triaxial_opm_as_grad"):
+            if geom_mode in ("triaxial_xyz_softhfc", "phase5_axis_split_xyz"):
                 x_sel = apply_soft_hfc(x_sel, pos_ori[:, 3:6], alpha=0.25)
 
             x_norm = np.stack(
@@ -237,27 +251,44 @@ def run_phase4_real_nottingham_evaluation(
                 axis=0,
             )
 
-            # 1. Zero-shot BrainTokenizer waveform reconstruction PCC
-            pcc_res = evaluate_zero_shot_tokenizer_pcc(
-                bb_pt, {sub: x_norm}, {sub: pos_ori}, {sub: st}, device=device
-            )
+            if geom_mode == "phase5_axis_split_xyz":
+                xb = torch.from_numpy(x_norm).float().to(device)
+                b = len(xb)
+                pb = torch.from_numpy(pos_ori).float().unsqueeze(0).expand(b, -1, -1).to(device)
+                sb = torch.from_numpy(st).long().unsqueeze(0).expand(b, -1).to(device)
+                xt, xr = adapter_pt.reconstruct_waveform(xb, pb, sb, axis_labels=axis_sub)
+                pcc_val = float(get_pcc(xt, xr).cpu().item())
 
-            # 2. Somatosensory Braille Decoding (Start_index vs Start_pinky) via 5-fold Stratified CV
-            sea_pt = precompute_seanet_features(bb_pt, {sub: x_norm}, device=device, batch_size=32)
-            emb_pt = encode_from_seanet_features(
-                bb_pt, sea_pt, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
-            )[sub]
+                h_pt = adapter_pt.encode_latent(xb, pb, sb, axis_labels=axis_sub)
+                emb_pt = h_pt[:, :, 1:4, :].mean(dim=2).reshape(b, -1).cpu().numpy()
 
-            sea_rand = precompute_seanet_features(bb_rand, {sub: x_norm}, device=device, batch_size=32)
-            emb_rand = encode_from_seanet_features(
-                bb_rand, sea_rand, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
-            )[sub]
+                h_rand = adapter_rand.encode_latent(xb, pb, sb, axis_labels=axis_sub)
+                emb_rand = h_rand[:, :, 1:4, :].mean(dim=2).reshape(b, -1).cpu().numpy()
+            else:
+                pcc_res = evaluate_zero_shot_tokenizer_pcc(
+                    bb_pt, {sub: x_norm}, {sub: pos_ori}, {sub: st}, device=device
+                )
+                pcc_val = pcc_res["mean_pcc"]
+
+                sea_pt = precompute_seanet_features(bb_pt, {sub: x_norm}, device=device, batch_size=32)
+                emb_pt = encode_from_seanet_features(
+                    bb_pt, sea_pt, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
+                )[sub]
+
+                sea_rand = precompute_seanet_features(bb_rand, {sub: x_norm}, device=device, batch_size=32)
+                emb_rand = encode_from_seanet_features(
+                    bb_rand, sea_rand, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
+                )[sub]
 
             # Active somatosensory window [+50ms, +850ms] -> samples 64..268
             bp_X = dec.extract_features(x_norm[:, :, 64:268])
 
             skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-            fold_scores = {"pretrained_linear_probe": [], "control_a_linear_probe": [], "classical_bandpower": []}
+            fold_scores = {
+                "pretrained_linear_probe": [],
+                "control_a_linear_probe": [],
+                "classical_bandpower": [],
+            }
             for tr_idx, te_idx in skf.split(x_norm, y):
                 for arm_name, feat_mat in [
                     ("pretrained_linear_probe", emb_pt),
@@ -272,24 +303,66 @@ def run_phase4_real_nottingham_evaluation(
             modes_out[geom_mode] = {
                 "n_channels": int(x_norm.shape[1]),
                 "n_trials": int(x_norm.shape[0]),
-                "zero_shot_tokenizer_pcc": pcc_res["mean_pcc"],
+                "zero_shot_tokenizer_pcc": pcc_val,
                 "braille_5fold_bacc": {k: float(np.mean(v)) for k, v in fold_scores.items()},
             }
         subj_results[sub] = modes_out
+        print(
+            f"  [Nottingham {sub}] PCC raw={modes_out['triaxial_xyz_raw']['zero_shot_tokenizer_pcc']:.4f} "
+            f"-> radial={modes_out['radial_only_z']['zero_shot_tokenizer_pcc']:.4f} "
+            f"-> phase5_axis_split={modes_out['phase5_axis_split_xyz']['zero_shot_tokenizer_pcc']:.4f}"
+        )
 
-    # Aggregate across real Nottingham subjects
+    # Compute 10,000-resample subject-level bootstrap CIs across all evaluated subjects
+    subs = sorted(subj_results.keys())
+    cohort_summary = {}
+    if len(subs) >= 2:
+        for gm in geom_modes:
+            pcc_arr = np.array([subj_results[s][gm]["zero_shot_tokenizer_pcc"] for s in subs])
+            pcc_ci = subject_bootstrap_ci(pcc_arr, n_resamples=10_000, rng_seed=42)
+            bacc_cis = {}
+            for arm_name in ("pretrained_linear_probe", "control_a_linear_probe", "classical_bandpower"):
+                arr = np.array([subj_results[s][gm]["braille_5fold_bacc"][arm_name] for s in subs])
+                ci = subject_bootstrap_ci(arr, n_resamples=10_000, rng_seed=42)
+                bacc_cis[arm_name] = {"mean": ci.mean, "ci_low": ci.ci_low, "ci_high": ci.ci_high}
+            cohort_summary[gm] = {
+                "zero_shot_pcc": {"mean": pcc_ci.mean, "ci_low": pcc_ci.ci_low, "ci_high": pcc_ci.ci_high},
+                "braille_5fold_bacc": bacc_cis,
+            }
+
+        # Paired hypothesis tests on zero-shot PCC and Braille BACC
+        raw_pcc = np.array([subj_results[s]["triaxial_xyz_raw"]["zero_shot_tokenizer_pcc"] for s in subs])
+        rad_pcc = np.array([subj_results[s]["radial_only_z"]["zero_shot_tokenizer_pcc"] for s in subs])
+        p5_pcc = np.array([subj_results[s]["phase5_axis_split_xyz"]["zero_shot_tokenizer_pcc"] for s in subs])
+        rad_diff = subject_bootstrap_ci(rad_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
+        p5_diff = subject_bootstrap_ci(p5_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
+        cohort_summary["paired_hypothesis_tests"] = {
+            "radial_vs_triaxial_raw_pcc_delta": {
+                "delta_mean": rad_diff.mean,
+                "delta_ci_low": rad_diff.ci_low,
+                "delta_ci_high": rad_diff.ci_high,
+            },
+            "phase5_axis_split_vs_triaxial_raw_pcc_delta": {
+                "delta_mean": p5_diff.mean,
+                "delta_ci_low": p5_diff.ci_low,
+                "delta_ci_high": p5_diff.ci_high,
+            },
+        }
+
     summary = {
         "dataset": "nottingham_opm_triaxial_zenodo_11126593",
         "coordinate_frame": "head",
         "is_triaxial": True,
         "has_digitized_landmarks": True,
         "status": "VERIFIED_REAL_DATA",
-        "subjects_evaluated": list(subj_results.keys()),
+        "n_subjects": len(subs),
+        "subjects_evaluated": subs,
+        "cohort_bootstrap_summary": cohort_summary,
         "per_subject": subj_results,
     }
     out_p = RESULTS_DIR / "summary_phase4_nottingham.json"
     out_p.write_text(json.dumps(summary, indent=2))
-    print(f"Saved real Phase 4 Nottingham triaxial evaluation to {out_p}")
+    print(f"Saved real Nottingham triaxial evaluation ({len(subs)} subjects) to {out_p}")
     return summary
 
 
@@ -304,7 +377,7 @@ def main() -> None:
 
     # 1. PHASE 2: Cross-Subject Aligned LOSO Benchmark on `age` (full 5 arms) and `race`/`gender`
     for task in ["age", "race", "gender"]:
-        print(f"\n--- Phase 2 Cross-Subject LOSO (Aligned 50 ch, Soft-HFC): task={task} ---")
+        print(f"\n--- Cross-Subject Transfer Benchmark (Aligned 50 ch, Soft-HFC): task={task} ---")
         task_arms = (
             [
                 "pretrained_linear_probe",
@@ -343,7 +416,7 @@ def main() -> None:
     gender_sum = json.loads((RESULTS_DIR / "summary_aligned21_gender.json").read_text())
 
     # 2. Within-Subject Few-Shot Calibration on `gender` (where within-subject signal is p=0.0002)
-    print("\n--- Phase 2B: Within-Subject Few-Shot Calibration (21 Subjects, task=gender) ---")
+    print("\n--- Within-Subject Few-Shot Calibration (21 Subjects, task=gender) ---")
     base_dir = Path("data/cache/ds005107")
     raw_X, raw_pos, raw_st, y_gender = {}, {}, {}, {}
     for sdir in sorted([p for p in base_dir.iterdir() if p.is_dir() and p.name.startswith("sub-")]):
@@ -376,7 +449,7 @@ def main() -> None:
     (RESULTS_DIR / "summary_within_subject_gender.json").write_text(json.dumps(within_summary, indent=2))
 
     # 3. PHASE 3: Genuine Sensor Geometry Ablations on BrainOmni (`pretrained_linear_probe` & Zero-Shot PCC)
-    print("\n--- Phase 3: Genuine BrainOmni Sensor Geometry Ablations (RQ3 / FR7) ---")
+    print("\n--- BrainOmni Sensor Geometry and Embedding Ablations ---")
     ablation_summaries = {}
     pcc_by_mode = {}
     for mode in ["default", "opm_as_grad", "zero_orientation", "flip_orientation", "scramble_channels"]:
@@ -437,7 +510,7 @@ def main() -> None:
     (RESULTS_DIR / "summary_phase3_ablations.json").write_text(json.dumps(phase3_full, indent=2))
 
     # 4. PHASE 4: Real Nottingham Triaxial OPM Evaluation (Zenodo 11126593)
-    print("\n--- Phase 4: Real Nottingham Triaxial OPM Evaluation (sub-101 & sub-102) ---")
+    print("\n--- Real Nottingham Triaxial OPM Evaluation ---")
     nott_summary = run_phase4_real_nottingham_evaluation(bb_pt, bb_rand, device=device)
 
     # Save master cohort summary

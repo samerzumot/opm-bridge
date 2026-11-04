@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Phase 1.5 Signal Gate CLI (§5.2).
+"""Task decodability gate evaluation script.
 
-Evaluates `CompactMEGNet` (Simple Specialist) and `ClassicalBandPowerDecoder` at the largest
-available subject budget across subject-wise cross-validation folds. A task passes the signal gate
-only if at least one baseline achieves a 95% subject-level bootstrap CI lower bound strictly above
-chance (0.50).
+Evaluates `CompactMEGNet` and `ClassicalBandPowerDecoder` across subject-wise cross-validation
+folds to verify that at least one baseline achieves a 95% bootstrap CI lower bound strictly
+above chance (0.50).
 
 Usage:
-  # Synthetic smoke test:
+  # Synthetic verification:
   python scripts/run_phase15_signal_gate.py --smoke
 
   # Real cached OPM epochs (ds005107):

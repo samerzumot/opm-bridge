@@ -1,4 +1,4 @@
-"""Unit and smoke tests for OPM-Bridge Phase 0 / Phase 1 components."""
+"""Unit tests and regression verification for OPM-Bridge core modules."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from opm_bridge.eval.metrics import (
 )
 from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
 from opm_bridge.models.vendor_brainomni.brainomni.model import BrainOmni
-from opm_bridge.models.wrapper import BrainOmniClassifier
+from opm_bridge.models.wrapper import BrainOmniClassifier, OPMAwareBrainOmniAdapter
 from opm_bridge.preprocessing.sensor_mapping import (
     align_subjects_by_sensor_geometry,
     apply_soft_hfc,
@@ -305,6 +305,36 @@ def test_cross_subject_sensor_alignment() -> None:
     assert np.allclose(al_pos["sub-01"], al_pos["sub-02"])
     assert np.allclose(al_X["sub-01"], al_X["sub-02"])
     assert al_X["sub-01"][0, :, 0].tolist() == [1.0, 3.0, 4.0, 6.0, 7.0, 8.0, 9.0]
+
+
+def test_opm_aware_adapter_axis_split_and_grad_remapping() -> None:
+    """Verify OPMAwareBrainOmniAdapter axis-split tokenization and GRAD remapping."""
+    cfg = _tiny_test_config()
+    bb = BrainOmni(**cfg)
+    adapter = OPMAwareBrainOmniAdapter(bb, remap_to_grad=True, axis_split_triaxial=True)
+
+    # 12 triaxial channels (4 physical locations x 3 axes X/Y/Z)
+    x = torch.randn(2, 12, 512)
+    pos = torch.randn(2, 12, 6)
+    pos[:, :, 3:] = torch.nn.functional.normalize(pos[:, :, 3:], dim=-1)
+    st = torch.ones(2, 12, dtype=torch.long)  # MAG=1
+    axis_labels = ["X", "Y", "Z"] * 4
+
+    # 1. Verify GRAD=2 remapping
+    st_remapped = adapter._prepare_sensor_type(st)
+    assert torch.all(st_remapped == 2)
+
+    # 2. Verify axis-split waveform reconstruction preserves exact channel order & shape
+    x_target, x_rec = adapter.reconstruct_waveform(x, pos, st, axis_labels=axis_labels)
+    assert x_target.shape == (2, 12, 1, 512)
+    assert x_rec.shape == (2, 12, 1, 512)
+
+    # 3. Verify axis-split latent encoding concatenates 3 * N_neuro (3 * 8 = 24) spatial tokens
+    lat = adapter.encode_latent(x, pos, st, axis_labels=axis_labels)
+    assert lat.shape[0] == 2
+    assert lat.shape[1] == 3 * cfg["n_neuro"]
+    assert lat.shape[-1] == cfg["lm_dim"]
+
 
 
 

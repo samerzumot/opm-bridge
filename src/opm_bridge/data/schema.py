@@ -11,7 +11,7 @@ import torch
 
 
 class CoordinateFrame(str, Enum):
-    """Explicit coordinate frame tag required by FR1 and Gate 5b."""
+    """Explicit coordinate frame representation for sensor positioning."""
 
     DEVICE = "device"  # FIFFV_COORD_DEVICE (1): Helmet / sensor array frame
     HEAD = "head"  # FIFFV_COORD_HEAD (4): Digitized landmark head frame (Nasion/LPA/RPA)

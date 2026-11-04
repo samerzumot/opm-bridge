@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""OPM-Bridge Phase 2 & 3 Transfer Benchmark CLI (§4, §6, §8, §9).
+"""Transfer benchmark evaluation across model architectures, baselines, and sample budgets.
 
 Evaluates:
-  1. `pretrained_linear_probe`: Official pre-trained BrainOmni weights (`mode="frozen"`), linear/ridge probe.
-  2. `control_a_linear_probe`: Untrained/random BrainOmni weights (`mode="frozen"`), linear/ridge probe.
-  3. `control_b_linear_probe`: Pre-trained BrainTokenizer + random backbone (`mode="frozen"`), linear/ridge probe.
-  4. `pretrained_backbone_ft`: Official pre-trained weights, frozen tokenizer, fine-tuned backbone.
-  5. `control_a_random_e2e`: Untrained/random weights, trained from scratch end-to-end.
-  6. `compact_megnet`: Simple Specialist CNN trained from scratch on aligned channels.
-  7. `classical_bandpower`: Welch log band-power + temporal summary + Logistic Regression.
+  1. `pretrained_linear_probe`: Pre-trained BrainOmni representations with linear probing.
+  2. `control_a_linear_probe`: Randomly initialized BrainOmni representations with linear probing.
+  3. `control_b_linear_probe`: Pre-trained BrainTokenizer + randomly initialized backbone.
+  4. `compact_megnet`: Compact spatio-temporal convolutional network trained from scratch.
+  5. `classical_bandpower`: Spectral Welch band-power features with regularized logistic regression.
+  6. `phase5_opm_aware_probe`: OPM-aware categorical embedding adaptation.
 
 Across:
-  - Physically aligned 6D sensor geometry across subjects (`align_subjects_by_sensor_geometry`).
-  - Subject-wise K-folds (Leave-One-Subject-Out) or Within-Subject calibration splits.
-  - Nested data budgets: B in {1, 2, 4, 10, 20} subjects.
-  - Seeds: [42, 3407, 2025].
+  - Physically aligned 6D sensor geometry across subjects.
+  - Leave-one-subject-out (LOSO) cross-validation.
+  - Nested sample budgets: B in {1, 2, 4, 10, 20} subjects.
+  - Random seeds: [42, 3407, 2025].
 """
 
 from __future__ import annotations
@@ -79,7 +78,7 @@ def precompute_seanet_features(
 
     Because `BrainTokenizer.encoder.seanet_encoder` depends only on waveform `x` (and not on
     `pos` or `sensor_type`), precomputing `x_sea` in batch-64 chunks yields exact bit-for-bit
-    equivalence (`max_diff == 0.0`) while accelerating multi-fold and Phase 3 geometry ablations
+    equivalence (`max_diff == 0.0`) while accelerating multi-fold evaluation and geometry ablations
     by >35x.
     """
     backbone.eval()
@@ -357,8 +356,22 @@ def run_benchmark(
         ref_pos, ref_st = None, None
         for p in pt_files:
             payload = torch.load(p, weights_only=False)
-            all_x.append(payload["x"].float().numpy())
-            all_y.append(payload["labels"][task].numpy())
+            x_arr = payload["x"].float().numpy()
+            if task == "visual_detection":
+                # High-SNR positive control: split independent trials 50/50 into
+                # Class 1 (Visual Evoked Response [+50ms, +550ms] at samples 64..192 / tokens 1..3)
+                # and Class 0 (Inter-trial Baseline [+1.05s, +1.55s] rolled by +256 samples to
+                # occupy the exact same sample indices 64..192 / tokens 1..3).
+                n_t = len(x_arr)
+                y_det = np.zeros(n_t, dtype=np.int64)
+                y_det[::2] = 1
+                x_det = x_arr.copy()
+                x_det[1::2] = np.roll(x_det[1::2], shift=256, axis=-1)
+                all_x.append(x_det)
+                all_y.append(y_det)
+            else:
+                all_x.append(x_arr)
+                all_y.append(payload["labels"][task].numpy())
             ref_pos = payload["pos_ori"].float().numpy()
             ref_st = payload["sensor_type"].long().numpy()
 
@@ -398,17 +411,22 @@ def run_benchmark(
     # Precompute frozen embeddings for linear-probe arms once per subject
     probe_embeddings: Dict[str, Dict[str, np.ndarray]] = {}
     for arm in arms:
-        if arm in ("pretrained_linear_probe", "control_a_linear_probe", "control_b_linear_probe"):
+        if arm in (
+            "pretrained_linear_probe",
+            "phase5_opm_aware_probe",
+            "control_a_linear_probe",
+            "control_b_linear_probe",
+        ):
             seed_everything(42)
-            if arm == "pretrained_linear_probe":
+            if arm in ("pretrained_linear_probe", "phase5_opm_aware_probe"):
                 bb = load_brainomni_backbone("tiny", True, True).to(device)
-                sea_key = "pretrained_tok"
+                sea_key = "pretrained_tok_det" if task == "visual_detection" else "pretrained_tok"
             elif arm == "control_b_linear_probe":
                 bb = load_brainomni_backbone("tiny", False, True).to(device)
-                sea_key = "pretrained_tok"
+                sea_key = "pretrained_tok_det" if task == "visual_detection" else "pretrained_tok"
             else:
                 bb = load_brainomni_backbone("tiny", False, False).to(device)
-                sea_key = "random_tok"
+                sea_key = "random_tok_det" if task == "visual_detection" else "random_tok"
 
             if precomputed_sea is not None and sea_key in precomputed_sea:
                 sea_feats = precomputed_sea[sea_key]
@@ -418,9 +436,14 @@ def run_benchmark(
                 if precomputed_sea is not None:
                     precomputed_sea[sea_key] = sea_feats
 
+            st_for_arm = (
+                {s: np.full_like(st_by_subj[s], 2) for s in valid_subjects}
+                if arm == "phase5_opm_aware_probe"
+                else st_by_subj
+            )
             print(f"Encoding Spatial+VQ+Transformer embeddings for {arm} (mode={mapping_mode})...")
             probe_embeddings[arm] = encode_from_seanet_features(
-                bb, sea_feats, pos_by_subj, st_by_subj, device=device, batch_size=64
+                bb, sea_feats, pos_by_subj, st_for_arm, device=device, batch_size=64
             )
 
     ledger = ResumableBenchmarkLedger(ledger_path)
@@ -604,6 +627,17 @@ def aggregate_ledger_results(
                 "delta_ci_high": diff_ci.ci_high,
             }
 
+        if "phase5_opm_aware_probe" in arms and "pretrained_linear_probe" in arms:
+            p5_means = np.mean(scores_by_arm_budget["phase5_opm_aware_probe"][b], axis=1)
+            pt_means = np.mean(scores_by_arm_budget["pretrained_linear_probe"][b], axis=1)
+            diff_p5 = p5_means - pt_means
+            diff_p5_ci = subject_bootstrap_ci(diff_p5, n_resamples=10_000, rng_seed=42)
+            b_summary["phase5_adapter_vs_default_pretrained"] = {
+                "delta_mean": diff_p5_ci.mean,
+                "delta_ci_low": diff_p5_ci.ci_low,
+                "delta_ci_high": diff_p5_ci.ci_high,
+            }
+
         results_by_budget[str(b)] = b_summary
 
     return {
@@ -619,7 +653,12 @@ def aggregate_ledger_results(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run OPM-Bridge Transfer Benchmark")
     parser.add_argument("--data-dir", type=str, default="data/cache/ds005107")
-    parser.add_argument("--task", type=str, default="age", choices=["gender", "race", "age", "emotion"])
+    parser.add_argument(
+        "--task",
+        type=str,
+        default="age",
+        choices=["gender", "race", "age", "emotion", "visual_detection"],
+    )
     parser.add_argument(
         "--arms",
         nargs="+",
@@ -642,7 +681,7 @@ def main() -> None:
         type=str,
         default="default",
         choices=["default", "opm_as_grad", "zero_orientation", "flip_orientation", "scramble_channels"],
-        help="Sensor geometry ablation mode for Phase 3 (FR7 / RQ3)",
+        help="Sensor geometry perturbation mode",
     )
     parser.add_argument("--ledger", type=str, default="results/benchmark_ledger.json")
     parser.add_argument("--out", type=str, default="results/transfer_benchmark_summary.json")

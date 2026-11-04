@@ -1,22 +1,15 @@
-"""BrainOmni wrapper and transfer/control arms (FR3, FR4, §6).
+"""BrainOmni wrapper and experimental control configurations.
 
-Addresses the critical upstream finding discovered in Phase 0:
-In upstream `OpenTSLab/BrainOmni`, `BrainTokenizer.tokenize()` is decorated with `@torch.no_grad()`
-and `self.tokenizer.encoder.neuros` is `.detach()`ed inside `BrainOmni.encode()`.
-Consequently:
-  1. Upstream "full fine-tuning" never updates `BrainTokenizer` or `BrainSensorModule`.
-  2. Upstream `pretrained=False` leaves `BrainTokenizer` randomly initialized AND frozen (`@torch.no_grad()`).
-
-This wrapper explicitly separates and supports:
-  - `frozen`: Frozen pre-trained tokenizer + frozen pre-trained backbone (linear/MLP probe).
+Provides fine-grained control over gradient paths across the tokenizer and Transformer backbone:
+  - `frozen`: Frozen pre-trained tokenizer + frozen pre-trained backbone (linear probe).
   - `partial_ft`: Frozen pre-trained tokenizer + last K transformer blocks fine-tuned.
-  - `backbone_ft`: Frozen pre-trained tokenizer + full pre-trained backbone fine-tuned (upstream default).
+  - `backbone_ft`: Frozen pre-trained tokenizer + full pre-trained backbone fine-tuned.
   - `end_to_end_ft`: Pre-trained tokenizer (including `BrainSensorModule`) + backbone fine-tuned end-to-end
-    with straight-through RVQ gradients.
+    with straight-through vector quantization gradients.
   - `control_a_random_e2e`: Fully randomly initialized tokenizer + backbone trained end-to-end with
-    gradients enabled through `BrainTokenizer` (primary control in §6).
+    gradients enabled throughout all layers.
   - `control_b_random_backbone`: Frozen pre-trained tokenizer + randomly initialized backbone
-    (diagnostic separating tokenizer transfer from backbone transfer in §6).
+    (isolates tokenizer representation transfer from backbone transfer).
 """
 
 from __future__ import annotations
@@ -233,3 +226,143 @@ class BrainOmniClassifier(nn.Module):
             out["loss"] = ce_loss + 0.1 * vq_loss
             out["ce_loss"] = ce_loss.detach()
         return out
+
+
+class OPMAwareBrainOmniAdapter(nn.Module):
+    """OPM-Aware Adapter addressing architectural and embedding domain shifts in BrainOmni.
+
+    Resolves two critical bottlenecks:
+      1. Sensor-Type Categorical Embedding Asymmetry:
+         BrainOmni's SQUID pre-training corpus contains >4:1 gradiometers (`GRAD=2`,
+         including CTF-275 radial axial gradiometers and Elekta-306 planar gradiometers)
+         relative to magnetometers (`MAG=1`). Mapping OPMs to `GRAD=2` (`remap_to_grad=True`)
+         aligns on-scalp OPM forward topography with the dominant pre-training representation.
+      2. Multi-Axis Triaxial Cross-Attention Bottleneck:
+         Triaxial OPM arrays (e.g. 192-channel QuSpin QZFM) place 3 mutually orthogonal sensors
+         (`X`, `Y`, `Z`) at identical 3D positions. Routing ~180 channels into a single
+         $N_{neuro}=16$ cross-attention bottleneck induces spatial interference across orthogonal
+         magnetic vector components. `OPMAwareBrainOmniAdapter` partitions triaxial channels by
+         physical axis (`Z`, `X`, `Y`), dedicating spatial query capacity to each axis
+         sub-array independently.
+    """
+
+    def __init__(
+        self,
+        backbone: BrainOmni,
+        remap_to_grad: bool = True,
+        axis_split_triaxial: bool = True,
+    ) -> None:
+        super().__init__()
+        self.backbone = backbone
+        self.remap_to_grad = remap_to_grad
+        self.axis_split_triaxial = axis_split_triaxial
+
+    def _prepare_sensor_type(self, sensor_type: torch.Tensor) -> torch.Tensor:
+        if not self.remap_to_grad:
+            return sensor_type
+        st = sensor_type.clone()
+        st[st == 1] = 2
+        return st
+
+    @staticmethod
+    def _get_axis_groups(axis_labels: Optional[list[str]], n_channels: int) -> list[list[int]]:
+        if not axis_labels or len(axis_labels) != n_channels:
+            return [list(range(n_channels))]
+        groups: list[list[int]] = []
+        for ax in ("Z", "X", "Y"):
+            idx = [i for i, a in enumerate(axis_labels) if a == ax]
+            if idx:
+                groups.append(idx)
+        covered = {i for g in groups for i in g}
+        rem = [i for i in range(n_channels) if i not in covered]
+        if rem:
+            groups.append(rem)
+        return groups if groups else [list(range(n_channels))]
+
+    @torch.no_grad()
+    def reconstruct_waveform(
+        self,
+        x: torch.Tensor,
+        pos: torch.Tensor,
+        sensor_type: torch.Tensor,
+        axis_labels: Optional[list[str]] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Reconstruct normalized target and predicted waveforms `(x_target, x_rec)` of shape `(B, C, N, L)`."""
+        self.backbone.eval()
+        tok = self.backbone.tokenizer
+        st = self._prepare_sensor_type(sensor_type)
+
+        groups = (
+            self._get_axis_groups(axis_labels, x.shape[1])
+            if self.axis_split_triaxial
+            else [list(range(x.shape[1]))]
+        )
+
+        if len(groups) == 1:
+            x_unf = tok.unfold(x, overlap_ratio=0.0)
+            se = tok.sensor_embed(pos, st)
+            feat = tok.encoder(x_unf, se)
+            q_feat, _, _ = tok.quantizer(feat)
+            x_rec = tok.decoder(q_feat, se).float()
+            return tok.norm_target(x_unf), x_rec
+
+        # Axis-split triaxial reconstruction: each axis bank gets its own N_neuro=16 bottleneck
+        x_unf_full = tok.unfold(x, overlap_ratio=0.0)
+        x_target_full = tok.norm_target(x_unf_full)
+        x_rec_full = torch.zeros_like(x_target_full)
+
+        for idx_list in groups:
+            idx_t = torch.tensor(idx_list, dtype=torch.long, device=x.device)
+            x_sub = x.index_select(dim=1, index=idx_t)
+            pos_sub = pos.index_select(dim=1, index=idx_t)
+            st_sub = st.index_select(dim=1, index=idx_t)
+
+            x_unf = tok.unfold(x_sub, overlap_ratio=0.0)
+            se = tok.sensor_embed(pos_sub, st_sub)
+            feat = tok.encoder(x_unf, se)
+            q_feat, _, _ = tok.quantizer(feat)
+            x_rec_sub = tok.decoder(q_feat, se).float()
+            x_rec_full.index_copy_(dim=1, index=idx_t, source=x_rec_sub)
+
+        return x_target_full, x_rec_full
+
+    @torch.no_grad()
+    def encode_latent(
+        self,
+        x: torch.Tensor,
+        pos: torch.Tensor,
+        sensor_type: torch.Tensor,
+        axis_labels: Optional[list[str]] = None,
+    ) -> torch.Tensor:
+        """Encode inputs into normalized backbone latent tokens `(B, K * N_neuro, W, D)`."""
+        self.backbone.eval()
+        st = self._prepare_sensor_type(sensor_type)
+        groups = (
+            self._get_axis_groups(axis_labels, x.shape[1])
+            if self.axis_split_triaxial
+            else [list(range(x.shape[1]))]
+        )
+
+        latents: list[torch.Tensor] = []
+        for idx_list in groups:
+            idx_t = torch.tensor(idx_list, dtype=torch.long, device=x.device)
+            x_sub = x.index_select(dim=1, index=idx_t)
+            pos_sub = pos.index_select(dim=1, index=idx_t)
+            st_sub = st.index_select(dim=1, index=idx_t)
+
+            feat, _ = self.backbone.tokenizer.tokenize(
+                x_sub, pos_sub, st_sub, self.backbone.overlap_ratio
+            )
+            c_lat = feat.shape[1]
+            neuro = (
+                self.backbone.tokenizer.encoder.neuros.type_as(feat)
+                .detach()
+                .view(1, c_lat, 1, -1)
+            )
+            h = self.backbone.projection(feat + neuro)
+            for block in self.backbone.blocks[:-1]:
+                h = block(h)
+            h = F.normalize(h, p=2.0, dim=-1, eps=1e-6)
+            latents.append(h)
+
+        return torch.cat(latents, dim=1)

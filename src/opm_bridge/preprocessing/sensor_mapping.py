@@ -1,4 +1,4 @@
-"""Harmonized OPM and SQUID sensor metadata extraction, normalization, and ablations (FR1, FR2, FR3, FR7)."""
+"""Harmonized OPM and SQUID sensor metadata extraction, normalization, and geometric ablations."""
 
 from __future__ import annotations
 
@@ -154,13 +154,13 @@ def normalize_sensor_positions(
     Upstream BrainOmni centers `pos[:, :3]` per modality (EEG vs MEG) and scales by
     `sqrt(3 * mean(sum(pos^2, axis=1)))`, leaving `pos[:, 3:6]` (orientation) as a unit vector.
 
-    Supports diagnostics and ablations required by FR7 (RQ3):
+    Supports experimental diagnostics and ablations:
       - "default": OPM mapped to MAG (1), unit orientation vector preserved.
-      - "opm_as_grad": OPM mapped to GRAD (2) to test sensor-type embedding sensitivity.
+      - "opm_as_grad": OPM mapped to GRAD (2) to assess sensor-type embedding alignment.
       - "zero_orientation": Orientation vector set to [0, 0, 0] (position-only ablation).
-      - "flip_orientation": Orientation vector negated (-ori) to test sign convention sensitivity.
-      - "radial_only": If triaxial (X/Y/Z), keep only radial (Z) channels.
-      - "scramble_channels": Permute sensor metadata across channels (sanity control).
+      - "flip_orientation": Orientation vector negated (-ori) to evaluate sign sensitivity.
+      - "radial_only": In triaxial arrays, retain radial (Z) channels only.
+      - "scramble_channels": Permute sensor metadata across channels (topology sanity check).
     """
     c = len(meta.ch_names)
     keep_mask = np.ones(c, dtype=bool)

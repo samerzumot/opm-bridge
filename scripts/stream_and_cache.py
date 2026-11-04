@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Zero-spend streaming cache builder for OpenNeuro ds005107 (§7, §8.2).
+"""Streaming cache builder for OpenNeuro ds005107.
 
-Streams one `.fif` + `beh/*_events.tsv` run at a time directly from OpenNeuro's public S3 bucket
-(`https://s3.amazonaws.com/openneuro.org/ds005107/...`), applies harmonized notch + bandpass
-filtering and 256 Hz resampling, extracts latency-corrected (+33 ms) epochs and 2^4 factorial
-face labels (`race`, `gender`, `age`, `emotion`), saves a compact `.pt` cache (< 5 MB/run),
-and deletes the temporary 85 MB raw `.fif` file immediately so disk usage stays under 200 MB.
+Streams one `.fif` + `beh/*_events.tsv` run at a time directly from OpenNeuro's S3 archive,
+applies harmonized notch + bandpass filtering and 256 Hz decimation, extracts latency-corrected
+(+33 ms) epochs and 2^4 factorial face labels, and saves a compact `.pt` cache.
 """
 
 from __future__ import annotations

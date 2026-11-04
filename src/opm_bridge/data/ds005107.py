@@ -1,14 +1,14 @@
 """Dataset adapter for OpenNeuro ds005107 ('FACE-DEC', 64-ch Quanmag OPM-MEG).
 
-Verified facts (Phase 0, 2026-11-03):
+Dataset specifications:
   - 21 participants (`sub-01`..`sub-23`, with `sub-05` and `sub-12` absent).
   - 64 MEG channels typed `MEGMAG` (`coil_type=3024`, unit `T`), `sfreq=1000 Hz`, 50 Hz line.
-  - Per `ds005107/README` [V]: sensor coordinates in the FIF files were approximated from an
+  - Per `ds005107/README`: sensor coordinates in the FIF files were approximated from an
     Elekta layout for 2D topomap visualization (`CoordinateFrame.APPROX_ELEKTA`) and
     `dev_head_t` is the 4x4 identity matrix (`DigitizedLandmarks: false`).
   - Stimulus identities (`1.bmp`..`64.bmp`) are stored in `beh/*_events.tsv` (`stim_file`),
     while `meg/*_events.tsv` only holds trigger codes (`1`=Stimulus, `99`=Catch, `999`=Button).
-  - Per `code/analysis/face_1_prep.py` and `face_3_rsa.py` [V]:
+  - Per `code/analysis/face_1_prep.py` and `face_3_rsa.py`:
       * Projector latency offset: +33 ms (`epoch_proj_latency = 0.033`).
       * 64 face stimuli follow a balanced 2x2x2x2 factorial design across 4 binary dimensions:
         - `race`: stimuli 1..32 (1) vs 33..64 (0)

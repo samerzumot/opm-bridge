@@ -1,12 +1,12 @@
 """Dataset adapter for Nottingham 192-ch triaxial OPM-MEG somatosensory dataset (Zenodo 11126593).
 
-Verified facts (Phase 0, 2026-11-03):
-  - DOI: `10.5281/zenodo.11126593` (Rier & Rhodes et al., eLife 2024), License: `CC-BY-4.0` [V].
+Dataset specifications:
+  - DOI: `10.5281/zenodo.11126593` (Rier & Rhodes et al., eLife 2024), License: `CC-BY-4.0`.
   - Archives: `Adults.zip` (12.24 GB, 26 adults `sub-101`..`sub-126`) and
-    `Children.zip` (12.67 GB, 27 children `sub-001`..`sub-027`) [V].
-  - Using `Adults.zip` (N=26) eliminates pediatric age and head-size confounds in the main transfer
-    curves while allowing `Children.zip` as an explicit developmental/head-size diagnostic.
-  - Per `index_pinky_Tstat_func.m` [V]:
+    `Children.zip` (12.67 GB, 27 children `sub-001`..`sub-027`).
+  - Evaluating adult cohorts eliminates pediatric age and head-size confounds in the main transfer
+    experiments.
+  - Per `index_pinky_Tstat_func.m`:
       * Flat binary `*_task-braille_run-001_meg.dat` accompanied by `*_meg_read_info.txt`
         (giving matrix `Size`, `Precision`, `Ordering`), `*_meg.json` (`SamplingFrequency`),
         `*_channels.tsv` (with `name` ending in `X`/`Y`/`Z`, `Px,Py,Pz` in cm, and `Ox,Oy,Oz`
