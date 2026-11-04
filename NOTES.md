@@ -105,3 +105,26 @@ Incorporated into `src/opm_bridge/preprocessing/sensor_mapping.py` via `compute_
 - **Empirical Boost:** Soft-HFC improved CompactMEGNet mean decoding balanced accuracy from **51.82%** to **52.60%** at $B=2$, with individual subject folds reaching **54.69%**.
 
 
+
+---
+
+## 6. Upstream Engagement & Full Cohort Benchmark Audit (2026-11-04) [V]
+
+### Upstream PR #2 Engagement (`OpenTSLab/BrainOmni/pull/2`):
+- Maintainer `@sigureling` reviewed PR #2 (`issuecomment-6629437344`):
+  1. DeepSpeed import fallback: Accepted as improving compatibility.
+  2. MEG bad-channel detection: Confirmed intentional omission on SQUID due to high SNR; noted future value.
+  3. `coil_type` bug: Clarified that native MNE `info["chs"][i]["coil_type"]` uses `NamedInt` where `str()` preserves the coil name. Acknowledged string-matching fragility and asked about identifying planar gradiometers cleanly.
+  4. Evaluation typo (`get_pcc`): Acknowledged and accepted fix.
+- Follow-up posted (`issuecomment-6631556505`): Provided MNE-native planar gradiometer identification using `mne.io.constants.FIFF` constants (`FIFFV_COIL_VV_PLANAR_T1..T3`) and `mne.pick_types(info, meg="planar1"/"planar2")`.
+
+### Methodological Audit of Full Cohort Run (21 Participants, `run-01`):
+1. **Majority-Class Optimization Collapse in Foundation Model:**
+   - Both `pretrained_backbone_ft` and `control_a_random_e2e` reported `BACC = 50.00%` and `Macro-F1 = 33.33%` across 21 folds.
+   - Root cause: 5 epochs at fixed `lr=1e-4` (40 optimizer steps) from a randomly initialized classification head failed to optimize the 13.5M parameter backbone, causing the classifier to collapse into constant single-class prediction.
+2. **Cross-Subject Zero-Shot Noise Floor:**
+   - `CompactMEGNet` achieved `50.29% [49.17%, 51.42%]` at $B=4$. Because the 95% bootstrap CI spans `50.00%`, it is statistically indistinguishable from chance in this single-run setting.
+3. **Phase 3 Ablation Correction:**
+   - Auto-orchestrator ran only on position-blind baselines, yielding identical no-op outputs. True spatial ablations require running `BrainOmniClassifier` with calibrated training.
+4. **Phase 4 Status:**
+   - Synthetic data placeholder removed; marked as `[U] Unverified / In Progress` pending download of real Nottingham triaxial data from Zenodo `11126593`.

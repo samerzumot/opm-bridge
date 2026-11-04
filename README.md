@@ -25,18 +25,25 @@ See [NOTES.md](./NOTES.md) for the complete Phase 0 verification gate log and [d
 
 Evaluated on OpenNeuro `ds005107` across all 21 subjects, 58 harmonized OPM channels, and Leave-One-Subject-Out (LOSO) cross-validation with **Soft-HFC** spatial noise filtering (`alpha=0.25`):
 
-| Model Arm | $B=1$ (256 trials) BACC [95% CI] | $B=2$ (512 trials) BACC [95% CI] | $B=4$ (1,024 trials) BACC [95% CI] | Architectural Type |
-| :--- | :--- | :--- | :--- | :--- |
-| **`pretrained_backbone_ft`** | 49.97% [49.80%, 50.13%] | 49.94% [49.83%, 50.00%] | 50.00% [50.00%, 50.00%] | 13.5M Transformer Foundation Model |
-| **`control_a_random_e2e`** | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | Matched Random Init E2E |
-| **`compact_megnet`** (+Soft-HFC) | 49.14% [47.55%, 50.65%] | 48.67% [47.51%, 49.90%] | **50.29% [49.17%, 51.42%]** | Compact CNN Specialist (~2,500 params) |
-| **`classical_bandpower`** | 49.57% [48.67%, 50.29%] | 49.66% [48.83%, 50.46%] | 50.01% [49.20%, 50.81%] | Classical Log Power + Logistic Reg |
+| Model Arm | $B=1$ (256 trials) BACC [95% CI] | $B=2$ (512 trials) BACC [95% CI] | $B=4$ (1,024 trials) BACC [95% CI] | Macro-F1 (All B) | Architectural Type |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`pretrained_backbone_ft`** | 49.97% [49.80%, 50.13%] | 49.94% [49.83%, 50.00%] | 50.00% [50.00%, 50.00%] | **33.33%** | 13.5M Foundation Model |
+| **`control_a_random_e2e`** | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | **33.33%** | Matched Random Init E2E |
+| **`compact_megnet`** (+Soft-HFC) | 49.14% [47.55%, 50.65%] | 48.67% [47.51%, 49.90%] | 50.29% [49.17%, 51.42%] | 48.8%–50.2% | Compact CNN Specialist (~2,500 params) |
+| **`classical_bandpower`** | 49.57% [48.67%, 50.29%] | 49.66% [48.83%, 50.46%] | 50.01% [49.20%, 50.81%] | 49.4%–49.9% | Classical Log Power + Logistic Reg |
 
-### Primary Conclusions:
-1. **Primary Hypothesis (RQ1 - Foundation Model Benefit):** SQUID pre-training provides no detectable transfer advantage over training from scratch on low-budget OPM data ($\Delta = 0.00\%$, pre-registered SESOI = 0.03 decision: **`equivalent`**).
-2. **Specialist Inductive Bias (RQ2):** Domain-specific compact architectures (`CompactMEGNet`) scale with cross-subject data to **50.29% mean BACC** (with single-subject folds decoding up to **54.47%**), outperforming heavy Transformer backbones that underfit at small sample sizes.
-3. **Soft-HFC Efficacy:** Homogeneous Field Correction with shrinkage $\alpha=0.25$ mitigates ambient external field interference without covariance rank loss ($\text{rank} = C$).
-4. **Detailed Technical Report:** See [docs/technical_report.md](./docs/technical_report.md).
+### Honest Diagnostic Analysis & Verification Status:
+1. **Foundation Model Majority-Class Collapse (`pretrained_backbone_ft` & `control_a`):**
+   - Both `pretrained_backbone_ft` and `control_a_random_e2e` collapsed to predicting a single constant class for 100% of test samples (`BACC = 50.00%`, `Macro-F1 = 33.33%`).
+   - *Diagnostic Root Cause:* With only 5 training epochs at fixed `lr=1e-4` (40 optimizer steps) without learning-rate warmup or linear probe warmstarting, the 13.5M parameter transformer fails to optimize the randomly initialized classification head. The `0.00%` difference between pre-trained and random initialization reflects an optimization floor effect rather than genuine transfer parity.
+2. **Noise Floor Across Cross-Subject Zero-Shot Classifiers:**
+   - On this fine-grained cognitive decoding task (`gender` from single-run `run-01` of `ds005107`), `CompactMEGNet` achieved `50.29% [49.17%, 51.42%]` at $B=4$. Because its 95% bootstrap confidence interval spans `50.00%` chance, it is **statistically indistinguishable from chance**.
+   - No model achieved statistically significant cross-subject zero-shot generalization in this single-run setting.
+3. **Phase 3 (Geometry Ablations) Audit:**
+   - Initial automated ablation runs used position-blind baselines (`compact_megnet`), yielding identical no-op metrics. Proper geometry ablations require evaluating `BrainOmniClassifier` (which consumes 6D coordinates and sensor types) under a tuned linear probe or warmstart regime.
+4. **Phase 4 (Nottingham Triaxial OPM) Status:**
+   - Loader implemented and unit-tested in [`nottingham_opm.py`](./src/opm_bridge/data/nottingham_opm.py). Empirical evaluation on real Zenodo `11126593` data is currently marked as **`[U] Unverified / In Progress`** (no synthetic metrics reported).
+5. **Detailed Technical Report:** See [docs/technical_report.md](./docs/technical_report.md).
 
 ---
 
