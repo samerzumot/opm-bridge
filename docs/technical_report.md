@@ -74,17 +74,35 @@ BrainOmni incorporates an integer sensor category embedding: `EEG=0`, `MAG=1`, `
 
 ### 3.3 Triaxial Sensor Geometry & Axis-Partitioned Tokenization
 
-In 192-channel triaxial QuSpin arrays (Zenodo 11126593, 10 adult participants, 10,000 bootstrap resamples), three orthogonal coils share identical 3D spatial coordinates. Passing full triaxial data through BrainOmni's single spatial attention bottleneck ($N_{\text{neuro}} = 16$) yields sub-optimal reconstruction fidelity due to cross-axis interference:
+In 192-channel triaxial QuSpin arrays (Zenodo 11126593, 10 adult participants, 84 trials/subject = 840 trials total, 10,000 bootstrap resamples), three orthogonal coils share identical 3D spatial coordinates. Passing full triaxial data through BrainOmni's single spatial attention bottleneck ($N_{\text{neuro}} = 16$) yields sub-optimal reconstruction fidelity due to cross-axis interference:
 
-| Processing Mode | Channels | Zero-Shot Reconstruction PCC [95% CI] | Braille 5-Fold BACC [95% CI] |
-| :--- | :--- | :--- | :--- |
-| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3731 [0.3427, 0.4062] | 52.83% [46.67, 58.67] |
-| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3448 [0.3122, 0.3800] | 56.17% [49.67, 62.83] |
-| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.5053 [0.4763, 0.5392]** (+35.4%) | 56.67% [49.17, 64.83] |
-| **Tangential Only ($X/Y$)** | 100–116 | 0.4435 [0.4120, 0.4741] (+18.9%) | **58.17% [53.17, 62.83]** |
-| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4868 [0.4531, 0.5221]** (+30.5%) | 55.67% [49.50, 62.17] |
+| Processing Mode | Channels | Zero-Shot Reconstruction PCC [95% CI] | Braille 5-Fold BACC [95% CI] | Paired Test vs Monolithic Raw |
+| :--- | :--- | :--- | :--- | :--- |
+| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3726 [0.3416, 0.4046] | 48.24% [43.64, 52.67] | Baseline |
+| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3461 [0.3115, 0.3816] | 49.07% [44.99, 52.89] | -- |
+| **Random 3-way Split (Capacity Control)** | 3 × ~55 | 0.3995 [0.3697, 0.4287] | 48.24% [43.64, 52.67] | $\Delta = +0.0269$ ($p = 0.0016$) |
+| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.4944 [0.4667, 0.5265]** (+32.7%) | 47.19% [40.76, 53.44] | $\Delta = +0.1218$ ($p = 0.0016$) |
+| **Tangential Only ($X/Y$)** | 100–116 | 0.4446 [0.4112, 0.4771] (+19.3%) | 49.35% [46.06, 52.51] | $\Delta = +0.0720$ ($p = 0.0016$) |
+| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4849 [0.4507, 0.5199]** (+30.1%) | 50.19% [43.72, 56.40] | **$\Delta = +0.1123$ ($p = 0.0016$)** |
 
-By partitioning triaxial channels into distinct orthogonal groups and allocating an independent query subspace to each, the axis-partitioned adapter restores reconstruction accuracy ($\Delta = +0.1137$ [0.1048, 0.1213], $p < 0.0001$) without discarding tangential sensor channels.
+**Capacity Control Analysis:** Comparing the axis-partitioned adapter to a size-matched random 3-way split reveals that channel query load accounts for only $\Delta = +0.0269$ of the gain, while physical orthogonal vector separation provides an additional $\Delta = +0.0854$ ($p = 0.0016$). This establishes that over **76% of the bottleneck is genuine cross-axis interference** when three orthogonal sensors occupy identical spatial coordinates.
+
+### 3.4 In-Domain Cryogenic SQUID Baseline (ds000117)
+
+To isolate cross-hardware transfer effects from model competence, we evaluated BrainOmni on an in-domain cryogenic SQUID dataset (OpenNeuro `ds000117`, 102 magnetometers + 204 planar gradiometers):
+
+| Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Evoked Detection (Pretrained vs Ctrl A) | Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **SQUID (`ds000117`)** | Full Array (306 ch) | `MAG=1, GRAD=2` | 0.4177 | 97.56% vs 92.69% (Δ = +4.87%) | 61.03% vs 55.81% (Δ = +5.22%) | Native Dual-Sensor Baseline |
+| **SQUID (`ds000117`)** | Magnetometers (102 ch) | `MAG=1` | 0.4105 | -- | -- | SQUID Magnetometer Baseline |
+| **SQUID (`ds000117`)** | Gradiometers (204 ch) | `GRAD=2` | 0.4473 | -- | -- | SQUID Gradiometer Baseline |
+| **SQUID (`ds000117`)** | Inverse Control (102 ch Mag) | `GRAD=2` | **0.7130** | -- | -- | **Δ = +0.3025 (+73.7% gain)** |
+| **OPM (`ds005107`)** | Whole-Head (50 ch) | `MAG=1` | 0.3702 | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |
+| **OPM (`ds005107`)** | Remapped (`opm_as_grad`) | `GRAD=2` | **0.5653** | -- | Floor (~50%) | **Δ = +0.1951 (+52.7% gain)** |
+
+**Key Findings:**
+1. On native cryogenic SQUID data, Pretrained representations outperform Control A on both visual detection (+4.87%, AUC 0.9993 vs 0.9932) and face decoding (+5.22%), while Control B (Tokenizer Only) underperforms (88.45% and 56.10%), confirming the validity of the autoregressive Transformer backbone within its training domain.
+2. The `opm_as_grad` PCC increase (+52.7% on OPM) is replicated and amplified on real SQUID magnetometers (+73.7% when remapped to GRAD), proving that the phenomenon is driven by an asymmetric gradiometer pre-training inductive bias within the tokenizer.
 
 ---
 

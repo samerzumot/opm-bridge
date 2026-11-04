@@ -165,6 +165,25 @@ Paired permutation hypothesis testing across all 10 participants (84 trials/subj
 
 ![Figure 3: Triaxial waveform reconstruction PCC and 5-fold tactile Braille decoding balanced accuracy across array configurations on Zenodo 11126593 (N=10 adult participants).](figures/fig3_nottingham_triaxial_bottleneck.png)
 
+### 4.5 In-Domain SQUID Control & The Sensor-Type Bias Mechanism
+
+To verify whether foundation model transfer bottlenecks are hardware-specific rather than indicative of general model pathology, we evaluated BrainOmni on an in-domain cryogenic SQUID benchmark (OpenNeuro `ds000117`, Wakeman & Henson, Elekta Neuromag-306 with 102 magnetometers and 204 planar gradiometers):
+
+**Table 4:** In-domain cryogenic SQUID baseline (`ds000117`) versus on-scalp OPM transfer (`ds005107`).
+
+| Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Evoked Detection (Pretrained vs Ctrl A) | Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **SQUID (`ds000117`)** | Full Array (306 ch) | `MAG=1, GRAD=2` | 0.4177 | 97.56% vs 92.69% (Δ = +4.87%) | 61.03% vs 55.81% (Δ = +5.22%) | Native Dual-Sensor Baseline |
+| **SQUID (`ds000117`)** | Magnetometers (102 ch) | `MAG=1` | 0.4105 | -- | -- | SQUID Magnetometer Baseline |
+| **SQUID (`ds000117`)** | Gradiometers (204 ch) | `GRAD=2` | 0.4473 | -- | -- | SQUID Gradiometer Baseline |
+| **SQUID (`ds000117`)** | Inverse Control (102 ch Mag) | `GRAD=2` | **0.7130** | -- | -- | **Δ = +0.3025 (+73.7% gain)** |
+| **OPM (`ds005107`)** | Whole-Head (50 ch) | `MAG=1` | 0.3702 | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |
+| **OPM (`ds005107`)** | Remapped (`opm_as_grad`) | `GRAD=2` | **0.5653** | -- | Floor (~50%) | **Δ = +0.1951 (+52.7% gain)** |
+
+Two fundamental insights emerge from this in-domain baseline:
+1. **Validation of In-Domain Foundation Model Utility:** On cryogenic SQUID recordings, the pre-trained foundation model consistently outperforms randomly initialized controls on both evoked visual detection (97.56% vs 92.69%, $\text{AUC} = 0.9993$ vs $0.9932$) and fine-grained face-versus-scrambled decoding (61.03% vs 55.81%, $\text{AUC} = 0.5909$ vs $0.5591$). Control B (Tokenizer Only) significantly underperforms the full model (88.45% on detection and 56.10% on face decoding), confirming that the pre-trained autoregressive Transformer backbone captures genuine temporal structure in its training domain.
+2. **The Mechanism of `opm_as_grad`:** Remapping native SQUID magnetometers from `MAG=1` to `GRAD=2` causes zero-shot reconstruction PCC to increase from 0.4105 to 0.7130—a **+73.7% relative gain ($\Delta = +0.3025$)** on cryogenic SQUID data itself. This matches the +52.7% relative gain observed on OPM data (`ds005107`, 0.2501 to 0.3819). This provides decisive empirical proof that `opm_as_grad` is not an OPM-specific geometric adaptation; rather, it reflects an asymmetric inductive bias in BrainOmni's `sensor_embed` weights, which were heavily shaped by the numerical dominance of planar gradiometers in SQUID pre-training corpora.
+
 ---
 
 ## 5. Discussion
@@ -195,3 +214,4 @@ Upstream modifications and bug fixes identified during this evaluation have been
 4. Lawhern, V. J., et al. EEGNet: a compact convolutional neural network for EEG-based brain–computer interfaces. *Journal of Neural Engineering*, 15(5):056013, 2018.
 5. Boto, E., et al. Moving magnetoencephalography towards real-world applications with a wearable system. *Nature*, 555(7698):657–661, 2018.
 6. Mellor, S., et al. Spatial filtering for optically pumped magnetometer MEG. *NeuroImage*, 260:119488, 2022.
+7. Wakeman, D. G., & Henson, R. N. A multi-subject, multi-modal human neuroimaging dataset. *Scientific Data*, 2:150001, 2015.

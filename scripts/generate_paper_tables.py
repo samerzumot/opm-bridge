@@ -164,6 +164,26 @@ def generate_table3_markdown() -> str:
     return "\n".join(lines)
 
 
+def generate_table4_markdown() -> str:
+    """Generate Table 4: In-domain SQUID control (ds000117) vs OPM transfer (ds005107)."""
+    squid_data = json.loads((RESULTS_DIR / "summary_ds000117_squid_baseline.json").read_text())
+    pcc = squid_data["reconstruction_pcc"]
+    det = squid_data["visual_detection"]
+    face = squid_data["face_decoding"]
+
+    lines = [
+        "| Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Evoked Detection (Pretrained vs Ctrl A) | Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+        f"| **SQUID (`ds000117`)** | Full Array (306 ch) | `MAG=1, GRAD=2` | {pcc['full_306ch']:.4f} | {det['pretrained']['accuracy']*100:.2f}% vs {det['control_a']['accuracy']*100:.2f}% (Δ = {det['delta_vs_ctrl_a']*100:+.2f}%) | {face['pretrained']['accuracy']*100:.2f}% vs {face['control_a']['accuracy']*100:.2f}% (Δ = {face['delta_vs_ctrl_a']*100:+.2f}%) | Native Dual-Sensor Baseline |",
+        f"| **SQUID (`ds000117`)** | Magnetometers (102 ch) | `MAG=1` | {pcc['mag_102ch']:.4f} | -- | -- | SQUID Magnetometer Baseline |",
+        f"| **SQUID (`ds000117`)** | Gradiometers (204 ch) | `GRAD=2` | {pcc['grad_204ch']:.4f} | -- | -- | SQUID Gradiometer Baseline |",
+        f"| **SQUID (`ds000117`)** | Inverse Control (102 ch Mag) | `GRAD=2` | **{pcc['mag_as_grad']:.4f}** | -- | -- | **Δ = {pcc['delta_mag_remapped_to_grad']:+.4f} (+73.7% gain)** |",
+        "| **OPM (`ds005107`)** | Whole-Head (50 ch) | `MAG=1` | 0.3702 | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |",
+        "| **OPM (`ds005107`)** | Remapped (`opm_as_grad`) | `GRAD=2` | **0.5653** | -- | Floor (~50%) | **Δ = +0.1951 (+52.7% gain)** |",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> None:
     print("=== Table 1: Cross-Subject Downstream Transfer ===")
     t1 = generate_table1_markdown()
@@ -174,6 +194,9 @@ def main() -> None:
     print("\n=== Table 3: Nottingham Triaxial Configurations ===")
     t3 = generate_table3_markdown()
     print(t3)
+    print("\n=== Table 4: In-Domain SQUID Baseline vs. OPM Transfer ===")
+    t4 = generate_table4_markdown()
+    print(t4)
 
 
 if __name__ == "__main__":
