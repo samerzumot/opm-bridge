@@ -27,6 +27,7 @@ from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
 from opm_bridge.models.vendor_brainomni.brainomni.model import BrainOmni
 from opm_bridge.models.wrapper import BrainOmniClassifier
 from opm_bridge.preprocessing.sensor_mapping import (
+    align_subjects_by_sensor_geometry,
     apply_soft_hfc,
     compute_soft_hfc_projector,
     extract_sensor_metadata_from_mne,
@@ -277,5 +278,33 @@ def test_soft_hfc_properties() -> None:
     # 5. Invalid alpha check
     with pytest.raises(ValueError):
         compute_soft_hfc_projector(ori, alpha=1.5)
+
+
+def test_cross_subject_sensor_alignment() -> None:
+    """Verify that physical 6D sensor geometry alignment fixes misaligned bad-channel drops."""
+    rng = np.random.default_rng(123)
+    # 10 canonical physical helmet slots
+    canonical_pos = rng.normal(size=(10, 6)).astype(np.float32)
+    canonical_st = np.ones(10, dtype=np.int64)
+
+    # Subject 1 drops slot #2 (keeps 9 slots)
+    keep_s1 = [0, 1, 3, 4, 5, 6, 7, 8, 9]
+    # Subject 2 drops slots #0 and #5 (keeps 8 slots)
+    keep_s2 = [1, 2, 3, 4, 6, 7, 8, 9]
+
+    # Put each slot's true index into the signal so we can verify exact channel alignment
+    x_full = np.broadcast_to(np.arange(10, dtype=np.float32)[None, :, None], (4, 10, 16)).copy()
+    subj_X = {"sub-01": x_full[:, keep_s1, :], "sub-02": x_full[:, keep_s2, :]}
+    subj_pos = {"sub-01": canonical_pos[keep_s1], "sub-02": canonical_pos[keep_s2]}
+    subj_st = {"sub-01": canonical_st[keep_s1], "sub-02": canonical_st[keep_s2]}
+
+    al_X, al_pos, al_st = align_subjects_by_sensor_geometry(subj_X, subj_pos, subj_st)
+    # Common slots between keep_s1 and keep_s2: [1, 3, 4, 6, 7, 8, 9] -> 7 channels
+    assert al_X["sub-01"].shape == (4, 7, 16)
+    assert al_X["sub-02"].shape == (4, 7, 16)
+    assert np.allclose(al_pos["sub-01"], al_pos["sub-02"])
+    assert np.allclose(al_X["sub-01"], al_X["sub-02"])
+    assert al_X["sub-01"][0, :, 0].tolist() == [1.0, 3.0, 4.0, 6.0, 7.0, 8.0, 9.0]
+
 
 

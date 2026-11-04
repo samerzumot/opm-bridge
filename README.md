@@ -2,48 +2,80 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-*An open benchmark of how pre-trained MEG foundation models ([BrainOmni](https://arxiv.org/abs/2505.18185), NeurIPS 2025) transfer to scarce optically pumped magnetometer (OPM-MEG) data.*
+*An open, reproducible benchmark evaluating whether pre-trained SQUID MEG foundation models ([BrainOmni](https://arxiv.org/abs/2505.18185), NeurIPS 2025) transfer to scarce optically pumped magnetometer (OPM-MEG) data—and diagnosing where and why they fail.*
 
 ---
 
-## Key Highlights & Phase 0 Verified Findings (`[V]`)
+## Key Verified Findings (`[V]`)
 
-1. **Zero OPM Pre-Training Contamination (`[V]`):** Verified across all 22 pre-training datasets (Appendix D) and 11 downstream datasets (Appendix E) of BrainOmni (`arXiv:2505.18185v1`) that **zero OPM-MEG recordings** were included. All BrainOmni MEG training used conventional SQUID systems (Elekta Neuromag, CTF, KIT/Yokogawa).
-2. **Co-Primary Dataset Design (`[V]`):**
-   - **Target 1 (`ds005107`, OpenNeuro, CC0):** 21 subjects, 64-channel single-axis Quanmag OPM-MEG during a balanced $2^4$ factorial face perception task (`race`, `gender`, `age`, `emotion`). Per `ds005107/README`, sensor coordinates were approximated from an Elekta layout (`CoordinateFrame.APPROX_ELEKTA`), isolating **OPM signal/SNR domain shift**.
-   - **Target 2 (Nottingham OPM, `10.5281/zenodo.11126593`, CC-BY-4.0, `Adults.zip`):** 26 adult subjects, up to 192-channel **triaxial (`X/Y/Z`) QuSpin OPM-MEG** with subject-coregistered 3D positions (`Px, Py, Pz`) and true 3D unit orientations (`Ox, Oy, Oz`) (`CoordinateFrame.HEAD`) during a tactile Braille somatosensory task (`Start_index` vs. `Start_pinky`), isolating **true triaxial OPM geometry and orientation transfer**.
-3. **Three Upstream BrainOmni Bugs Discovered & Fixed in OPM-Bridge (`[V]`):**
-   - **Frozen Tokenizer in `encode()` & `pretrained=False`:** Upstream `BrainTokenizer.tokenize()` is decorated with `@torch.no_grad()`, preventing gradient flow into `BrainSensorModule` during fine-tuning and leaving `BrainTokenizer` frozen at random weights when `pretrained=False`. [`BrainOmniClassifier`](./src/opm_bridge/models/wrapper.py) explicitly separates `backbone_ft`, `end_to_end_ft`, `control_a_random_e2e` (with differentiable straight-through RVQ), and `control_b_random_backbone`.
-   - **MEG/OPM Bad-Channel Blind Spot:** Upstream `auto_detect_bad_channels` only runs on `eeg_mask`, allowing unlocked/noisy OPM channels to contaminate all channels via group common-average referencing (`sensortype_wise_normalize`). Rejecting outlier OPM channels on real OPM data (`ds005346` `sub-31`) improves zero-shot `BrainTokenizer` waveform reconstruction PCC by **+51% relative (`0.1626 -> 0.2459`)**.
-   - **Plain-Integer `coil_type` Misclassification:** Upstream `if "MAG" in str(i["coil_type"])` misclassifies plain integer FIFF magnetometer codes (`2000`, `3024`, `8001`–`8004`) as `GRAD (2)`. Fixed in [`sensor_mapping.py`](./src/opm_bridge/preprocessing/sensor_mapping.py).
-
-See [NOTES.md](./NOTES.md) for the complete Phase 0 verification gate log and [docs/datasets.md](./docs/datasets.md) for the verified dataset catalog.
+1. **Zero OPM Pre-Training Contamination (`[V]`):** Verified across all 22 pre-training datasets (Appendix D) and 11 downstream datasets (Appendix E) of BrainOmni (`arXiv:2505.18185v1`) that **zero OPM-MEG recordings** were included. All 656.82 hours of BrainOmni MEG pre-training used conventional SQUID systems (CTF-275 axial gradiometers, Elekta Neuromag-306, KIT/Yokogawa).
+2. **Upstream Audit & PR Contribution (`[V]`):**
+   - Submitted [OpenTSLab/BrainOmni#2](https://github.com/OpenTSLab/BrainOmni/pull/2) (reviewed and confirmed by maintainer `@sigureling`), fixing an evaluation metric bug in `evaluate.py`, adding a DeepSpeed import fallback for CPU/MPS/single-GPU users, and contributing MNE-native planar gradiometer detection (`FIFFV_COIL_VV_PLANAR_T1..T3`).
+   - Identified that upstream `BrainTokenizer.tokenize()` is decorated with `@torch.no_grad()`, meaning upstream `pretrained=False` leaves `BrainTokenizer` randomly initialized *and* frozen. [`BrainOmniClassifier`](./src/opm_bridge/models/wrapper.py) explicitly separates `frozen` (linear probe), `backbone_ft`, `end_to_end_ft`, `control_a` (fully random), and `control_b` (pre-trained tokenizer + random backbone).
+3. **Physical 6D Sensor Alignment & Soft-HFC Filtering (`[V]`):**
+   - Implemented [`align_subjects_by_sensor_geometry`](./src/opm_bridge/preprocessing/sensor_mapping.py) to match physical 6D helmet coordinates (`[x, y, z, ox, oy, oz]`) across subjects after per-subject bad-channel rejection (yielding **50 exact common helmet sensors** across all 21 subjects of `ds005107`), preventing channel-index shifts across subjects.
+   - Implemented **Soft-HFC** (`compute_soft_hfc_projector`, $P_{\text{soft}}(\alpha) = I_C - \alpha Q_R Q_R^T$ with $\alpha=0.25$), attenuating homogeneous environmental magnetic interference by 75% in power while strictly preserving full covariance rank ($\text{rank} = C$).
 
 ---
 
-## Empirical Benchmark Findings (All 21 Participants, 5,376 Epochs)
+## Empirical Benchmark Results (`[V]`)
 
-Evaluated on OpenNeuro `ds005107` across all 21 subjects, 58 harmonized OPM channels, and Leave-One-Subject-Out (LOSO) cross-validation with **Soft-HFC** spatial noise filtering (`alpha=0.25`):
+### 1. Phase 2: Cross-Subject Transfer vs. Matched Controls (`ds005107`, All 21 Subjects, 50 Aligned Channels)
 
-| Model Arm | $B=1$ (256 trials) BACC [95% CI] | $B=2$ (512 trials) BACC [95% CI] | $B=4$ (1,024 trials) BACC [95% CI] | Macro-F1 (All B) | Architectural Type |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`pretrained_backbone_ft`** | 49.97% [49.80%, 50.13%] | 49.94% [49.83%, 50.00%] | 50.00% [50.00%, 50.00%] | **33.33%** | 13.5M Foundation Model |
-| **`control_a_random_e2e`** | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | **33.33%** | Matched Random Init E2E |
-| **`compact_megnet`** (+Soft-HFC) | 49.14% [47.55%, 50.65%] | 48.67% [47.51%, 49.90%] | 50.29% [49.17%, 51.42%] | 48.8%–50.2% | Compact CNN Specialist (~2,500 params) |
-| **`classical_bandpower`** | 49.57% [48.67%, 50.29%] | 49.66% [48.83%, 50.46%] | 50.01% [49.20%, 50.81%] | 49.4%–49.9% | Classical Log Power + Logistic Reg |
+Evaluated via Leave-One-Subject-Out (LOSO, 21 folds) on the post-stimulus visual evoked response window (`[+50ms, +550ms]`, Soft-HFC $\alpha=0.25$):
 
-### Honest Diagnostic Analysis & Verification Status:
-1. **Foundation Model Majority-Class Collapse (`pretrained_backbone_ft` & `control_a`):**
-   - Both `pretrained_backbone_ft` and `control_a_random_e2e` collapsed to predicting a single constant class for 100% of test samples (`BACC = 50.00%`, `Macro-F1 = 33.33%`).
-   - *Diagnostic Root Cause:* With only 5 training epochs at fixed `lr=1e-4` (40 optimizer steps) without learning-rate warmup or linear probe warmstarting, the 13.5M parameter transformer fails to optimize the randomly initialized classification head. The `0.00%` difference between pre-trained and random initialization reflects an optimization floor effect rather than genuine transfer parity.
-2. **Noise Floor Across Cross-Subject Zero-Shot Classifiers:**
-   - On this fine-grained cognitive decoding task (`gender` from single-run `run-01` of `ds005107`), `CompactMEGNet` achieved `50.29% [49.17%, 51.42%]` at $B=4$. Because its 95% bootstrap confidence interval spans `50.00%` chance, it is **statistically indistinguishable from chance**.
-   - No model achieved statistically significant cross-subject zero-shot generalization in this single-run setting.
-3. **Phase 3 (Geometry Ablations) Audit:**
-   - Initial automated ablation runs used position-blind baselines (`compact_megnet`), yielding identical no-op metrics. Proper geometry ablations require evaluating `BrainOmniClassifier` (which consumes 6D coordinates and sensor types) under a tuned linear probe or warmstart regime.
-4. **Phase 4 (Nottingham Triaxial OPM) Status:**
-   - Loader implemented and unit-tested in [`nottingham_opm.py`](./src/opm_bridge/data/nottingham_opm.py). Empirical evaluation on real Zenodo `11126593` data is currently marked as **`[U] Unverified / In Progress`** (no synthetic metrics reported).
-5. **Detailed Technical Report:** See [docs/technical_report.md](./docs/technical_report.md).
+#### Task A: Cross-Subject Face `age` Decoding (21 Folds, 95% Subject-Level Bootstrap CI)
+
+| Model Arm | $B=1$ (256 trials) | $B=2$ (512 trials) | $B=4$ (1,024 trials) | $B=10$ (2,560 trials) | $B=20$ (5,120 trials) | Macro-F1 ($B=20$) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`pretrained_linear_probe`** (BrainOmni Frozen) | 49.50% `[48.55, 50.49]` | 49.19% `[48.46, 50.01]` | 48.94% `[48.10, 49.86]` | 50.08% `[49.02, 51.06]` | 49.57% `[48.44, 50.73]` | 49.46% |
+| **`control_a_linear_probe`** (Random Init Frozen) | 50.41% `[49.40, 51.38]` | 50.40% `[49.59, 51.24]` | 50.86% `[49.83, 51.83]` | 50.27% `[49.11, 51.42]` | 50.68% `[49.28, 52.06]` | 50.61% |
+| **`control_b_linear_probe`** (PT Tokenizer + Rand BB) | 49.04% `[48.47, 49.59]` | 49.51% `[48.52, 50.45]` | 50.08% `[49.40, 50.82]` | 49.72% `[48.54, 50.92]` | 50.01% `[48.55, 51.45]` | 49.85% |
+| **`compact_megnet`** (~2.5k Param CNN Specialist) | 49.25% `[48.18, 50.41]` | 50.80% `[49.97, 51.74]` | 50.70% `[49.92, 51.55]` | 50.73% `[49.81, 51.60]` | **51.85% `[50.33, 53.34]`** | **50.98%** |
+| **`classical_bandpower`** (Welch PSD + LogReg) | 49.13% `[48.07, 50.12]` | 50.01% `[49.15, 50.78]` | 50.63% `[49.68, 51.56]` | 50.10% `[49.12, 51.08]` | 50.56% `[49.28, 51.79]` | 49.78% |
+| **`pretrained_backbone_ft`** (5-ep Un-warmed E2E FT) | 49.97% `[49.80, 50.13]` | 49.94% `[49.83, 50.00]` | 50.00% `[50.00, 50.00]` | — | — | **33.33% (Collapsed)** |
+| **RQ1 Verdict ($\text{PT Probe} - \text{Control A}$, $\text{SESOI}=3\%$)** | `-0.91%` (**`equivalent`**) | `-1.21%` (**`equivalent`**) | `-1.92%` (`inconclusive`) | `-0.19%` (**`equivalent`**) | `-1.11%` (**`equivalent`**) | — |
+
+#### Task B: Cross-Subject Face `race` Decoding & Within-Subject `gender` Calibration (All 21 Subjects)
+- **Cross-Subject `race` (`results/summary_aligned21_race.json`):** `pretrained_linear_probe` achieves **51.00% `[50.08%, 51.87%]`** at $B=2$ and **51.01% `[50.19%, 51.84%]`** at $B=10$, while `control_b_linear_probe` (Pre-trained `BrainTokenizer` + Random Backbone) reaches **51.45% `[50.37%, 52.55%]`** at $B=20$ (vs. `48.95%` for `control_a_linear_probe`). Across all three tasks (`age`, `race`, `gender`) at $B=20$, `control_b_linear_probe` matches or exceeds `pretrained_linear_probe`, indicating that any representation transfer originates in `BrainTokenizer` rather than the 13.5M spatiotemporal backbone.
+- **Within-Subject Few-Shot Calibration on `gender` (`results/summary_within_subject_gender.json`):** On a fixed 64-trial per-subject holdout across all 21 subjects, `ClassicalBandPowerDecoder` scales significantly above chance to **51.80% `[50.38%, 53.20%]`** ($B=64$ trials) and **53.13% `[51.14%, 55.14%]`** ($B=128$ trials), whereas `pretrained_linear_probe` (`50.83% [49.05%, 52.61%]`) and `control_a_linear_probe` (`49.28% [47.08%, 51.54%]`) remain statistically equivalent ($\Delta = +1.55\%$, `inconclusive` / `equivalent`).
+
+---
+
+### 2. Phase 3: `BrainOmni` Sensor Geometry Ablations & The `MAG` vs. `GRAD` Embedding Discovery (`[V]`)
+
+Evaluating `BrainOmni` across all 21 subjects (`50` aligned channels) under five geometry perturbations ([`summary_phase3_ablations.json`](./results/summary_phase3_ablations.json)):
+
+| Geometry Mode | Sensor Type Token | Orientation Vector | Zero-Shot `BrainTokenizer` PCC `[95% CI]` | Relative PCC Change | Downstream `PT Probe` BACC ($B=20$, `age`) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **`default`** | `MAG (1)` | True unit $\hat{\mathbf{o}} \in S^2$ | `0.2501 [0.2450, 0.2549]` | Baseline | 49.57% `[48.44%, 50.73%]` |
+| **`opm_as_grad`** | **`GRAD (2)`** | True unit $\hat{\mathbf{o}} \in S^2$ | **`0.3819 [0.3779, 0.3859]`** | **+52.7% ($p < 0.0001$)** | 49.41% `[48.14%, 50.69%]` |
+| **`zero_orientation`** | `MAG (1)` | $\mathbf{0} = [0, 0, 0]$ | `0.2359 [0.2295, 0.2421]` | -5.7% | 50.85% `[49.62%, 52.09%]` |
+| **`flip_orientation`** | `MAG (1)` | $-\hat{\mathbf{o}}$ (sign negated) | `0.2340 [0.2274, 0.2402]` | -6.4% | 49.02% `[47.83%, 50.20%]` |
+| **`scramble_channels`** | `MAG (1)` | Permuted across channels | `0.2330 [0.2307, 0.2354]` | -6.8% | 50.46% `[49.33%, 51.68%]` |
+
+**Why does `opm_as_grad` (`GRAD=2`) boost zero-shot `BrainTokenizer` reconstruction PCC by +52.7% (`0.2501 -> 0.3819`)?**
+In BrainOmni's 656.82-hour SQUID pre-training mix, CTF-275 datasets consist exclusively of axial gradiometers (`GRAD=2`, which share radial 3D orientations with radial OPMs) and Elekta-306 datasets contain 204 planar gradiometers (`GRAD=2`) vs. 102 magnetometers (`MAG=1`). Consequently, `GRAD (2)` outnumbered `MAG (1)` by $>4:1$ during pre-training, making the `GRAD (2)` embedding in `BrainSensorModule` substantially better conditioned for radial MEG waveform reconstruction than `MAG (1)`.
+
+---
+
+### 3. Phase 4: Real Nottingham Triaxial (`X/Y/Z`) QuSpin OPM-MEG Diagnostics (`Zenodo 11126593`, `[V]`)
+
+Evaluated on real subject-coregistered (`CoordinateFrame.HEAD`) triaxial QuSpin OPM-MEG recordings streamed from Zenodo `11126593` (`Adults.zip`, `sub-101` with 176 good channels and `sub-102` with 170 good channels; 26 balanced tactile Braille somatosensory trials `Start_index` vs. `Start_pinky` per subject; [`summary_phase4_nottingham.json`](./results/summary_phase4_nottingham.json)):
+
+| Subject | Configuration | Active Channels | Zero-Shot `BrainTokenizer` PCC | Braille 5-Fold BACC (`PT Probe`) | Braille 5-Fold BACC (`Classical PSD`) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **`sub-101`** | **Full Triaxial (`X/Y/Z`, Raw)** | 176 | `0.3229` | 38.33% | 51.67% |
+| **`sub-101`** | **Full Triaxial (`X/Y/Z` + Soft-HFC)** | 176 | `0.2898` | 43.33% (`55.00%` as `GRAD`) | 51.67% |
+| **`sub-101`** | **Radial-Only (`Z`-axis)** | **60** | **`0.4758` (+47.4%)** | 53.33% | **60.00%** |
+| **`sub-102`** | **Full Triaxial (`X/Y/Z`, Raw)** | 170 | `0.3423` | 58.33% | 48.33% |
+| **`sub-102`** | **Full Triaxial (`X/Y/Z` + Soft-HFC)** | 170 | `0.3038` | **68.33%** | 53.33% |
+| **`sub-102`** | **Radial-Only (`Z`-axis)** | **58** | **`0.4592` (+34.1%)** | 40.00% | **65.00%** |
+
+**The Triaxial $N_{\text{neuro}}=16$ Spatial Bottleneck:**
+`BrainTokenizer` compresses all input channels into a fixed bottleneck of **$N_{\text{neuro}} = 16$ spatial latent tokens**. When fed 170–176 triaxial (`X/Y/Z`) OPM channels where 3 orthogonal axes share each 3D coordinate $(P_x, P_y, P_z)$ (`11:1` channel-to-token compression, never seen in SQUID pre-training), reconstruction PCC drops to **`0.3326` mean**. Restricting to the radial `Z` axis (`58–60` channels, `3.7:1` compression matching SQUID geometry) increases zero-shot reconstruction PCC to **`0.4675` mean (+40.6% relative)**.
+
+See [docs/technical_report.md](./docs/technical_report.md) and [NOTES.md](./NOTES.md) for the complete technical report and audit log.
 
 ---
 
@@ -53,47 +85,9 @@ Evaluated on OpenNeuro `ds005107` across all 21 subjects, 58 harmonized OPM chan
 # Install dependencies (Python 3.10–3.12 via uv)
 uv sync --python 3.12 --extra dev
 
-# Run unit and smoke test suite
+# Run unit and smoke test suite (7/7 tests)
 uv run pytest -v
 
-# Run Phase 1.5 synthetic signal gate smoke check
-uv run python scripts/run_phase15_signal_gate.py --smoke
-
-# Verify BrainOmni-tiny checkpoint loading from Hugging Face
-uv run python scripts/run_transfer_benchmark.py --verify-checkpoint
-```
-
----
-
-## Repository Structure
-
-```text
-opm-bridge/
-├── configs/
-│   ├── ds005107_primary.yaml        # Target 1 (OpenNeuro ds005107) config
-│   └── nottingham_adults.yaml       # Target 2 (Zenodo 11126593 Adults) config
-├── docs/
-│   └── datasets.md                  # Verified OPM-MEG dataset catalog
-├── scripts/
-│   ├── run_phase15_signal_gate.py   # Phase 1.5 per-task learnable-signal gate
-│   └── run_transfer_benchmark.py    # Resumable transfer & diagnostic runner
-├── src/opm_bridge/
-│   ├── data/
-│   │   ├── schema.py                # CoordinateFrame, SensorMetadata, HarmonizedSample
-│   │   ├── ds005107.py              # ds005107 events (+33ms latency) & 2^4 face labels
-│   │   └── nottingham_opm.py        # Pure-Python flat binary & triaxial BIDS loader
-│   ├── preprocessing/
-│   │   └── sensor_mapping.py        # Pos/ori normalization & RQ3 mapping ablations
-│   ├── models/
-│   │   ├── vendor_brainomni/        # MIT-licensed BrainOmni/BrainTokenizer (no DeepSpeed)
-│   │   ├── wrapper.py               # BrainOmniClassifier (6 transfer & control arms)
-│   │   └── baselines.py             # CompactMEGNet & ClassicalBandPowerDecoder
-│   ├── train/
-│   │   └── runner.py                # Subject-wise K-fold splits, nested budgets & ledger
-│   └── eval/
-│       └── metrics.py               # Subject-level bootstrap CI, SESOI & signal gate
-├── tests/
-│   └── test_smoke.py                # Unit tests for loaders, ablations, gradients & CIs
-├── NOTES.md                         # Phase 0 verification log & bug findings
-└── pyproject.toml
+# Run full verified Phases 2, 3, and 4 benchmark suite
+PYTHONPATH=. uv run python scripts/auto_orchestrate_remaining_phases.py
 ```

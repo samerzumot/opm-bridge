@@ -1,0 +1,142 @@
+{
+  "protocol": "within_subject_few_shot_calibration",
+  "task": "gender",
+  "n_subjects": 21,
+  "test_trials_per_subject": 64,
+  "trial_budgets": [
+    32,
+    64,
+    128,
+    180
+  ],
+  "results_by_trial_budget": {
+    "32": {
+      "pretrained_linear_probe": {
+        "mean": 0.4894771932070319,
+        "ci_low": 0.47404405881976447,
+        "ci_high": 0.5069111623143882,
+        "macro_f1_mean": 0.4852384997862443
+      },
+      "control_a_linear_probe": {
+        "mean": 0.49769478579962445,
+        "ci_low": 0.4815214173707116,
+        "ci_high": 0.514279220536781,
+        "macro_f1_mean": 0.4924887503844577
+      },
+      "control_b_linear_probe": {
+        "mean": 0.5023404164533197,
+        "ci_low": 0.4839790946620583,
+        "ci_high": 0.5198084277393753,
+        "macro_f1_mean": 0.4986142188505568
+      },
+      "classical_bandpower": {
+        "mean": 0.5044712194913807,
+        "ci_low": 0.48805882243130216,
+        "ci_high": 0.5202004528289811,
+        "macro_f1_mean": 0.49722372873207293
+      },
+      "primary_hypothesis_test_rq1": {
+        "delta_mean": -0.008217592592592585,
+        "delta_ci_low": -0.029524716248506572,
+        "delta_ci_high": 0.012141790407919429,
+        "verdict": "equivalent"
+      }
+    },
+    "64": {
+      "pretrained_linear_probe": {
+        "mean": 0.5090256443079022,
+        "ci_low": 0.48755229668032074,
+        "ci_high": 0.5318321039213173,
+        "macro_f1_mean": 0.5063820529559222
+      },
+      "control_a_linear_probe": {
+        "mean": 0.5014032898105478,
+        "ci_low": 0.482062732014849,
+        "ci_high": 0.5212070905871309,
+        "macro_f1_mean": 0.4972546043197664
+      },
+      "control_b_linear_probe": {
+        "mean": 0.4912767750469363,
+        "ci_low": 0.4691719203362347,
+        "ci_high": 0.5150688177376684,
+        "macro_f1_mean": 0.48767077434595274
+      },
+      "classical_bandpower": {
+        "mean": 0.5179990186038574,
+        "ci_low": 0.5038145774662912,
+        "ci_high": 0.5319618855606759,
+        "macro_f1_mean": 0.5113185750035003
+      },
+      "primary_hypothesis_test_rq1": {
+        "delta_mean": 0.007622354497354489,
+        "delta_ci_low": -0.021404183201058215,
+        "delta_ci_high": 0.03816937617340844,
+        "verdict": "inconclusive"
+      }
+    },
+    "128": {
+      "pretrained_linear_probe": {
+        "mean": 0.50830239802014,
+        "ci_low": 0.4905202732974909,
+        "ci_high": 0.5261116178102065,
+        "macro_f1_mean": 0.5052346157190724
+      },
+      "control_a_linear_probe": {
+        "mean": 0.4928011392729134,
+        "ci_low": 0.4707546883000512,
+        "ci_high": 0.5153821844598053,
+        "macro_f1_mean": 0.49059332804911254
+      },
+      "control_b_linear_probe": {
+        "mean": 0.5006187062638675,
+        "ci_low": 0.4776936390595665,
+        "ci_high": 0.5235709085381465,
+        "macro_f1_mean": 0.49839309939751125
+      },
+      "classical_bandpower": {
+        "mean": 0.5312649342891278,
+        "ci_low": 0.5113571535244922,
+        "ci_high": 0.5514262246117084,
+        "macro_f1_mean": 0.5269400603653738
+      },
+      "primary_hypothesis_test_rq1": {
+        "delta_mean": 0.01550125874722648,
+        "delta_ci_low": -0.007186699948796709,
+        "delta_ci_high": 0.0365202439622802,
+        "verdict": "inconclusive"
+      }
+    },
+    "180": {
+      "pretrained_linear_probe": {
+        "mean": 0.5013131507083121,
+        "ci_low": 0.4741102097200887,
+        "ci_high": 0.5276756645758661,
+        "macro_f1_mean": 0.49783219904792564
+      },
+      "control_a_linear_probe": {
+        "mean": 0.5071449906127325,
+        "ci_low": 0.48011884760624685,
+        "ci_high": 0.5355023121479773,
+        "macro_f1_mean": 0.5047924126076072
+      },
+      "control_b_linear_probe": {
+        "mean": 0.4896606716163169,
+        "ci_low": 0.4666805208866701,
+        "ci_high": 0.5133334800093874,
+        "macro_f1_mean": 0.4879732409781414
+      },
+      "classical_bandpower": {
+        "mean": 0.5333946705922512,
+        "ci_low": 0.5090158703490355,
+        "ci_high": 0.5579739903353815,
+        "macro_f1_mean": 0.5291417277894903
+      },
+      "primary_hypothesis_test_rq1": {
+        "delta_mean": -0.005831839904420549,
+        "delta_ci_low": -0.03716420517579792,
+        "delta_ci_high": 0.022432769030551275,
+        "verdict": "inconclusive"
+      }
+    }
+  }
+}

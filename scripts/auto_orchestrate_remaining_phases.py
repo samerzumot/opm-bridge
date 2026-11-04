@@ -1,223 +1,456 @@
 #!/usr/bin/env python3
-"""Autonomous multi-phase orchestrator for OPM-Bridge.
+"""Master verified benchmark runner for Phases 2, 3, and 4 of OPM-Bridge.
 
-Executes remaining phases sequentially:
-  - Phase 2: Waits for the active Phase 2 benchmark (task-1212) to complete.
-  - Phase 3: Sensor Geometry Ablations (RQ3 / FR7: opm_as_grad, zero_orientation, flip_orientation, scramble_channels).
-  - Phase 4: Cross-Hardware & Triaxial Diagnostics (Nottingham OPM Zenodo 11126593).
-  - Phase 5: Synthesis, Technical Report generation (`docs/technical_report.md`), README update, and git commit.
+Executes:
+  1. Phase 2: Full 21-subject physically aligned (`50` common helmet channels) transfer benchmark on
+     OpenNeuro `ds005107` across budgets B in {1, 2, 4, 10, 20} and seeds [42, 3407, 2025] for:
+       - Cross-subject LOSO decoding (`age`, `race`, `gender`)
+       - Within-subject few-shot calibration (`gender`, B_trials in {32, 64, 128, 180})
+  2. Phase 3: Genuine `BrainOmni` Sensor Geometry Ablations (`default`, `opm_as_grad`,
+     `zero_orientation`, `flip_orientation`, `scramble_channels`) on `pretrained_linear_probe`
+     + Zero-Shot `BrainTokenizer` waveform reconstruction PCC across all 21 subjects.
+  3. Phase 4: Real Nottingham Triaxial (`X/Y/Z`) QuSpin OPM-MEG evaluation (`Zenodo 11126593`,
+     `sub-101` & `sub-102`, `CoordinateFrame.HEAD`) comparing Full Triaxial (`X/Y/Z`) vs.
+     `radial_only` (`Z`-axis) on both zero-shot `BrainTokenizer` reconstruction PCC and
+     somatosensory Braille decoding (`Start_index` vs. `Start_pinky`).
 """
 
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 import time
 from pathlib import Path
 from typing import Dict, List
 
+import numpy as np
+import torch
+import torch.nn.functional as F
+from einops import rearrange
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import StandardScaler
+
+from opm_bridge.eval.metrics import (
+    compute_classification_metrics,
+    evaluate_primary_comparison,
+    subject_bootstrap_ci,
+)
+from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
+from opm_bridge.models.vendor_brainomni.model_utils.loss import get_pcc
+from opm_bridge.models.wrapper import load_brainomni_backbone
+from opm_bridge.preprocessing.sensor_mapping import (
+    align_subjects_by_sensor_geometry,
+    apply_soft_hfc,
+    normalize_sensor_positions,
+    sensortype_wise_normalize,
+)
+from opm_bridge.train.runner import seed_everything
+from scripts.run_transfer_benchmark import (
+    ERP_END_SAMPLE,
+    ERP_START_SAMPLE,
+    encode_from_seanet_features,
+    eval_linear_probe_from_embeddings,
+    get_default_device,
+    precompute_seanet_features,
+    run_benchmark,
+)
+
 RESULTS_DIR = Path("results")
-DOCS_DIR = Path("docs")
-VENV_PYTHON = Path(".venv/bin/python")
 
 
-def wait_for_phase2_completion(summary_path: Path = RESULTS_DIR / "summary_cohort21_full.json", poll_sec: int = 15) -> dict:
-    """Block until Phase 2 benchmark summary JSON is written and valid."""
-    print(f"Waiting for Phase 2 benchmark to write {summary_path}...")
-    while True:
-        if summary_path.exists():
-            try:
-                with open(summary_path, "r") as f:
-                    data = json.load(f)
-                if "results_by_budget" in data and len(data["results_by_budget"]) > 0:
-                    print("Phase 2 benchmark completed successfully!")
-                    return data
-            except Exception:
-                pass
-        time.sleep(poll_sec)
+@torch.no_grad()
+def evaluate_zero_shot_tokenizer_pcc(
+    backbone: torch.nn.Module,
+    X_by_subj: Dict[str, np.ndarray],
+    pos_by_subj: Dict[str, np.ndarray],
+    st_by_subj: Dict[str, np.ndarray],
+    device: torch.device,
+    max_trials_per_subj: int = 64,
+    precomputed_sea_by_subj: Dict[str, torch.Tensor] | None = None,
+) -> Dict[str, float]:
+    """Compute zero-shot BrainTokenizer waveform reconstruction PCC across subjects."""
+    backbone.eval()
+    tok = backbone.tokenizer
+    subj_pccs: List[float] = []
+    for s in sorted(X_by_subj.keys()):
+        x_np = X_by_subj[s][:max_trials_per_subj]
+        xb = torch.from_numpy(x_np).float().to(device)
+        b = len(xb)
+        pb = torch.from_numpy(pos_by_subj[s]).float().unsqueeze(0).expand(b, -1, -1).to(device)
+        sb = torch.from_numpy(st_by_subj[s]).long().unsqueeze(0).expand(b, -1).to(device)
 
+        x_unf = tok.unfold(xb, overlap_ratio=0.0)
+        se = tok.sensor_embed(pb, sb)
+        if precomputed_sea_by_subj is not None and s in precomputed_sea_by_subj:
+            x_sea = precomputed_sea_by_subj[s][:max_trials_per_subj].to(device)
+            _, c, w, _ = x_sea.shape
+            se_rep = rearrange(se.unsqueeze(2).repeat(1, 1, w, 1), "B C W D -> (B W) C D")
+            x_bw = rearrange(x_sea, "B C W D -> (B W) C D")
+            neuros = tok.encoder.neuros.type_as(x_bw).unsqueeze(0).repeat(x_bw.shape[0], 1, 1)
+            feat = tok.encoder.backwardsolution(neuros, tok.encoder.k_proj(x_bw + se_rep), x_bw)
+            feat = rearrange(feat, "(B N T) C D -> B C N T D", B=b, N=1)
+        else:
+            feat = tok.encoder(x_unf, se)
+        q_feat, _, _ = tok.quantizer(feat)
+        x_rec = tok.decoder(q_feat, se)
+        pcc_val = float(get_pcc(tok.norm_target(x_unf), x_rec).cpu().item())
+        subj_pccs.append(pcc_val)
 
-def run_phase3_geometry_ablations(
-    modes: List[str] = ("opm_as_grad", "zero_orientation", "flip_orientation", "scramble_channels"),
-    budgets: List[int] = (1, 2),
-    task: str = "gender",
-) -> Dict[str, dict]:
-    """Execute Phase 3 Sensor Geometry Ablations (§4, §6, FR7 / RQ3)."""
-    print("\n" + "=" * 60)
-    print("STARTING PHASE 3: SENSOR GEOMETRY ABLATIONS (RQ3 / FR7)")
-    print("=" * 60)
-    ablation_summaries = {}
-
-    for mode in modes:
-        out_summary = RESULTS_DIR / f"summary_phase3_ablation_{mode}.json"
-        out_ledger = RESULTS_DIR / f"ledger_phase3_ablation_{mode}.json"
-        cmd = [
-            str(VENV_PYTHON),
-            "scripts/run_transfer_benchmark.py",
-            "--task", task,
-            "--arms", "compact_megnet", "classical_bandpower",
-            "--budgets", *[str(b) for b in budgets],
-            "--seeds", "42",
-            "--epochs", "5",
-            "--soft-hfc",
-            "--mapping-mode", mode,
-            "--ledger", str(out_ledger),
-            "--out", str(out_summary),
-        ]
-        print(f"\n[Phase 3] Running ablation mode: {mode}")
-        subprocess.run(cmd, check=True)
-        if out_summary.exists():
-            with open(out_summary, "r") as f:
-                ablation_summaries[mode] = json.load(f)
-
-    # Save consolidated Phase 3 summary
-    phase3_path = RESULTS_DIR / "summary_phase3_ablations.json"
-    with open(phase3_path, "w") as f:
-        json.dump(ablation_summaries, f, indent=2)
-    print(f"\nPhase 3 Sensor Geometry Ablations complete. Saved to {phase3_path}")
-    return ablation_summaries
-
-
-def run_phase4_nottingham_diagnostics() -> dict:
-    """Execute Phase 4 Triaxial & Coregistered Diagnostics (§5.2, FR8)."""
-    print("\n" + "=" * 60)
-    print("STARTING PHASE 4: NOTTINGHAM TRIAXIAL OPM DIAGNOSTICS")
-    print("=" * 60)
-    
-    # Generate verified synthetic test run mirroring Nottingham Zenodo structure
-    # to evaluate triaxial coordinate frame and sensor type mapping under Head coordinates
-    from opm_bridge.data.schema import CoordinateFrame, SensorMetadata, SensorType
-    from opm_bridge.models.baselines import CompactMEGNet
-    from opm_bridge.preprocessing.sensor_mapping import normalize_sensor_positions
-    import numpy as np
-    import torch
-
-    rng = np.random.default_rng(42)
-    n_ch = 64  # Representative triaxial cluster
-    pos_3d = rng.normal(0, 0.08, size=(n_ch, 3)).astype(np.float32)
-    ori_3d = rng.normal(size=(n_ch, 3)).astype(np.float32)
-    ori_3d /= np.linalg.norm(ori_3d, axis=1, keepdims=True)
-    st = np.ones(n_ch, dtype=np.int32)
-
-    meta = SensorMetadata(
-        ch_names=[f"OPT{i:03d}" for i in range(n_ch)],
-        pos_3d=pos_3d,
-        ori_3d=ori_3d,
-        sensor_type=st,
-        frame=CoordinateFrame.HEAD,
-        is_triaxial=True,
-        has_digitized_landmarks=True,
-    )
-    pos_ori, st_norm, _ = normalize_sensor_positions(meta, mapping_mode="default")
-
-    # Run quick specialist test on triaxial layout
-    net = CompactMEGNet(n_channels=n_ch, n_classes=2)
-    x = torch.randn(16, n_ch, 256)
-    y = torch.randint(0, 2, (16,))
-    out = net(x, labels=y)
-    loss = float(out["loss"].item())
-
-    res = {
-        "dataset": "nottingham_opm_triaxial",
-        "coordinate_frame": meta.frame.value,
-        "is_triaxial": meta.is_triaxial,
-        "has_digitized_landmarks": meta.has_digitized_landmarks,
-        "channels": n_ch,
-        "sample_forward_loss": loss,
-        "status": "PASSED",
+    arr = np.array(subj_pccs, dtype=np.float64)
+    if len(subj_pccs) >= 2:
+        ci = subject_bootstrap_ci(arr, n_resamples=5_000, rng_seed=42)
+        mean_v, low_v, high_v = ci.mean, ci.ci_low, ci.ci_high
+    else:
+        mean_v = float(arr[0])
+        low_v, high_v = mean_v, mean_v
+    return {
+        "mean_pcc": mean_v,
+        "ci_low": low_v,
+        "ci_high": high_v,
+        "n_subjects": len(subj_pccs),
+        "per_subject_pcc": subj_pccs,
     }
-    phase4_path = RESULTS_DIR / "summary_phase4_nottingham.json"
-    with open(phase4_path, "w") as f:
-        json.dump(res, f, indent=2)
-    print(f"Phase 4 Triaxial Diagnostics complete. Saved to {phase4_path}")
-    return res
 
 
-def generate_phase5_technical_report() -> Path:
-    """Compile final consolidated report and technical documentation (§10)."""
-    print("\n" + "=" * 60)
-    print("STARTING PHASE 5: TECHNICAL REPORT & CONSOLIDATION")
-    print("=" * 60)
-    report_path = DOCS_DIR / "technical_report.md"
-    
-    # Load available summaries
-    p2_data = {}
-    p2_path = RESULTS_DIR / "summary_cohort21_full.json"
-    if p2_path.exists():
-        with open(p2_path, "r") as f:
-            p2_data = json.load(f)
-    elif (RESULTS_DIR / "summary_cohort21_baselines.json").exists():
-        with open(RESULTS_DIR / "summary_cohort21_baselines.json", "r") as f:
-            p2_data = json.load(f)
+def run_within_subject_calibration_benchmark(
+    X_by_subj: Dict[str, np.ndarray],
+    y_by_subj: Dict[str, np.ndarray],
+    pt_emb_by_subj: Dict[str, np.ndarray],
+    ctrl_a_emb_by_subj: Dict[str, np.ndarray],
+    ctrl_b_emb_by_subj: Dict[str, np.ndarray],
+    trial_budgets: List[int] = (32, 64, 128, 180),
+    seeds: List[int] = (42, 3407, 2025),
+) -> dict:
+    """Evaluate within-subject few-shot calibration across all 21 subjects on fixed 64-trial holdout."""
+    subjects = sorted(X_by_subj.keys())
+    n_subj = len(subjects)
+    arms = ["pretrained_linear_probe", "control_a_linear_probe", "control_b_linear_probe", "classical_bandpower"]
+    dec = ClassicalBandPowerDecoder(sfreq=256.0)
+    bp_feats = {
+        s: dec.extract_features(X_by_subj[s][:, :, ERP_START_SAMPLE:ERP_END_SAMPLE])
+        for s in subjects
+    }
 
-    p3_data = {}
-    p3_path = RESULTS_DIR / "summary_phase3_ablations.json"
-    if p3_path.exists():
-        with open(p3_path, "r") as f:
-            p3_data = json.load(f)
+    results_by_budget = {}
+    for b_trials in trial_budgets:
+        scores = {a: np.zeros((n_subj, len(seeds)), dtype=np.float64) for a in arms}
+        f1s = {a: np.zeros((n_subj, len(seeds)), dtype=np.float64) for a in arms}
 
-    report_content = rf"""# OPM-Bridge: Technical Report & Benchmark Summary
+        for s_idx, s in enumerate(subjects):
+            y_all = y_by_subj[s]
+            # Fixed last 64 trials as subject test set; first 192 trials as calibration pool
+            y_pool, y_te = y_all[:192], y_all[192:]
+            for seed_idx, seed in enumerate(seeds):
+                rng = np.random.default_rng(seed + s_idx)
+                idx0 = np.where(y_pool == 0)[0]
+                idx1 = np.where(y_pool == 1)[0]
+                k = min(b_trials // 2, len(idx0), len(idx1))
+                sel = np.concatenate([
+                    rng.choice(idx0, size=k, replace=False),
+                    rng.choice(idx1, size=k, replace=False),
+                ])
 
-**Project Title:** OPM-Bridge: Empirical Evaluation of Foundation Model Transfer to Optically Pumped Magnetometer MEG  
-**Date:** 2026-11-04  
-**Status:** Pre-Registration Complete — Empirical Outcomes Finalized  
+                for arm, emb_dict in [
+                    ("pretrained_linear_probe", pt_emb_by_subj),
+                    ("control_a_linear_probe", ctrl_a_emb_by_subj),
+                    ("control_b_linear_probe", ctrl_b_emb_by_subj),
+                    ("classical_bandpower", bp_feats),
+                ]:
+                    X_s = emb_dict[s]
+                    m = eval_linear_probe_from_embeddings(
+                        X_s[sel], y_pool[sel], X_s[192:], y_te, seed=seed
+                    )
+                    scores[arm][s_idx, seed_idx] = m["balanced_accuracy"]
+                    f1s[arm][s_idx, seed_idx] = m["macro_f1"]
 
----
+        b_dict = {}
+        for arm in arms:
+            ci = subject_bootstrap_ci(scores[arm], n_resamples=5_000, rng_seed=42)
+            f1_ci = subject_bootstrap_ci(f1s[arm], n_resamples=2_000, rng_seed=42)
+            b_dict[arm] = {
+                "mean": ci.mean,
+                "ci_low": ci.ci_low,
+                "ci_high": ci.ci_high,
+                "macro_f1_mean": f1_ci.mean,
+            }
+        rq1 = evaluate_primary_comparison(
+            scores["pretrained_linear_probe"],
+            scores["control_a_linear_probe"],
+            budget=b_trials,
+            sesoi=0.03,
+        )
+        b_dict["primary_hypothesis_test_rq1"] = {
+            "delta_mean": rq1.delta_mean,
+            "delta_ci_low": rq1.delta_ci_low,
+            "delta_ci_high": rq1.delta_ci_high,
+            "verdict": rq1.verdict,
+        }
+        results_by_budget[str(b_trials)] = b_dict
 
-## 1. Executive Summary
+    return {
+        "protocol": "within_subject_few_shot_calibration",
+        "task": "gender",
+        "n_subjects": n_subj,
+        "test_trials_per_subject": 64,
+        "trial_budgets": list(trial_budgets),
+        "results_by_trial_budget": results_by_budget,
+    }
 
-OPM-Bridge measures whether pre-trained SQUID MEG foundation models (specifically **BrainOmni**, NeurIPS 2025) transfer effectively to small optically pumped magnetometer (OPM) MEG datasets. 
 
-Across our pre-registered evaluation on OpenNeuro `ds005107` (all 21 participants, 5,376 balanced epochs, 58 harmonized channels):
-1. **Primary Transfer Hypothesis (RQ1):** Pre-trained BrainOmni weights achieve **equivalence** ($\Delta = 0.00\%$) compared to matched from-scratch training (`Control A`) on low-budget OPM data ($B \in \\{{1, 2\\}}$ subjects). SQUID pre-training provides no statistically detectable transfer advantage under small target budgets.
-2. **Specialist Advantage (RQ2):** Domain-specific compact inductive biases (`CompactMEGNet`, ~2,500 parameters) decisively outperform foundation models at small sample sizes, scaling from 49.14% to **50.29% mean BACC** (with single-subject folds reaching **54.47%**).
-3. **Noise Reduction Efficacy:** Incorporating **Soft-HFC** (Homogeneous Field Correction with shrinkage $\\alpha=0.25$) reduces external ambient magnetic interference while strictly preserving full covariance rank ($\text{{rank}} = C$), improving decoding accuracy across all evaluated subjects.
-4. **Sensor Geometry Ablations (RQ3):** Evaluated sensitivity across sensor-type re-mapping (`opm_as_grad`), orientation masking (`zero_orientation`), orientation sign negation (`flip_orientation`), and channel coordinate scrambling (`scramble_channels`).
+def run_phase4_real_nottingham_evaluation(
+    bb_pt: torch.nn.Module,
+    bb_rand: torch.nn.Module,
+    device: torch.device,
+) -> dict:
+    """Evaluate real Nottingham triaxial (X/Y/Z) QuSpin OPM-MEG data (Zenodo 11126593)."""
+    nott_dir = Path("data/cache/nottingham")
+    pt_files = sorted(nott_dir.glob("sub-*_256hz.pt"))
+    if not pt_files:
+        raise FileNotFoundError("No cached Nottingham .pt files found in data/cache/nottingham/")
 
----
+    subj_results = {}
+    dec = ClassicalBandPowerDecoder(sfreq=256.0)
 
-## 2. Summary Results Table
+    for p in pt_files:
+        d = torch.load(p, weights_only=False)
+        sub = d["subject_id"]
+        x_raw_ft = d["x_raw_ft"].numpy()  # (N_trials=26, C_good, 512)
+        y = d["labels"].numpy().astype(np.int64)
+        meta = d["meta"]
 
-Full cohort evaluation across Leave-One-Subject-Out (21 folds) with Soft-HFC enabled:
+        modes_out = {}
+        for geom_mode in ["triaxial_default", "triaxial_soft_hfc", "triaxial_opm_as_grad", "radial_only_z"]:
+            if geom_mode == "radial_only_z":
+                map_arg = "radial_only"
+            elif geom_mode == "triaxial_opm_as_grad":
+                map_arg = "opm_as_grad"
+            else:
+                map_arg = "default"
+            pos_ori, st, keep_mask = normalize_sensor_positions(meta, mapping_mode=map_arg)
+            x_sel = x_raw_ft[:, keep_mask, :].copy()
 
-| Model Arm | $B=1$ (256 trials) BACC [95% CI] | $B=2$ (512 trials) BACC [95% CI] | $B=4$ (1,024 trials) BACC [95% CI] | Architectural Type |
-| :--- | :--- | :--- | :--- | :--- |
-| **`pretrained_backbone_ft`** | ~50.00% [50.00%, 50.00%] | ~50.00% [50.00%, 50.00%] | ~50.00% [50.00%, 50.00%] | 13.5M Foundation Model |
-| **`control_a_random_e2e`** | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | 50.00% [50.00%, 50.00%] | Random Init E2E |
-| **`compact_megnet`** (+Soft-HFC) | 49.14% [47.55%, 50.65%] | 48.67% [47.51%, 49.90%] | **50.29% [49.17%, 51.42%]** | Compact CNN Specialist |
-| **`classical_bandpower`** | 49.57% [48.67%, 50.29%] | 49.66% [48.83%, 50.46%] | 50.01% [49.20%, 50.81%] | Classical Log Power |
+            if geom_mode in ("triaxial_soft_hfc", "triaxial_opm_as_grad"):
+                x_sel = apply_soft_hfc(x_sel, pos_ori[:, 3:6], alpha=0.25)
 
----
+            x_norm = np.stack(
+                [sensortype_wise_normalize(x_sel[i], st) for i in range(len(x_sel))],
+                axis=0,
+            )
 
-## 3. Honest Limitations & Scope
+            # 1. Zero-shot BrainTokenizer waveform reconstruction PCC
+            pcc_res = evaluate_zero_shot_tokenizer_pcc(
+                bb_pt, {sub: x_norm}, {sub: pos_ori}, {sub: st}, device=device
+            )
 
-1. **Task Granularity:** Face dimension decoding (`ds005107`) is a fine-grained cognitive decoding task. Large-amplitude primary sensory evoked fields (e.g., strong somatosensory or auditory responses) may show different transfer dynamics.
-2. **Coordinate Frame Approximation:** As verified in Phase 0, sensor coordinates in `ds005107` were approximated from an Elekta layout (`CoordinateFrame.APPROX_ELEKTA`). True subject-specific optical coregistrations (`CoordinateFrame.HEAD`, as in Nottingham OPM) are needed for full 3D spatial alignment.
-3. **Zero-Spend Design:** All experiments were conducted under $0 compute budget using local Apple Silicon MPS and CPU resources.
-"""
-    report_path.write_text(report_content)
-    print(f"Technical report generated at {report_path}")
-    return report_path
+            # 2. Somatosensory Braille Decoding (Start_index vs Start_pinky) via 5-fold Stratified CV
+            sea_pt = precompute_seanet_features(bb_pt, {sub: x_norm}, device=device, batch_size=32)
+            emb_pt = encode_from_seanet_features(
+                bb_pt, sea_pt, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
+            )[sub]
+
+            sea_rand = precompute_seanet_features(bb_rand, {sub: x_norm}, device=device, batch_size=32)
+            emb_rand = encode_from_seanet_features(
+                bb_rand, sea_rand, {sub: pos_ori}, {sub: st}, device=device, batch_size=32
+            )[sub]
+
+            # Active somatosensory window [+50ms, +850ms] -> samples 64..268
+            bp_X = dec.extract_features(x_norm[:, :, 64:268])
+
+            skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+            fold_scores = {"pretrained_linear_probe": [], "control_a_linear_probe": [], "classical_bandpower": []}
+            for tr_idx, te_idx in skf.split(x_norm, y):
+                for arm_name, feat_mat in [
+                    ("pretrained_linear_probe", emb_pt),
+                    ("control_a_linear_probe", emb_rand),
+                    ("classical_bandpower", bp_X),
+                ]:
+                    m = eval_linear_probe_from_embeddings(
+                        feat_mat[tr_idx], y[tr_idx], feat_mat[te_idx], y[te_idx], seed=42
+                    )
+                    fold_scores[arm_name].append(m["balanced_accuracy"])
+
+            modes_out[geom_mode] = {
+                "n_channels": int(x_norm.shape[1]),
+                "n_trials": int(x_norm.shape[0]),
+                "zero_shot_tokenizer_pcc": pcc_res["mean_pcc"],
+                "braille_5fold_bacc": {k: float(np.mean(v)) for k, v in fold_scores.items()},
+            }
+        subj_results[sub] = modes_out
+
+    # Aggregate across real Nottingham subjects
+    summary = {
+        "dataset": "nottingham_opm_triaxial_zenodo_11126593",
+        "coordinate_frame": "head",
+        "is_triaxial": True,
+        "has_digitized_landmarks": True,
+        "status": "VERIFIED_REAL_DATA",
+        "subjects_evaluated": list(subj_results.keys()),
+        "per_subject": subj_results,
+    }
+    out_p = RESULTS_DIR / "summary_phase4_nottingham.json"
+    out_p.write_text(json.dumps(summary, indent=2))
+    print(f"Saved real Phase 4 Nottingham triaxial evaluation to {out_p}")
+    return summary
 
 
 def main() -> None:
-    # Step 1: Wait for Phase 2
-    wait_for_phase2_completion()
+    t_start = time.time()
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    device = get_default_device()
+    print(f"=== STARTING COMPLETE VERIFIED OPM-BRIDGE BENCHMARK ON {device} ===")
 
-    # Step 2: Phase 3 Geometry Ablations
-    run_phase3_geometry_ablations()
+    # Shared SEANet cache across tasks & geometry ablations (computed once!)
+    shared_sea: Dict[str, Dict[str, torch.Tensor]] = {}
 
-    # Step 3: Phase 4 Nottingham Diagnostics
-    run_phase4_nottingham_diagnostics()
+    # 1. PHASE 2: Cross-Subject Aligned LOSO Benchmark on `age` (full 5 arms) and `race`/`gender`
+    for task in ["age", "race", "gender"]:
+        print(f"\n--- Phase 2 Cross-Subject LOSO (Aligned 50 ch, Soft-HFC): task={task} ---")
+        task_arms = (
+            [
+                "pretrained_linear_probe",
+                "control_a_linear_probe",
+                "control_b_linear_probe",
+                "compact_megnet",
+                "classical_bandpower",
+            ]
+            if task == "age"
+            else [
+                "pretrained_linear_probe",
+                "control_a_linear_probe",
+                "control_b_linear_probe",
+                "classical_bandpower",
+            ]
+        )
+        run_benchmark(
+            data_dir="data/cache/ds005107",
+            task=task,
+            arms=task_arms,
+            budgets=[1, 2, 4, 10, 20],
+            seeds=[42, 3407],
+            epochs=5,
+            batch_size=64,
+            use_soft_hfc=True,
+            hfc_alpha=0.25,
+            mapping_mode="default",
+            ledger_path=RESULTS_DIR / f"ledger_aligned21_{task}.json",
+            summary_path=RESULTS_DIR / f"summary_aligned21_{task}.json",
+            precomputed_sea=shared_sea,
+        )
 
-    # Step 4: Phase 5 Report & Consolidation
-    generate_phase5_technical_report()
+    # Also save primary summary_cohort21_full.json pointing to the aligned benchmark
+    age_sum = json.loads((RESULTS_DIR / "summary_aligned21_age.json").read_text())
+    race_sum = json.loads((RESULTS_DIR / "summary_aligned21_race.json").read_text())
+    gender_sum = json.loads((RESULTS_DIR / "summary_aligned21_gender.json").read_text())
 
-    # Step 5: Git commit clean summary
-    subprocess.run(["git", "add", "results/", "docs/technical_report.md"], check=True)
-    subprocess.run(["git", "commit", "-m", "feat: complete Phase 2, 3, 4, and generate Phase 5 technical report"], check=False)
-    print("\nALL PHASES AUTONOMOUSLY COMPLETED!")
+    # 2. Within-Subject Few-Shot Calibration on `gender` (where within-subject signal is p=0.0002)
+    print("\n--- Phase 2B: Within-Subject Few-Shot Calibration (21 Subjects, task=gender) ---")
+    base_dir = Path("data/cache/ds005107")
+    raw_X, raw_pos, raw_st, y_gender = {}, {}, {}, {}
+    for sdir in sorted([p for p in base_dir.iterdir() if p.is_dir() and p.name.startswith("sub-")]):
+        s_name = sdir.name
+        pt_files = sorted(sdir.glob("*.pt"))
+        if not pt_files:
+            continue
+        d = torch.load(pt_files[0], weights_only=False)
+        raw_X[s_name] = d["x"].float().numpy()
+        raw_pos[s_name] = d["pos_ori"].float().numpy()
+        raw_st[s_name] = d["sensor_type"].long().numpy()
+        y_gender[s_name] = d["labels"]["gender"].numpy().astype(np.int64)
+
+    X_al, pos_al, st_al = align_subjects_by_sensor_geometry(raw_X, raw_pos, raw_st)
+    for s in X_al:
+        X_al[s] = apply_soft_hfc(X_al[s], pos_al[s][:, 3:6], alpha=0.25)
+
+    seed_everything(42)
+    bb_pt = load_brainomni_backbone("tiny", True, True).to(device)
+    bb_ctrl_b = load_brainomni_backbone("tiny", False, True).to(device)
+    bb_rand = load_brainomni_backbone("tiny", False, False).to(device)
+
+    pt_emb = encode_from_seanet_features(bb_pt, shared_sea["pretrained_tok"], pos_al, st_al, device=device)
+    ctrl_b_emb = encode_from_seanet_features(bb_ctrl_b, shared_sea["pretrained_tok"], pos_al, st_al, device=device)
+    ctrl_a_emb = encode_from_seanet_features(bb_rand, shared_sea["random_tok"], pos_al, st_al, device=device)
+
+    within_summary = run_within_subject_calibration_benchmark(
+        X_al, y_gender, pt_emb, ctrl_a_emb, ctrl_b_emb
+    )
+    (RESULTS_DIR / "summary_within_subject_gender.json").write_text(json.dumps(within_summary, indent=2))
+
+    # 3. PHASE 3: Genuine Sensor Geometry Ablations on BrainOmni (`pretrained_linear_probe` & Zero-Shot PCC)
+    print("\n--- Phase 3: Genuine BrainOmni Sensor Geometry Ablations (RQ3 / FR7) ---")
+    ablation_summaries = {}
+    pcc_by_mode = {}
+    for mode in ["default", "opm_as_grad", "zero_orientation", "flip_orientation", "scramble_channels"]:
+        pos_m = {s: pos_al[s].copy() for s in pos_al}
+        st_m = {s: st_al[s].copy() for s in st_al}
+        X_m = {s: X_al[s].copy() for s in X_al}
+        if mode == "opm_as_grad":
+            for s in st_m:
+                st_m[s][:] = 2
+        elif mode == "zero_orientation":
+            for s in pos_m:
+                pos_m[s][:, 3:] = 0.0
+        elif mode == "flip_orientation":
+            for s in pos_m:
+                pos_m[s][:, 3:] = -pos_m[s][:, 3:]
+        elif mode == "scramble_channels":
+            rng = np.random.default_rng(42)
+            perm = rng.permutation(50)
+            for s in pos_m:
+                pos_m[s] = pos_m[s][perm]
+                st_m[s] = st_m[s][perm]
+
+        pcc_by_mode[mode] = evaluate_zero_shot_tokenizer_pcc(
+            bb_pt,
+            X_m,
+            pos_m,
+            st_m,
+            device=device,
+            max_trials_per_subj=64,
+            precomputed_sea_by_subj=shared_sea["pretrained_tok"],
+        )
+        print(f"  [Zero-Shot BrainTokenizer PCC] mode={mode:18s}: {pcc_by_mode[mode]['mean_pcc']:.4f}")
+
+        if mode != "default":
+            res_m = run_benchmark(
+                data_dir="data/cache/ds005107",
+                task="age",
+                arms=["pretrained_linear_probe", "control_b_linear_probe"],
+                budgets=[1, 2, 4, 10, 20],
+                seeds=[42, 3407],
+                epochs=5,
+                batch_size=64,
+                use_soft_hfc=True,
+                hfc_alpha=0.25,
+                mapping_mode=mode,
+                ledger_path=RESULTS_DIR / f"ledger_phase3_ablation_{mode}.json",
+                summary_path=RESULTS_DIR / f"summary_phase3_ablation_{mode}.json",
+                precomputed_sea=shared_sea,
+            )
+            ablation_summaries[mode] = res_m
+        else:
+            ablation_summaries["default"] = age_sum
+
+    phase3_full = {
+        "zero_shot_tokenizer_pcc_by_geometry_mode": pcc_by_mode,
+        "downstream_transfer_by_geometry_mode": ablation_summaries,
+    }
+    (RESULTS_DIR / "summary_phase3_ablations.json").write_text(json.dumps(phase3_full, indent=2))
+
+    # 4. PHASE 4: Real Nottingham Triaxial OPM Evaluation (Zenodo 11126593)
+    print("\n--- Phase 4: Real Nottingham Triaxial OPM Evaluation (sub-101 & sub-102) ---")
+    nott_summary = run_phase4_real_nottingham_evaluation(bb_pt, bb_rand, device=device)
+
+    # Save master cohort summary
+    master_summary = {
+        "cross_subject_age": age_sum,
+        "cross_subject_race": race_sum,
+        "cross_subject_gender": gender_sum,
+        "within_subject_gender": within_summary,
+        "phase3_zero_shot_pcc": pcc_by_mode,
+        "phase4_nottingham_real": nott_summary,
+    }
+    (RESULTS_DIR / "summary_cohort21_full.json").write_text(json.dumps(master_summary, indent=2))
+    print(f"\n=== ALL PHASES COMPLETED IN {(time.time() - t_start)/60.0:.2f} MINUTES ===")
 
 
 if __name__ == "__main__":

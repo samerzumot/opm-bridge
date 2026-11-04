@@ -327,3 +327,56 @@ def apply_soft_hfc(
         raise ValueError(f"data must be 2D [C, T] or 3D [B, C, T], got shape {data.shape}")
 
 
+def align_subjects_by_sensor_geometry(
+    subj_X: dict[str, np.ndarray],
+    subj_pos: dict[str, np.ndarray],
+    subj_st: dict[str, np.ndarray],
+    decimals: int = 4,
+) -> Tuple[dict[str, np.ndarray], dict[str, np.ndarray], dict[str, np.ndarray]]:
+    """Align channels across subjects by matching physical 6D sensor geometry (pos_ori).
+
+    When per-subject bad-channel rejection drops different noisy sensors across subjects,
+    naive index slicing (`[:, :min_ch, :]`) misaligns physical helmet channels across subjects.
+    This function finds the intersection of physical sensors present in all subjects
+    (matched by rounded 6D `[x, y, z, ox, oy, oz]` coordinates) and orders every subject's
+    channels identically so channel index `k` refers to the exact same physical sensor.
+    """
+    subjects = sorted(subj_X.keys())
+    if not subjects:
+        return {}, {}, {}
+
+    pos_tuples_by_subj: dict[str, list[tuple[float, ...]]] = {}
+    for s in subjects:
+        rounded = np.round(np.asarray(subj_pos[s], dtype=np.float32), decimals=decimals)
+        pos_tuples_by_subj[s] = [tuple(float(v) for v in row) for row in rounded]
+
+    common_sensors = set(pos_tuples_by_subj[subjects[0]])
+    for s in subjects[1:]:
+        common_sensors.intersection_update(pos_tuples_by_subj[s])
+
+    # Preserve canonical sensor order from the first subject
+    canonical_order = [pt for pt in pos_tuples_by_subj[subjects[0]] if pt in common_sensors]
+    if not canonical_order:
+        # Fallback if subjects have subject-specific coregistrations without shared slots
+        min_ch = min(subj_X[s].shape[1] for s in subjects)
+        return (
+            {s: np.asarray(subj_X[s], dtype=np.float32)[:, :min_ch, :] for s in subjects},
+            {s: np.asarray(subj_pos[s], dtype=np.float32)[:min_ch] for s in subjects},
+            {s: np.asarray(subj_st[s], dtype=np.int64)[:min_ch] for s in subjects},
+        )
+
+    aligned_X: dict[str, np.ndarray] = {}
+    aligned_pos: dict[str, np.ndarray] = {}
+    aligned_st: dict[str, np.ndarray] = {}
+
+    for s in subjects:
+        idx_map = {pt: idx for idx, pt in enumerate(pos_tuples_by_subj[s])}
+        sel = [idx_map[pt] for pt in canonical_order]
+        aligned_X[s] = np.asarray(subj_X[s], dtype=np.float32)[:, sel, :]
+        aligned_pos[s] = np.asarray(subj_pos[s], dtype=np.float32)[sel]
+        aligned_st[s] = np.asarray(subj_st[s], dtype=np.int64)[sel]
+
+    return aligned_X, aligned_pos, aligned_st
+
+
+

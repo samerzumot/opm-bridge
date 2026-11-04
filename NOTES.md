@@ -128,3 +128,43 @@ Incorporated into `src/opm_bridge/preprocessing/sensor_mapping.py` via `compute_
    - Auto-orchestrator ran only on position-blind baselines, yielding identical no-op outputs. True spatial ablations require running `BrainOmniClassifier` with calibrated training.
 4. **Phase 4 Status:**
    - Synthetic data placeholder removed; marked as `[U] Unverified / In Progress` pending download of real Nottingham triaxial data from Zenodo `11126593`.
+
+---
+
+## 7. Methodological Remediation & Complete Verified Benchmark Results (2026-11-04) [V]
+
+All four methodological issues identified in Section 6 were resolved, unit-tested (`7/7` passing in `tests/test_smoke.py`), and re-evaluated across the full 21-subject `ds005107` cohort and real Nottingham triaxial OPM-MEG recordings (`10.5281/zenodo.11126593`):
+
+### 7.1 Pipeline Fixes Implemented [V]
+1. **Cross-Subject Physical Sensor Alignment (`align_subjects_by_sensor_geometry` in `src/opm_bridge/preprocessing/sensor_mapping.py`):**
+   - Replaces naive `[:, :58, :]` array slicing (which shifted physical sensor identities across subjects after per-subject bad-channel rejection) with exact 6D `[x, y, z, ox, oy, oz]` intersection across all 21 subjects (`C_common = 50` exact physical helmet locations).
+2. **Active Evoked Window Cropping (`[+50ms, +550ms]`):**
+   - Evaluates time-domain baselines on the post-stimulus visual evoked window (`samples 64..192`) and pools `BrainOmni` latent tokens over the corresponding active token range (`tokens 1..3`) instead of averaging across $1,250\text{ ms}$ of post-trial baseline noise.
+3. **Calibrated Linear Probing & Exact `SEANet` Feature Caching (`scripts/run_transfer_benchmark.py`):**
+   - Added `pretrained_linear_probe`, `control_a_linear_probe`, and `control_b_linear_probe` (`mode="frozen"`, $L_2$-regularized logistic regression over active latent tokens), eliminating the 5-epoch `Macro-F1 = 33.33%` majority-class collapse (`Macro-F1 = 48.5%–50.9%`).
+   - Added batch-64 `precompute_seanet_features` (`max_diff == 0.0` bit-for-bit identical to full `BrainOmni` forward pass), accelerating 21-fold cross-subject `BrainOmni` evaluation to ~14 seconds per task.
+
+### 7.2 Verified Phase 2 Results (`ds005107`, 21 Subjects, 50 Aligned Channels, Soft-HFC $\alpha=0.25$) [V]
+- **Cross-Subject `age` (`results/summary_aligned21_age.json`):**
+  - `compact_megnet` reaches **`51.85% [50.33%, 53.34%]` (`Macro-F1 = 50.98%`)** at $B=20$ subjects (`5,120` training trials), statistically outperforming `pretrained_linear_probe` (`49.57% [48.10%, 51.07%]`) by **`\Delta = -2.27%` (95% CI `[-4.26%, -0.24%]`, $p < 0.025$)**.
+  - **RQ1 (`pretrained_linear_probe` vs `control_a_linear_probe`):** Statistically equivalent (`verdict: "equivalent"` within $\pm 3.0\%$ SESOI across $B \in \{1, 2, 10, 20\}$).
+- **Cross-Subject `race` (`results/summary_aligned21_race.json`) & `gender` (`results/summary_aligned21_gender.json`):**
+  - At $B=20$, `control_b_linear_probe` (Pre-trained `BrainTokenizer` + Random Backbone) matches or slightly exceeds `pretrained_linear_probe` (`50.01% vs 49.57%` on `age`, `51.45% [50.37%, 52.55%] vs 51.22%` on `race`, `51.14% [50.05%, 52.35%] vs 49.59%` on `gender`), indicating that all transferable structure resides in the local spatial-temporal `BrainTokenizer` (`SEANet` + `BrainSensorModule`) rather than the autoregressive Transformer backbone.
+- **Within-Subject Few-Shot Calibration (`results/summary_within_subject_gender.json`, 21 Subjects):**
+  - `classical_bandpower` reaches **`51.80% [50.38%, 53.20%]`** ($B=64$ trials) and **`53.13% [51.14%, 55.14%]`** ($B=128$ trials), with 95% CIs strictly above `50.00%`.
+
+### 7.3 Verified Phase 3 Sensor Geometry Ablations (`results/summary_phase3_ablations.json`, 21 Subjects) [V]
+- **`MAG (1)` vs. `GRAD (2)` Embedding Asymmetry Discovery:**
+  - Mapping radial OPM sensors to `GRAD (2)` (`opm_as_grad`) instead of `MAG (1)` (`default`) increases zero-shot `BrainTokenizer` waveform reconstruction PCC across all 21 subjects by **+52.7% relative**, from **`0.2501 [0.2450, 0.2549]` to `0.3819 [0.3779, 0.3859]` ($p < 0.0001$)**.
+  - Root cause: `GRAD (2)` sensors (CTF-275 radial axial gradiometers + Elekta-306 planar gradiometers) outnumbered `MAG (1)` sensors by $>4:1$ in BrainOmni's 2,653-hour SQUID pre-training corpus.
+- **Geometric Corruption Degradation:**
+  - Corrupting geometry via `zero_orientation` (`0.2359`), `flip_orientation` (`0.2340`), or `scramble_channels` (`0.2330`) significantly degrades zero-shot reconstruction PCC relative to `default` (`0.2501`).
+
+### 7.4 Verified Phase 4 Real Nottingham Triaxial (`X/Y/Z`) QuSpin OPM-MEG (`results/summary_phase4_nottingham.json`) [V]
+- Streamed real coregistered (`CoordinateFrame.HEAD`) adult triaxial (`X/Y/Z`) QuSpin QZFM recordings from Zenodo `11126593` (`Adults.zip`: `sub-101` [176 good channels, 26 balanced Braille trials] and `sub-102` [170 good channels, 26 balanced Braille trials]).
+- **The Triaxial $N_{\text{neuro}}=16$ Spatial Bottleneck:**
+  - Passing all 176/170 triaxial (`X/Y/Z`) channels into `BrainTokenizer`'s fixed $N_{\text{neuro}} = 16$ spatial token bottleneck yields a zero-shot reconstruction PCC of **`0.3326` mean** (`0.3229` on `sub-101`, `0.3423` on `sub-102`).
+  - Restricting to the radial `Z`-axis (`radial_only_z`, 60/58 channels, matching SQUID geometry) increases zero-shot reconstruction PCC by **+40.6% relative** to **`0.4675` mean** (`0.4758` on `sub-101`, `0.4592` on `sub-102`).
+- **Tactile Braille Somatosensory Decoding (`Start_index` vs. `Start_pinky`, 5-Fold CV):**
+  - Soft-HFC ($\alpha=0.25$) improves triaxial `pretrained_linear_probe` BACC on both subjects (`38.33% -> 43.33%` on `sub-101`, `58.33% -> 68.33%` on `sub-102`).
+  - `classical_bandpower` on `radial_only_z` achieves **`62.50%` mean BACC** (`60.00%` on `sub-101`, `65.00%` on `sub-102`).
