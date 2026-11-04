@@ -34,6 +34,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from opm_bridge.eval.metrics import (
     compute_classification_metrics,
+    eval_linear_probe_from_embeddings,
     evaluate_primary_comparison,
     subject_bootstrap_ci,
 )
@@ -157,28 +158,6 @@ def encode_from_seanet_features(
         emb_by_subj[s] = np.concatenate(out_chunks, axis=0)
     return emb_by_subj
 
-
-def eval_linear_probe_from_embeddings(
-    emb_tr: np.ndarray,
-    y_tr: np.ndarray,
-    emb_te: np.ndarray,
-    y_te: np.ndarray,
-    seed: int = 42,
-) -> Dict[str, float]:
-    """Train a calibrated L2-regularized linear probe on frozen BrainOmni embeddings."""
-    scaler = StandardScaler()
-    X_tr_s = scaler.fit_transform(emb_tr)
-    X_te_s = scaler.transform(emb_te)
-    clf = LogisticRegression(
-        C=0.01,
-        max_iter=500,
-        class_weight="balanced",
-        random_state=seed,
-    )
-    clf.fit(X_tr_s, y_tr)
-    preds = clf.predict(X_te_s)
-    probs = clf.predict_proba(X_te_s)
-    return compute_classification_metrics(y_te, preds, probs)
 
 
 def train_and_eval_arm(

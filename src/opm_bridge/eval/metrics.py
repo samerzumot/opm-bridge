@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Sequence, Tuple
 
 import numpy as np
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import balanced_accuracy_score, f1_score, roc_auc_score
+from sklearn.preprocessing import StandardScaler
 
 DecisionVerdict = Literal["pre-training helped", "equivalent", "inconclusive"]
 
@@ -91,6 +93,31 @@ def compute_classification_metrics(
         except ValueError:
             metrics["auroc"] = float("nan")
     return metrics
+
+
+def eval_linear_probe_from_embeddings(
+    emb_tr: np.ndarray,
+    y_tr: np.ndarray,
+    emb_te: np.ndarray,
+    y_te: np.ndarray,
+    c_reg: float = 0.01,
+    max_iter: int = 500,
+    seed: int = 42,
+) -> Dict[str, float]:
+    """Train a calibrated L2-regularized linear probe on frozen BrainOmni embeddings."""
+    scaler = StandardScaler()
+    X_tr_s = scaler.fit_transform(emb_tr)
+    X_te_s = scaler.transform(emb_te)
+    clf = LogisticRegression(
+        C=c_reg,
+        max_iter=max_iter,
+        class_weight="balanced",
+        random_state=seed,
+    )
+    clf.fit(X_tr_s, y_tr)
+    preds = clf.predict(X_te_s)
+    probs = clf.predict_proba(X_te_s)
+    return compute_classification_metrics(y_te, preds, probs)
 
 
 def subject_bootstrap_ci(

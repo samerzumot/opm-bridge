@@ -56,7 +56,7 @@ Across 21 subjects, balanced accuracy and 95% bootstrap confidence intervals for
 | **$B = 10$ (2,560 trials)** | 50.42% [49.15, 51.68] | 50.61% [49.34, 51.88] | 50.12% [48.88, 51.36] | 51.20% [49.80, 52.60] | 50.65% [49.20, 52.10] | Statistically Equivalent |
 | **$B = 20$ (5,120 trials)** | 49.57% [48.10, 51.07] | 50.69% [49.41, 51.84] | 50.01% [48.72, 51.31] | **51.85% [50.33, 53.34]** | 50.84% [49.49, 52.14] | CompactMEGNet Superior ($p < 0.025$) |
 
-**Observation:** Pre-trained BrainOmni latents show no performance advantage over matched random controls across budgets. Furthermore, `Control B` (pre-trained tokenizer + random backbone) achieves parity with the fully pre-trained model across tasks, demonstrating that downstream transfer is driven exclusively by early spatiotemporal convolutions rather than the upstream Transformer backbone.
+**Observation:** Pre-trained BrainOmni latents show no performance advantage over matched random controls on demographic tasks because all models sit at the empirical single-trial chance floor (~50%). In contrast, on high-SNR evoked visual detection, pretraining provides a significant advantage (+3.22% over Control A, $p < 0.0001$), and the autoregressive Transformer backbone contributes crucial temporal context (outperforming Control B by +4.38%, $p < 0.0001$).
 
 ### 3.2 Sensor-Type Embedding Asymmetry
 
@@ -87,18 +87,18 @@ In 192-channel triaxial QuSpin arrays (Zenodo 11126593, 10 adult participants, 8
 
 **Capacity Control Analysis:** Comparing the axis-partitioned adapter to a size-matched random 3-way split reveals that channel query load accounts for only $\Delta = +0.0269$ of the gain, while physical orthogonal vector separation provides an additional $\Delta = +0.0854$ ($p = 0.0016$). This establishes that over **76% of the bottleneck is genuine cross-axis interference** when three orthogonal sensors occupy identical spatial coordinates.
 
-### 3.4 In-Domain Cryogenic SQUID Baseline (ds000117)
+### 3.4 In-Domain Cryogenic SQUID Baseline (ds000117, sub-01)
 
-To isolate cross-hardware transfer effects from model competence, we evaluated BrainOmni on an in-domain cryogenic SQUID dataset (OpenNeuro `ds000117`, 102 magnetometers + 204 planar gradiometers):
+To isolate cross-hardware transfer effects from model competence, we evaluated BrainOmni on an in-domain cryogenic SQUID dataset (OpenNeuro `ds000117`, `sub-01`, 5-fold CV, 102 magnetometers + 204 planar gradiometers):
 
 | Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Evoked Detection (Pretrained vs Ctrl A) | Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **SQUID (`ds000117`)** | Full Array (306 ch) | `MAG=1, GRAD=2` | 0.4177 | 97.56% vs 92.69% (Δ = +4.87%) | 61.03% vs 55.81% (Δ = +5.22%) | Native Dual-Sensor Baseline |
-| **SQUID (`ds000117`)** | Magnetometers (102 ch) | `MAG=1` | 0.4105 | -- | -- | SQUID Magnetometer Baseline |
-| **SQUID (`ds000117`)** | Gradiometers (204 ch) | `GRAD=2` | 0.4473 | -- | -- | SQUID Gradiometer Baseline |
-| **SQUID (`ds000117`)** | Inverse Control (102 ch Mag) | `GRAD=2` | **0.7130** | -- | -- | **Δ = +0.3025 (+73.7% gain)** |
-| **OPM (`ds005107`)** | Whole-Head (50 ch) | `MAG=1` | 0.3702 | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |
-| **OPM (`ds005107`)** | Remapped (`opm_as_grad`) | `GRAD=2` | **0.5653** | -- | Floor (~50%) | **Δ = +0.1951 (+52.7% gain)** |
+| **SQUID (`ds000117`, sub-01)** | Full Array (306 ch) | `MAG=1, GRAD=2` | 0.4177 | 97.56% vs 92.69% (Δ = +4.87%) | 61.03% vs 55.81% (Δ = +5.22%) | Native Dual-Sensor Baseline |
+| **SQUID (`ds000117`, sub-01)** | Magnetometers (102 ch) | `MAG=1` | 0.4105 | -- | -- | SQUID Magnetometer Baseline |
+| **SQUID (`ds000117`, sub-01)** | Gradiometers (204 ch) | `GRAD=2` | 0.4473 | -- | -- | SQUID Gradiometer Baseline |
+| **SQUID (`ds000117`, sub-01)** | Inverse Control (102 ch Mag) | `GRAD=2` | **0.7130** | -- | -- | **Δ = +0.3025 (+73.7% gain)** |
+| **OPM (`ds005107`, N=21)** | Whole-Head (50 ch) | `MAG=1` | 0.2501 | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |
+| **OPM (`ds005107`, N=21)** | Remapped (`opm_as_grad`) | `GRAD=2` | **0.3819** | -- | Floor (~50%) | **Δ = +0.1318 (+52.7% gain)** |
 
 **Key Findings:**
 1. On native cryogenic SQUID data, Pretrained representations outperform Control A on both visual detection (+4.87%, AUC 0.9993 vs 0.9932) and face decoding (+5.22%), while Control B (Tokenizer Only) underperforms (88.45% and 56.10%), confirming the validity of the autoregressive Transformer backbone within its training domain.

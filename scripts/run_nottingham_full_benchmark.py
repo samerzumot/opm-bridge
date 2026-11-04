@@ -32,33 +32,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from opm_bridge.eval.metrics import (
     compute_paired_permutation_p_value,
     compute_classification_metrics,
+    eval_linear_probe_from_embeddings,
     subject_bootstrap_ci,
 )
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-
-
-def eval_linear_probe_from_embeddings(
-    emb_tr: np.ndarray,
-    y_tr: np.ndarray,
-    emb_te: np.ndarray,
-    y_te: np.ndarray,
-    seed: int = 42,
-) -> Dict[str, float]:
-    """Train a calibrated L2-regularized linear probe on frozen BrainOmni embeddings."""
-    scaler = StandardScaler()
-    X_tr_s = scaler.fit_transform(emb_tr)
-    X_te_s = scaler.transform(emb_te)
-    clf = LogisticRegression(
-        C=0.01,
-        max_iter=500,
-        class_weight="balanced",
-        random_state=seed,
-    )
-    clf.fit(X_tr_s, y_tr)
-    preds = clf.predict(X_te_s)
-    probs = clf.predict_proba(X_te_s)
-    return compute_classification_metrics(y_te, preds, probs)
 from opm_bridge.models.baselines import ClassicalBandPowerDecoder
 from opm_bridge.models.vendor_brainomni.model_utils.loss import get_pcc
 from opm_bridge.models.wrapper import (

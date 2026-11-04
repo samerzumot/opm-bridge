@@ -6,6 +6,10 @@ build-backend = "hatchling.build"
 name = "opm-bridge"
 version = "0.1.0"
 description = "Open benchmark of how pre-trained MEG foundation models (BrainOmni) transfer to scarce OPM-MEG data"
+authors = [
+    { name = "Samer Zumot", email = "srzumot@gmail.com" },
+    { name = "Marzieh Zare" },
+]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.14"

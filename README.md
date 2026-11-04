@@ -118,8 +118,8 @@ If you use this benchmark, code, or findings in your research, please cite:
 
 ```bibtex
 @article{opm_bridge_2026,
-  title={OPM-Bridge: Evaluating Cross-Hardware Transfer of Electrophysiological Foundation Models to Optically Pumped Magnetometers},
-  author={OPM-Bridge Contributors},
+  title={Cross-Hardware Generalization of Electrophysiological Foundation Models: An Empirical Evaluation on Optically Pumped Magnetometers},
+  author={Zumot, Samer and Zare, Marzieh},
   journal={arXiv preprint},
   year={2026}
 }
