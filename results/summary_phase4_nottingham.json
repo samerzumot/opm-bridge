@@ -1,0 +1,9 @@
+{
+  "dataset": "nottingham_opm_triaxial",
+  "coordinate_frame": "head",
+  "is_triaxial": true,
+  "has_digitized_landmarks": true,
+  "channels": 64,
+  "sample_forward_loss": 0.6712707281112671,
+  "status": "PASSED"
+}
