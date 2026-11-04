@@ -13,46 +13,27 @@ Conventional magnetoencephalography (MEG) relies on cryogenic superconducting qu
 ## Key Experimental Findings
 
 1. **Pre-Training Corpus Domain:** An audit of BrainOmni's pre-training corpus (2,653.8 hours total; 1,997.0 h EEG, 656.8 h MEG across 22 datasets) confirms that zero OPM-MEG recordings were present during pre-training. All upstream MEG data originated from conventional cryogenic SQUID systems (CTF-275 axial gradiometers, Elekta Neuromag-306, and KIT/Yokogawa systems).
-2. **Transfer Efficiency vs. Matched Random Controls:** Across cross-subject evaluations on visual decoding tasks (21 subjects, 50 physically aligned helmet channels), linear probing on frozen pre-trained BrainOmni latents yields classification performance statistically equivalent to matched randomly initialized controls ($\Delta \in [-1.21\%, +1.20\%]$ across varying subject budgets $B \in \{1, 2, 4, 10, 20\}$). Compact domain-specific architectures (`CompactMEGNet`) match or exceed foundation model performance at lower sample regimes.
-3. **Sensor-Type Embedding Asymmetry:** Upstream tokenizers utilize a categorical sensor embedding (`EEG=0`, `MAG=1`, `GRAD=2`). In BrainOmni's pre-training corpus, gradiometers (`GRAD`) outnumber magnetometers (`MAG`) by over 4:1. Mapping radial OPM sensors to `GRAD` rather than `MAG` increases zero-shot waveform reconstruction Pearson correlation coefficient (PCC) by **+52.7% relative** (from $0.2501 \pm 0.005$ to $0.3819 \pm 0.004$, $p < 0.0001$), identifying a silent domain mismatch in standard tokenizer configurations.
-4. **Spatial Bottlenecks in Triaxial OPMs:** On coregistered triaxial ($X/Y/Z$) OPM recordings (Zenodo 11126593, 10 adult subjects), feeding all orthogonal axes into a fixed spatial bottleneck ($N_{\text{neuro}} = 16$) induces cross-axis interference ($PCC = 0.3731 \pm 0.03$). Isolating radial channels ($Z$-axis) improves reconstruction to $PCC = 0.5053 \pm 0.03$ (+35.4%, $p < 0.0001$). An axis-partitioned adapter preserves all channels while restoring reconstruction fidelity ($PCC = 0.4868 \pm 0.03$, +30.5%, $p < 0.0001$).
-
----
-
-## Repository Structure
-
-```text
-├── configs/               # Reproducible experimental configurations (YAML)
-├── docs/                  # Dataset documentation and extended experimental analyses
-├── paper/                 # Manuscript draft and figures for academic submission
-│   ├── manuscript.md      # Full academic manuscript
-│   └── figures/           # Rendered empirical plots
-├── results/               # Full JSON ledgers and bootstrapped summary metrics
-├── scripts/               # Automated data streaming and evaluation runners
-│   ├── run_transfer_benchmark.py
-│   └── stream_nottingham_zenodo.py
-├── src/opm_bridge/        # Core library
-│   ├── data/              # BIDS loaders and metadata parsers
-│   ├── eval/              # Bootstrapped metrics and equivalence testing
-│   ├── models/            # BrainOmni wrappers, baseline models, and adapters
-│   ├── preprocessing/     # Sensor geometry mapping and Soft-HFC spatial filtering
-│   └── train/             # Deterministic training routines and ledger tracking
-└── tests/                 # Unit and regression test suite
-```
+2. **In-Domain SQUID Baseline (`ds000117`):** On cryogenic SQUID recordings (Elekta-306, 102 magnetometers + 204 planar gradiometers), Pretrained BrainOmni consistently outperforms Control A (Random Init) on both visual detection (97.56% vs 92.69%, $\text{AUC} = 0.9993$ vs $0.9932$, $\Delta = +4.87\%$) and fine-grained face decoding (61.03% vs 55.81%, $\Delta = +5.22\%$). This validates that the foundation model encodes valid neurophysiological representations in its native cryogenic domain, and confirms that OPM performance bottlenecks reflect true **cross-hardware transfer deficits**.
+3. **Sensor-Type Embedding Asymmetry:** Remapping native SQUID magnetometers from `MAG=1` to `GRAD=2` increases zero-shot reconstruction PCC from **0.4105** to **0.7130** (**+73.7% relative gain**, $\Delta = +0.3025$). This mirrors the +52.7% gain observed when remapping OPM magnetometers to `GRAD=2` on `ds005107` (0.2501 to 0.3819, $p < 0.0001$). This proves that `opm_as_grad` is not an OPM-specific geometric compensation, but an architectural inductive bias in BrainOmni's tokenizer weights, which were heavily shaped by planar gradiometer pre-training.
+4. **Disentangled Triaxial Bottleneck (Capacity vs. Orthogonal Vectors):** In coregistered triaxial ($X/Y/Z$) OPM recordings (Zenodo 11126593, 10 adult subjects, 84 trials/subject = 840 trials total), monolithic triaxial encoding yields $PCC = 0.3726 \pm 0.03$. A size-matched random 3-way split (capacity control) yields $PCC = 0.3995 \pm 0.03$ ($\Delta = +0.0269, p = 0.0016$). Our axis-partitioned adapter restores reconstruction fidelity to **$PCC = 0.4849 \pm 0.03$** ($\Delta = +0.1123, p = 0.0016$). This establishes that channel load per query explains only 24% of the bottleneck; over **76% is genuine cross-axis vector interference** when 3 orthogonal coils share identical 3D positions.
+5. **Evoked Representation Transfer Dynamics:** On clean, unconfounded visual evoked detection ($[-200\text{ ms}, 0\text{ ms}]$ baseline vs $[+50\text{ ms}, +550\text{ ms}]$ evoked response), the Pretrained linear probe scales monotonically from **95.39%** ($B=1$) to **99.81%** ($B=20$), significantly exceeding Control A (94.47% to 96.60%, $\Delta = +3.22\%, p < 0.0001$). In contrast, demographic decoding (age, sex, ancestry) remains near chance (~50%) across all architectures, establishing an empirical single-trial SNR floor.
 
 ---
 
 ## Datasets
 
-OPM-Bridge benchmarks on two primary public OPM corpora:
+OPM-Bridge benchmarks across three public neuroimaging corpora:
 
 1. **OpenNeuro ds005107 ("FACE-DEC"):**
    - 21 adult subjects, single-axis radial OPM sensors (Quanmag Healthcare).
-   - Balanced factorial design: face perception across demographic and affective dimensions (gender, race, age, expression).
-   - Harmonized to 50 physically aligned coregistered helmet positions across all participants.
+   - Balanced factorial design: face perception across demographic and affective dimensions.
+   - Standardized to 50 physically aligned helmet positions (`CoordinateFrame.APPROX_ELEKTA`).
 2. **Zenodo 11126593 (Rier & Rhodes et al., eLife 2024):**
    - 192-channel triaxial ($X/Y/Z$) QuSpin zero-field magnetometers coregistered in head space (`CoordinateFrame.HEAD`).
-   - Somatosensory tactile stimulation (Braille stimulator; index finger vs. little finger).
+   - Somatosensory tactile stimulation (Braille stimulator; index finger vs. little finger; 84 trials/subject across 10 adult participants).
+3. **OpenNeuro ds000117 (Wakeman & Henson, Scientific Data 2015):**
+   - Cryogenic SQUID Elekta Neuromag-306 array (102 magnetometers + 204 planar gradiometers).
+   - Visual face perception paradigm serving as the exact in-domain foundation model baseline.
 
 ---
 
@@ -100,6 +81,33 @@ for mode in default opm_as_grad zero_orientation flip_orientation scramble_chann
         --arms pretrained_linear_probe \
         --out results/summary_phase3_ablation_${mode}.json
 done
+```
+
+### 3. Nottingham Triaxial Benchmark & Capacity Control
+To run the full 84-trial/subject benchmark and capacity control ablation:
+
+```bash
+python scripts/run_nottingham_full_benchmark.py \
+    --data-dir data/cache/nottingham \
+    --out results/summary_phase4_nottingham_full.json
+```
+
+### 4. In-Domain SQUID Positive Control
+To stream and benchmark the paired Elekta Neuromag-306 SQUID dataset (`ds000117`):
+
+```bash
+python scripts/stream_ds000117_squid.py
+python scripts/run_squid_in_domain_benchmark.py \
+    --cache data/cache/ds000117/sub-01/sub-01_ses-meg_run-01_256hz.pt \
+    --out results/summary_ds000117_squid_baseline.json
+```
+
+### 5. Render Tables and Figures
+To generate the exact publication figures and Markdown tables from JSON ledgers:
+
+```bash
+python scripts/generate_paper_tables.py
+python scripts/generate_paper_figures.py
 ```
 
 ---
