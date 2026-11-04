@@ -17,7 +17,7 @@ In this work, we present an empirical benchmark evaluating cross-hardware genera
 1. **Downstream Transfer Dynamics:** Under linear probing on low-to-medium sample budgets ($B \in \{1, 2, 4, 10, 20\}$ subjects; 256 to 5,120 trials), frozen BrainOmni representations yield downstream decoding accuracy statistically equivalent to matched randomly initialized controls ($\Delta \in [-1.21\%, +1.20\%]$ across demographic tasks). On a high-SNR sensory detection positive control, representations scale from 64.97% ($B=1$) to 81.68% ($B=20$). However, compact domain-specific convolutional baselines (`CompactMEGNet`) match or exceed foundation model representations ($\Delta = -2.27\%$, $p < 0.025$).
 2. **Locus of Transferable Representations:** An architectural ablation (`Control B`: pre-trained tokenizer coupled with an untrained, randomly initialized Transformer backbone) matches the fully pre-trained model across all downstream tasks ($51.45\%$ vs. $51.22\%$ on ancestry; $51.14\%$ vs. $49.59\%$ on sex). This demonstrates that transferable inductive priors reside predominantly in early spatio-temporal convolutional filtering rather than the upstream 8.4M-parameter autoregressive sequence backbone.
 3. **Sensor-Type Embedding Calibration:** BrainOmni encodes sensor categories via a discrete embedding (`EEG=0`, `MAG=1`, `GRAD=2`). Because upstream SQUID pre-training is dominated (>4:1) by axial and planar gradiometers over magnetometers, the model's cross-attention mechanisms developed strong spatial inductive priors for `GRAD=2`. Because on-scalp radial OPM magnetometers exhibit localized dipolar fields that closely approximate cryogenic gradiometers rather than distant, diffuse SQUID magnetometers, remapping radial OPM inputs from `MAG` to `GRAD` increases zero-shot waveform reconstruction Pearson correlation (PCC) by **+52.7% relative** ($0.2501 \to 0.3819$, $p < 0.0001$), identifying a zero-cost embedding calibration for multi-modality pipelines.
-4. **Triaxial Spatial Bottlenecks:** In multi-axis QuSpin arrays where three orthogonal coils share identical 3D positions, compressing 176 channels through a single spatial cross-attention bottleneck ($N_{\text{neuro}} = 16$) induces cross-axis interference ($PCC = 0.3326$). Isolating radial channels ($Z$-axis) restores fidelity to $PCC = 0.4675$ (+40.6%). We introduce an axis-partitioned adapter that dedicates independent query capacity to each directional component ($3 \times 16 = 48$ tokens), preserving all 176 triaxial channels while achieving $PCC = 0.4587$ (+42.1%) and supporting tactile finger decoding.
+4. **Triaxial Spatial Bottlenecks:** In multi-axis QuSpin arrays where three orthogonal coils share identical 3D positions, compressing 155–176 channels through a single spatial cross-attention bottleneck ($N_{\text{neuro}} = 16$) induces cross-axis interference ($PCC = 0.3731 \pm 0.03$). Isolating radial channels ($Z$-axis) restores fidelity to $PCC = 0.5053 \pm 0.03$ (+35.4% relative, $\Delta = +0.1322$ [0.1077, 0.1570], $p < 0.0001$). We introduce an axis-partitioned adapter that dedicates independent query capacity to each directional component ($3 \times 16 = 48$ tokens), preserving all 155–176 triaxial channels while achieving $PCC = 0.4868 \pm 0.03$ (+30.5% relative, $\Delta = +0.1137$ [0.1048, 0.1213], $p < 0.0001$) and supporting tactile finger decoding.
 
 ---
 
@@ -141,18 +141,21 @@ Mapping on-scalp OPM magnetometers to `GRAD=2` induces a +52.7% relative improve
 
 ### 4.4 Triaxial Sensor Geometry & Axis-Partitioned Tokenization
 
-Evaluating 10 adult participants with 192-channel coregistered triaxial QuSpin OPM recordings (Zenodo 11126593) demonstrated the impact of coincident multi-axis sensing:
+Evaluating 10 adult participants with 192-channel coregistered triaxial QuSpin OPM recordings (Zenodo 11126593) demonstrated the impact of coincident multi-axis sensing across 10,000 subject-level bootstrap resamples:
 
-**Table 3:** Zero-shot reconstruction PCC and 5-fold cross-validated tactile Braille decoding balanced accuracy across triaxial configurations.
+**Table 3:** Zero-shot reconstruction PCC and 5-fold cross-validated tactile Braille decoding balanced accuracy across triaxial configurations (10 adult subjects, Zenodo 11126593).
 
-| Array Configuration | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC |
+| Array Configuration | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC [95% CI] |
 | :--- | :--- | :--- | :--- |
-| **Monolithic Triaxial ($X/Y/Z$)** | 155–176 | 0.3326 [0.3150, 0.3502] | 48.33% |
-| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.4675 [0.4480, 0.4870]** (+40.6%) | 47.50% |
-| **Tangential Only ($X/Y$)** | 100–116 | 0.2684 [0.2490, 0.2878] | 51.67% |
-| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4587 [0.4402, 0.4772]** (+38.0%) | **55.83%** |
+| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3731 [0.3427, 0.4062] | 52.83% [46.67, 58.67] |
+| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3448 [0.3122, 0.3800] | 56.17% [49.67, 62.83] |
+| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.5053 [0.4763, 0.5392]** (+35.4%) | 56.67% [49.17, 64.83] |
+| **Tangential Only ($X/Y$)** | 100–116 | 0.4435 [0.4120, 0.4741] (+18.9%) | **58.17% [53.17, 62.83]** |
+| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4868 [0.4531, 0.5221]** (+30.5%) | 55.67% [49.50, 62.17] |
 
-Compressing 176 channels through a single 16-query bottleneck yields $PCC = 0.3326$. Restricting inputs strictly to the radial axis ($Z$, matching conventional SQUID orientation) increases PCC by +40.6%. Our axis-partitioned adapter restores high-fidelity reconstruction ($PCC = 0.4587$) while retaining all 176 sensing channels.
+Paired bootstrap hypothesis testing confirms that compressing triaxial channels into a monolithic 16-query bottleneck significantly suppresses reconstruction fidelity:
+- Isolating radial channels increases PCC by **$\Delta = +0.1322$ [0.1077, 0.1570]** ($p < 0.0001$).
+- Our axis-partitioned adapter preserves all 155–176 triaxial channels while raising PCC by **$\Delta = +0.1137$ [0.1048, 0.1213]** ($p < 0.0001$).
 
 ---
 

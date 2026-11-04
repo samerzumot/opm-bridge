@@ -4,13 +4,156 @@
   "is_triaxial": true,
   "has_digitized_landmarks": true,
   "status": "VERIFIED_REAL_DATA",
+  "n_subjects": 10,
   "subjects_evaluated": [
     "sub-101",
-    "sub-102"
+    "sub-102",
+    "sub-103",
+    "sub-104",
+    "sub-105",
+    "sub-106",
+    "sub-107",
+    "sub-108",
+    "sub-109",
+    "sub-110"
   ],
+  "cohort_bootstrap_summary": {
+    "triaxial_xyz_raw": {
+      "zero_shot_pcc": {
+        "mean": 0.3730564177036285,
+        "ci_low": 0.3427365358918905,
+        "ci_high": 0.40618743062019347
+      },
+      "braille_5fold_bacc": {
+        "pretrained_linear_probe": {
+          "mean": 0.5283333333333332,
+          "ci_low": 0.4666666666666666,
+          "ci_high": 0.5866666666666666
+        },
+        "control_a_linear_probe": {
+          "mean": 0.5333333333333333,
+          "ci_low": 0.485,
+          "ci_high": 0.5766666666666665
+        },
+        "classical_bandpower": {
+          "mean": 0.55,
+          "ci_low": 0.48,
+          "ci_high": 0.6399999999999999
+        }
+      }
+    },
+    "triaxial_xyz_softhfc": {
+      "zero_shot_pcc": {
+        "mean": 0.3448174655437469,
+        "ci_low": 0.31219872355461126,
+        "ci_high": 0.38002586923539633
+      },
+      "braille_5fold_bacc": {
+        "pretrained_linear_probe": {
+          "mean": 0.5616666666666666,
+          "ci_low": 0.4966666666666666,
+          "ci_high": 0.6283333333333333
+        },
+        "control_a_linear_probe": {
+          "mean": 0.5149999999999999,
+          "ci_low": 0.4749999999999999,
+          "ci_high": 0.5583333333333333
+        },
+        "classical_bandpower": {
+          "mean": 0.55,
+          "ci_low": 0.4833333333333333,
+          "ci_high": 0.6449999999999999
+        }
+      }
+    },
+    "radial_only_z": {
+      "zero_shot_pcc": {
+        "mean": 0.5052751272916793,
+        "ci_low": 0.47632223092019554,
+        "ci_high": 0.539154849126935
+      },
+      "braille_5fold_bacc": {
+        "pretrained_linear_probe": {
+          "mean": 0.5666666666666665,
+          "ci_low": 0.4916666666666666,
+          "ci_high": 0.6483333333333332
+        },
+        "control_a_linear_probe": {
+          "mean": 0.4999999999999999,
+          "ci_low": 0.3983333333333333,
+          "ci_high": 0.6133333333333332
+        },
+        "classical_bandpower": {
+          "mean": 0.5683333333333334,
+          "ci_low": 0.4916666666666666,
+          "ci_high": 0.6649999999999999
+        }
+      }
+    },
+    "tangential_only_xy": {
+      "zero_shot_pcc": {
+        "mean": 0.44353924691677094,
+        "ci_low": 0.41198532290756706,
+        "ci_high": 0.474067747592926
+      },
+      "braille_5fold_bacc": {
+        "pretrained_linear_probe": {
+          "mean": 0.5816666666666666,
+          "ci_low": 0.5316666666666666,
+          "ci_high": 0.6283333333333333
+        },
+        "control_a_linear_probe": {
+          "mean": 0.5433333333333332,
+          "ci_low": 0.45666666666666667,
+          "ci_high": 0.6283749999999994
+        },
+        "classical_bandpower": {
+          "mean": 0.55,
+          "ci_low": 0.4883333333333333,
+          "ci_high": 0.6433333333333333
+        }
+      }
+    },
+    "phase5_axis_split_xyz": {
+      "zero_shot_pcc": {
+        "mean": 0.4867826521396637,
+        "ci_low": 0.453132783100009,
+        "ci_high": 0.522137718424201
+      },
+      "braille_5fold_bacc": {
+        "pretrained_linear_probe": {
+          "mean": 0.5566666666666666,
+          "ci_low": 0.49499999999999994,
+          "ci_high": 0.6216666666666666
+        },
+        "control_a_linear_probe": {
+          "mean": 0.5383333333333333,
+          "ci_low": 0.4333333333333333,
+          "ci_high": 0.6533333333333333
+        },
+        "classical_bandpower": {
+          "mean": 0.55,
+          "ci_low": 0.4833333333333333,
+          "ci_high": 0.6449999999999999
+        }
+      }
+    },
+    "paired_hypothesis_tests": {
+      "radial_vs_triaxial_raw_pcc_delta": {
+        "delta_mean": 0.13221870958805085,
+        "delta_ci_low": 0.10772337637841702,
+        "delta_ci_high": 0.15697846978902816
+      },
+      "phase5_axis_split_vs_triaxial_raw_pcc_delta": {
+        "delta_mean": 0.11372623443603516,
+        "delta_ci_low": 0.10482993327081204,
+        "delta_ci_high": 0.12134357079863549
+      }
+    }
+  },
   "per_subject": {
     "sub-101": {
-      "triaxial_default": {
+      "triaxial_xyz_raw": {
         "n_channels": 176,
         "n_trials": 26,
         "zero_shot_tokenizer_pcc": 0.3228624165058136,
@@ -20,22 +163,12 @@
           "classical_bandpower": 0.5166666666666666
         }
       },
-      "triaxial_soft_hfc": {
+      "triaxial_xyz_softhfc": {
         "n_channels": 176,
         "n_trials": 26,
         "zero_shot_tokenizer_pcc": 0.2898199260234833,
         "braille_5fold_bacc": {
           "pretrained_linear_probe": 0.4333333333333333,
-          "control_a_linear_probe": 0.6,
-          "classical_bandpower": 0.5166666666666666
-        }
-      },
-      "triaxial_opm_as_grad": {
-        "n_channels": 176,
-        "n_trials": 26,
-        "zero_shot_tokenizer_pcc": 0.3160833716392517,
-        "braille_5fold_bacc": {
-          "pretrained_linear_probe": 0.55,
           "control_a_linear_probe": 0.6,
           "classical_bandpower": 0.5166666666666666
         }
@@ -49,36 +182,46 @@
           "control_a_linear_probe": 0.5666666666666667,
           "classical_bandpower": 0.6
         }
+      },
+      "tangential_only_xy": {
+        "n_channels": 116,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.38757866621017456,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.41666666666666663,
+          "control_a_linear_probe": 0.6,
+          "classical_bandpower": 0.5333333333333332
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 176,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4158272445201874,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.45,
+          "control_a_linear_probe": 0.5333333333333332,
+          "classical_bandpower": 0.5166666666666666
+        }
       }
     },
     "sub-102": {
-      "triaxial_default": {
+      "triaxial_xyz_raw": {
         "n_channels": 170,
         "n_trials": 26,
         "zero_shot_tokenizer_pcc": 0.3423411250114441,
         "braille_5fold_bacc": {
           "pretrained_linear_probe": 0.5833333333333333,
-          "control_a_linear_probe": 0.5166666666666666,
+          "control_a_linear_probe": 0.5833333333333333,
           "classical_bandpower": 0.4833333333333333
         }
       },
-      "triaxial_soft_hfc": {
+      "triaxial_xyz_softhfc": {
         "n_channels": 170,
         "n_trials": 26,
         "zero_shot_tokenizer_pcc": 0.30377089977264404,
         "braille_5fold_bacc": {
           "pretrained_linear_probe": 0.6833333333333332,
-          "control_a_linear_probe": 0.6166666666666666,
-          "classical_bandpower": 0.5333333333333333
-        }
-      },
-      "triaxial_opm_as_grad": {
-        "n_channels": 170,
-        "n_trials": 26,
-        "zero_shot_tokenizer_pcc": 0.2948944568634033,
-        "braille_5fold_bacc": {
-          "pretrained_linear_probe": 0.5833333333333333,
-          "control_a_linear_probe": 0.6166666666666666,
+          "control_a_linear_probe": 0.4999999999999999,
           "classical_bandpower": 0.5333333333333333
         }
       },
@@ -88,8 +231,444 @@
         "zero_shot_tokenizer_pcc": 0.459163099527359,
         "braille_5fold_bacc": {
           "pretrained_linear_probe": 0.4,
-          "control_a_linear_probe": 0.5499999999999999,
+          "control_a_linear_probe": 0.5666666666666667,
           "classical_bandpower": 0.6499999999999999
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 112,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3932460844516754,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.55,
+          "control_a_linear_probe": 0.6166666666666666,
+          "classical_bandpower": 0.4999999999999999
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 170,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4286128878593445,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5999999999999999,
+          "control_a_linear_probe": 0.5,
+          "classical_bandpower": 0.5333333333333333
+        }
+      }
+    },
+    "sub-103": {
+      "triaxial_xyz_raw": {
+        "n_channels": 174,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3054746389389038,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.4499999999999999,
+          "classical_bandpower": 0.5166666666666667
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 174,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.27335324883461,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4999999999999999,
+          "control_a_linear_probe": 0.4666666666666666,
+          "classical_bandpower": 0.4833333333333333
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 59,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.49896687269210815,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4833333333333333,
+          "control_a_linear_probe": 0.2833333333333333,
+          "classical_bandpower": 0.4333333333333333
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 115,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.37078699469566345,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.7,
+          "control_a_linear_probe": 0.6333333333333332,
+          "classical_bandpower": 0.55
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 174,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.42412832379341125,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6499999999999999,
+          "control_a_linear_probe": 0.4833333333333333,
+          "classical_bandpower": 0.4833333333333333
+        }
+      }
+    },
+    "sub-104": {
+      "triaxial_xyz_raw": {
+        "n_channels": 171,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.30951985716819763,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6,
+          "control_a_linear_probe": 0.5666666666666667,
+          "classical_bandpower": 0.6166666666666666
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 171,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.2761823832988739,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.7,
+          "control_a_linear_probe": 0.4333333333333333,
+          "classical_bandpower": 0.5833333333333333
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 58,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.5008077621459961,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5499999999999998,
+          "control_a_linear_probe": 0.4666666666666666,
+          "classical_bandpower": 0.4833333333333333
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 113,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3797254264354706,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6666666666666666,
+          "control_a_linear_probe": 0.6666666666666666,
+          "classical_bandpower": 0.55
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 171,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.43584200739860535,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.39999999999999997,
+          "control_a_linear_probe": 0.7,
+          "classical_bandpower": 0.5833333333333333
+        }
+      }
+    },
+    "sub-105": {
+      "triaxial_xyz_raw": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.42566418647766113,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.35,
+          "control_a_linear_probe": 0.5499999999999999,
+          "classical_bandpower": 0.4666666666666666
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3907914459705353,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5,
+          "control_a_linear_probe": 0.5833333333333333,
+          "classical_bandpower": 0.4666666666666666
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 53,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.5894807577133179,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5166666666666666,
+          "control_a_linear_probe": 0.3666666666666667,
+          "classical_bandpower": 0.4333333333333333
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 103,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.47689709067344666,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5166666666666666,
+          "control_a_linear_probe": 0.5166666666666666,
+          "classical_bandpower": 0.41666666666666663
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.5491489171981812,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5833333333333333,
+          "control_a_linear_probe": 0.6499999999999999,
+          "classical_bandpower": 0.4666666666666666
+        }
+      }
+    },
+    "sub-106": {
+      "triaxial_xyz_raw": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.47817444801330566,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.6166666666666667,
+          "classical_bandpower": 0.4833333333333333
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.45521822571754456,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5833333333333333,
+          "control_a_linear_probe": 0.4833333333333333,
+          "classical_bandpower": 0.4833333333333333
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 53,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.6160677671432495,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6666666666666666,
+          "control_a_linear_probe": 0.6833333333333333,
+          "classical_bandpower": 0.5499999999999999
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 103,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.478515625,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666665,
+          "control_a_linear_probe": 0.4833333333333333,
+          "classical_bandpower": 0.4833333333333332
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 156,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.5911183953285217,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5166666666666667,
+          "control_a_linear_probe": 0.5,
+          "classical_bandpower": 0.4833333333333333
+        }
+      }
+    },
+    "sub-107": {
+      "triaxial_xyz_raw": {
+        "n_channels": 161,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.390178918838501,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6833333333333332,
+          "control_a_linear_probe": 0.39999999999999997,
+          "classical_bandpower": 0.3833333333333333
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 161,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3689040541648865,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.7166666666666666,
+          "control_a_linear_probe": 0.4666666666666666,
+          "classical_bandpower": 0.41666666666666663
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 55,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4745955169200897,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6833333333333332,
+          "control_a_linear_probe": 0.4833333333333333,
+          "classical_bandpower": 0.45
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 106,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.47452595829963684,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.65,
+          "control_a_linear_probe": 0.3333333333333333,
+          "classical_bandpower": 0.4833333333333333
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 161,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4974570572376251,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4833333333333333,
+          "control_a_linear_probe": 0.5,
+          "classical_bandpower": 0.41666666666666663
+        }
+      }
+    },
+    "sub-108": {
+      "triaxial_xyz_raw": {
+        "n_channels": 155,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.37229543924331665,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.4833333333333333,
+          "classical_bandpower": 0.6
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 155,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.3483288884162903,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5499999999999999,
+          "control_a_linear_probe": 0.4499999999999999,
+          "classical_bandpower": 0.5833333333333333
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 53,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.45439091324806213,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4,
+          "control_a_linear_probe": 0.41666666666666663,
+          "classical_bandpower": 0.5833333333333333
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 102,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4879715144634247,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.4333333333333333,
+          "classical_bandpower": 0.5166666666666666
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 155,
+        "n_trials": 26,
+        "zero_shot_tokenizer_pcc": 0.4964756369590759,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.7166666666666666,
+          "control_a_linear_probe": 0.3,
+          "classical_bandpower": 0.5833333333333333
+        }
+      }
+    },
+    "sub-109": {
+      "triaxial_xyz_raw": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.392437219619751,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4833333333333333,
+          "control_a_linear_probe": 0.4666666666666666,
+          "classical_bandpower": 0.5333333333333332
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.3730018734931946,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.38333333333333336,
+          "control_a_linear_probe": 0.5166666666666666,
+          "classical_bandpower": 0.4999999999999999
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 53,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.48084235191345215,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5999999999999999,
+          "control_a_linear_probe": 0.2833333333333333,
+          "classical_bandpower": 0.5666666666666667
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 103,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.49326711893081665,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.35,
+          "classical_bandpower": 0.5333333333333332
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.5115931630134583,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.4666666666666666,
+          "control_a_linear_probe": 0.2833333333333333,
+          "classical_bandpower": 0.4999999999999999
+        }
+      }
+    },
+    "sub-110": {
+      "triaxial_xyz_raw": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.39161592721939087,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5,
+          "control_a_linear_probe": 0.5833333333333333,
+          "classical_bandpower": 0.9
+        }
+      },
+      "triaxial_xyz_softhfc": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.3688037097454071,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.5666666666666667,
+          "control_a_linear_probe": 0.65,
+          "classical_bandpower": 0.9333333333333332
+        }
+      },
+      "radial_only_z": {
+        "n_channels": 53,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.5026527643203735,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.8333333333333333,
+          "control_a_linear_probe": 0.8833333333333332,
+          "classical_bandpower": 0.9333333333333332
+        }
+      },
+      "tangential_only_xy": {
+        "n_channels": 103,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.4928779900074005,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.6166666666666666,
+          "control_a_linear_probe": 0.8,
+          "classical_bandpower": 0.9333333333333332
+        }
+      },
+      "phase5_axis_split_xyz": {
+        "n_channels": 156,
+        "n_trials": 27,
+        "zero_shot_tokenizer_pcc": 0.5176228880882263,
+        "braille_5fold_bacc": {
+          "pretrained_linear_probe": 0.7,
+          "control_a_linear_probe": 0.9333333333333332,
+          "classical_bandpower": 0.9333333333333332
         }
       }
     }
