@@ -3,7 +3,7 @@
   "coordinate_frame": "head",
   "is_triaxial": true,
   "has_digitized_landmarks": true,
-  "channels": 64,
-  "sample_forward_loss": 0.6712707281112671,
-  "status": "PASSED"
+  "loader_unit_test": "PASSED",
+  "empirical_evaluation": "PENDING_ZENODO_DOWNLOAD",
+  "status": "UNVERIFIED_PENDING_DOWNLOAD"
 }

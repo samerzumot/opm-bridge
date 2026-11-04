@@ -111,7 +111,23 @@ def train_and_eval_arm(
         return compute_classification_metrics(y_te, preds, probs)
 
     # 3. BrainOmni Arms
-    if arm == "pretrained_backbone_ft":
+    if arm == "pretrained_linear_probe":
+        backbone = load_brainomni_backbone(
+            size="tiny",
+            load_pretrained_backbone=True,
+            load_pretrained_tokenizer=True,
+        ).to(device)
+        model = BrainOmniClassifier(backbone, num_classes=2, mode="frozen").to(device)
+        opt_lr = 1e-3
+    elif arm == "control_a_linear_probe":
+        backbone = load_brainomni_backbone(
+            size="tiny",
+            load_pretrained_backbone=False,
+            load_pretrained_tokenizer=False,
+        ).to(device)
+        model = BrainOmniClassifier(backbone, num_classes=2, mode="frozen").to(device)
+        opt_lr = 1e-3
+    elif arm == "pretrained_backbone_ft":
         backbone = load_brainomni_backbone(
             size="tiny",
             load_pretrained_backbone=True,
