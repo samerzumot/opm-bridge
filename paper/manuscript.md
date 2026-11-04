@@ -14,10 +14,10 @@ Self-supervised electrophysiological foundation models aim to establish unified 
 
 In this work, we present an empirical benchmark evaluating cross-hardware generalization from SQUID-trained foundation models to on-scalp OPM-MEG recordings. Using subject-level bootstrap equivalence tests ($\text{SESOI} = \pm 3.0\%$) and matched randomly initialized controls across 21 participants (50 physically aligned helmet positions) on OpenNeuro `ds005107` and 10 adult participants with 192-channel coregistered triaxial recordings on Zenodo `11126593`, we report four primary findings:
 
-1. **Downstream Transfer Dynamics:** Under linear probing on low-to-medium sample budgets ($B \in \{1, 2, 4, 10, 20\}$ subjects; 256 to 5,120 trials), frozen BrainOmni representations yield downstream decoding accuracy statistically equivalent to matched randomly initialized controls ($\Delta \in [-1.21\%, +1.20\%]$ across demographic tasks). On a high-SNR sensory detection positive control, representations scale from 64.97% ($B=1$) to 81.68% ($B=20$). However, compact domain-specific convolutional baselines (`CompactMEGNet`) match or exceed foundation model representations ($\Delta = -2.27\%$, $p < 0.025$).
+1. **Downstream Transfer Dynamics & Data Efficiency:** Under linear probing on low-to-medium sample budgets ($B \in \{1, 2, 4, 10, 20\}$ subjects; 256 to 5,120 trials), frozen BrainOmni representations yield downstream decoding accuracy statistically equivalent or inconclusive compared to matched randomly initialized controls ($\Delta \in [-1.92\%, +2.27\%]$ across demographic tasks). In contrast, on a high-SNR evoked visual detection task (contrasting pre-stimulus baseline against peak visual evoked response), pretrained representations demonstrate genuine representation transfer, scaling rapidly from 95.39% ($B=1$) to 99.81% ($B=20$) and outperforming randomly initialized controls (Control A: 94.47% to 96.60%; $\Delta = +3.22\%$, $p < 0.0001$). Architectural ablation demonstrates that coupling a pretrained tokenizer to a random sequence backbone (Control B: 78.90% to 95.43%) lags behind fully pretrained representations, establishing that the autoregressive backbone encodes critical cross-trial temporal structure.
 2. **Locus of Transferable Representations:** An architectural ablation (`Control B`: pre-trained tokenizer coupled with an untrained, randomly initialized Transformer backbone) matches the fully pre-trained model across all downstream tasks ($51.45\%$ vs. $51.22\%$ on ancestry; $51.14\%$ vs. $49.59\%$ on sex). This demonstrates that transferable inductive priors reside predominantly in early spatio-temporal convolutional filtering rather than the upstream 8.4M-parameter autoregressive sequence backbone.
 3. **Sensor-Type Embedding Calibration:** BrainOmni encodes sensor categories via a discrete embedding (`EEG=0`, `MAG=1`, `GRAD=2`). Because upstream SQUID pre-training is dominated (>4:1) by axial and planar gradiometers over magnetometers, the model's cross-attention mechanisms developed strong spatial inductive priors for `GRAD=2`. Because on-scalp radial OPM magnetometers exhibit localized dipolar fields that closely approximate cryogenic gradiometers rather than distant, diffuse SQUID magnetometers, remapping radial OPM inputs from `MAG` to `GRAD` increases zero-shot waveform reconstruction Pearson correlation (PCC) by **+52.7% relative** ($0.2501 \to 0.3819$, $p < 0.0001$), identifying a zero-cost embedding calibration for multi-modality pipelines.
-4. **Triaxial Spatial Bottlenecks:** In multi-axis QuSpin arrays where three orthogonal coils share identical 3D positions, compressing 155–176 channels through a single spatial cross-attention bottleneck ($N_{\text{neuro}} = 16$) induces cross-axis interference ($PCC = 0.3731 \pm 0.03$). Isolating radial channels ($Z$-axis) restores fidelity to $PCC = 0.5053 \pm 0.03$ (+35.4% relative, $\Delta = +0.1322$ [0.1077, 0.1570], $p < 0.0001$). We introduce an axis-partitioned adapter that dedicates independent query capacity to each directional component ($3 \times 16 = 48$ tokens), preserving all 155–176 triaxial channels while achieving $PCC = 0.4868 \pm 0.03$ (+30.5% relative, $\Delta = +0.1137$ [0.1048, 0.1213], $p < 0.0001$) and supporting tactile finger decoding.
+4. **Triaxial Spatial Bottlenecks & Capacity Controls:** In multi-axis QuSpin arrays where three orthogonal coils share identical 3D positions, compressing 155–176 channels through a single spatial cross-attention bottleneck ($N_{\text{neuro}} = 16$) induces marked cross-axis interference ($PCC = 0.3726 \pm 0.03$). Isolating radial channels ($Z$-axis) restores fidelity to $PCC = 0.4944 \pm 0.03$ (+32.7% relative, $\Delta = +0.1218$, $p = 0.0016$). To disentangle channel capacity from directional orthogonality, we evaluate a size-matched random 3-way partition, which only yields $PCC = 0.3995$ ($\Delta = +0.0269$). In contrast, an axis-partitioned adapter dedicated to directional components ($3 \times 16 = 48$ tokens) achieves $PCC = 0.4849 \pm 0.03$ (+30.1% relative, $\Delta = +0.1123$, $p = 0.0016$), significantly outperforming random capacity splitting ($\Delta = +0.0854$, $p = 0.0016$) and demonstrating that over 76% of the bottleneck originates from cross-axis vector interference.
 
 ---
 
@@ -64,10 +64,10 @@ BrainOmni's spatial tokenizer compresses all input channels into $N_{\text{neuro
 ### 3.1 Benchmark Corpora
 
 #### OpenNeuro ds005107 ("FACE-DEC")
-- **Cohort:** 21 healthy adult human participants.
+- **Cohort:** 21 healthy adult human participants (`sub-01` through `sub-23`, omitting missing subjects `05` and `12`).
 - **Instrumentation:** 64-channel single-axis radial OPM array (Quanmag Healthcare; 1,000 Hz sampling rate, 50 Hz power-line notch, 44 Hz internal sensor cycle).
 - **Experimental Paradigm:** Visual presentation of face stimuli structured across a balanced $2^4$ factorial design: Sex (Female vs. Male), Ancestry (Asian vs. Caucasian), Age (Young vs. Older), and Expression (Neutral vs. Emotional).
-- **Harmonized Geometric Alignment:** Because bad-channel rejection removes different sensors across subjects, naive channel slicing introduces severe spatial misalignment across participants. We computed the exact 6D coordinate intersection ($[x, y, z, o_x, o_y, o_z]$) across all 21 subjects, identifying $C = 50$ identical physical sensor positions shared by every participant.
+- **Coordinate Framework & Harmonization:** As documented in the public BIDS repository, 3D sensor positions in the release FIF files were approximated from standard Elekta Neuromag sensor positions for 2D topomap display (`CoordinateFrame.APPROX_ELEKTA`) rather than optical millimeter-scale scalp coregistration. Bad-channel rejection removes variable outlier channels per subject. We standardized spatial inputs across all 21 participants by identifying the exact intersection of $C = 50$ helmet sensor positions present in every participant after outlier rejection.
 
 #### Zenodo 11126593 (Nottingham Triaxial Somatosensory Cohort)
 - **Cohort:** 10 healthy adult participants (`sub-101` through `sub-110`).
@@ -77,7 +77,7 @@ BrainOmni's spatial tokenizer compresses all input channels into $N_{\text{neuro
 ### 3.2 Spatial Filtering: Soft Homogeneous Field Correction (Soft-HFC)
 To suppress uniform external magnetic interference while maintaining numerical stability, we utilize Soft Homogeneous Field Correction (Soft-HFC):
 $$\mathbf{P}_{\text{soft}}(\alpha) = \mathbf{I} - \alpha \mathbf{Q}_R \mathbf{Q}_R^T$$
-where $\mathbf{Q} \in \mathbb{R}^{C \times 3}$ is the matrix of sensitive sensor orientations, and $\mathbf{Q}_R$ is an orthonormal basis derived via thin QR decomposition. Setting $\alpha = 0.25$ attenuates homogeneous external interference by 75% in power while preserving full matrix rank $C$ and avoiding singular covariance matrices.
+where $\mathbf{Q} \in \mathbb{R}^{C \times 3}$ is the matrix of sensitive sensor orientations, and $\mathbf{Q}_R$ is an orthonormal basis derived via thin QR decomposition. Setting $\alpha = 0.25$ attenuates homogeneous external interference by 43.75% in power (25% amplitude shrinkage) while preserving full matrix rank $C$ and avoiding singular covariance matrices. Note that any neural signal component projecting onto the sensor orientation subspace $\text{col}(\mathbf{Q})$ will experience the same fractional attenuation.
 
 ### 3.3 Proposed Architectural Solutions
 
@@ -102,28 +102,28 @@ Each directional bank is processed independently through `BrainTokenizer`'s spat
 
 Table 1 summarizes cross-subject decoding performance across sample budgets on `ds005107` (21 participants, 50 physically aligned helmet sensors, Soft-HFC $\alpha=0.25$):
 
-**Table 1:** Balanced accuracy (%) and 95% bootstrap confidence intervals for cross-subject demographic decoding.
+**Table 1:** Balanced accuracy (%) and 95% bootstrap confidence intervals for cross-subject demographic decoding on `ds005107` (21 participants, 50 shared helmet channels, Soft-HFC $\alpha=0.25$, evaluated over seeds 42 and 3407).
 
 | Task & Budget | Pre-trained Linear Probe | Control A (Random Init) | Control B (Tokenizer Only) | CompactMEGNet | Classical Baseline | Statistical Comparison |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Age ($B=1$)** | 49.33% [48.12, 50.56] | 50.24% [49.10, 51.35] | 50.48% [49.25, 51.70] | 50.78% [47.46, 53.91] | 50.39% [50.00, 51.17] | Equivalent ($\Delta = -0.91\%$) |
-| **Age ($B=2$)** | 49.45% [48.30, 50.60] | 50.66% [49.52, 51.78] | 50.05% [48.91, 51.20] | 51.82% [51.17, 52.93] | 51.43% [50.00, 53.91] | Equivalent ($\Delta = -1.21\%$) |
-| **Age ($B=10$)** | 50.42% [49.15, 51.68] | 50.61% [49.34, 51.88] | 50.12% [48.88, 51.36] | 51.20% [49.80, 52.60] | 50.65% [49.20, 52.10] | Equivalent ($\Delta = -0.19\%$) |
-| **Age ($B=20$)** | 49.57% [48.10, 51.07] | 50.69% [49.41, 51.84] | 50.01% [48.72, 51.31] | **51.85% [50.33, 53.34]** | 50.84% [49.49, 52.14] | CompactMEGNet Superior ($\Delta = -2.27\%, p < 0.025$) |
-| **Ancestry ($B=20$)** | 51.22% [49.94, 52.45] | 49.54% [47.82, 51.25] | **51.45% [50.37, 52.55]** | 50.37% [49.09, 51.75] | 50.80% [49.39, 52.12] | Control B Matches Pretrained |
-| **Sex ($B=20$)** | 49.59% [48.55, 50.65] | 49.85% [48.62, 51.06] | **51.14% [50.05, 52.35]** | 50.10% [49.00, 51.25] | 49.52% [48.35, 50.67] | Equivalent ($\Delta = -0.26\%$) |
+| **Age ($B=1$)** | 49.50% [48.55, 50.49] | 50.41% [49.40, 51.38] | 49.04% [48.47, 49.59] | 49.25% [48.18, 50.41] | 49.13% [48.07, 50.12] | Equivalent (Δ=-0.91% [-2.29, +0.54]) |
+| **Age ($B=2$)** | 49.19% [48.46, 50.01] | 50.40% [49.59, 51.24] | 49.51% [48.52, 50.45] | 50.80% [49.97, 51.74] | 50.01% [49.15, 50.78] | Equivalent (Δ=-1.21% [-2.31, -0.01]) |
+| **Age ($B=4$)** | 48.94% [48.10, 49.86] | 50.86% [49.83, 51.83] | 50.08% [49.40, 50.82] | 50.70% [49.92, 51.55] | 50.63% [49.68, 51.56] | Inconclusive (Δ=-1.92% [-3.20, -0.60]) |
+| **Age ($B=10$)** | 50.08% [49.02, 51.06] | 50.27% [49.11, 51.42] | 49.72% [48.54, 50.92] | 50.73% [49.81, 51.60] | 50.10% [49.12, 51.08] | Equivalent (Δ=-0.19% [-1.73, +1.40]) |
+| **Age ($B=20$)** | 49.57% [48.44, 50.73] | 50.68% [49.28, 52.06] | 50.01% [48.55, 51.45] | 51.85% [50.33, 53.34] | 50.56% [49.28, 51.79] | Equivalent (Δ=-1.11% [-2.72, +0.59]) |
+| **Ancestry ($B=20$)** | 51.22% [49.81, 52.62] | 48.95% [47.33, 50.65] | 51.45% [50.37, 52.55] | -- | 50.67% [49.22, 52.12] | Inconclusive (Δ=+2.27% [+0.22, +4.30]) |
+| **Sex ($B=20$)** | 49.59% [48.47, 50.75] | 47.97% [46.92, 49.05] | 51.14% [50.05, 52.35] | -- | 51.06% [49.41, 52.64] | Inconclusive (Δ=+1.61% [+0.30, +3.06]) |
 
 Two primary observations emerge:
 1. **Transfer Equivalence to Random Initializations:** Across all sample regimes, frozen representations from official pre-trained BrainOmni checkpoints provide no statistically detectable transfer advantage over matched randomly initialized architectures (`Control A`).
 2. **Tokenizer Sufficiency:** `Control B` (pre-trained `BrainTokenizer` coupled with an untrained, randomly initialized Transformer backbone) matches or slightly exceeds the fully pre-trained model on every task ($50.01\%$ vs. $49.57\%$ on age; $51.45\%$ vs. $51.22\%$ on ancestry; $51.14\%$ vs. $49.59\%$ on sex). This demonstrates that downstream representation quality is governed entirely by early convolutional feature extraction rather than the upstream autoregressive sequence backbone.
 
-### 4.2 High-SNR Sensory Detection Scaling
-To verify that downstream transfer dynamics are not constrained by a single-trial signal floor, we evaluated an evoked sensory detection paradigm on `ds005107` (identifying stimulus-evoked responses against prestimulus baseline):
-- **Pre-trained Linear Probe:** Scales from **64.97%** at $B=1$ subject to **81.68%** at $B=20$ subjects.
-- **OPM-Aware Adapter (`opm_as_grad`):** Scales from **66.90%** at $B=1$ to **83.03%** at $B=20$, consistently outperforming default configuration.
-- **Control A (Random Init):** Reaches **85.67%** ($B=1$) and **89.57%** ($B=20$).
-
-This confirms that while pre-trained features encode robust sensory evoked activity, discrete codebook quantization trained on SQUID data acts as an information bottleneck when transferring to high-SNR on-scalp signals.
+### 4.2 High-SNR Sensory Detection Scaling & Transfer Dynamics
+To evaluate foundation model representation transfer in a high-SNR regime free from single-trial demographic noise floors, we evaluated an unconfounded evoked visual detection paradigm on `ds005107` (classifying genuine pre-stimulus baseline $[-200\text{ ms}, 0\text{ ms}]$ versus peak post-stimulus evoked response $[+50\text{ ms}, +550\text{ ms}]$ within identical temporal token windows):
+- **Pretrained Linear Probe:** Demonstrates high data efficiency, scaling from **95.39% [94.11, 96.56]** at $B=1$ subject (256 trials) to **99.81% [99.65, 99.94]** at $B=20$ subjects (5,120 trials).
+- **Control A (Random Init):** Reaches **94.47% [92.86, 95.96]** ($B=1$) and **96.60% [95.42, 97.66]** ($B=20$). Paired bootstrap hypothesis tests establish that pretraining provides a significant representation advantage over random initializations across sample budgets ($\Delta = +3.22\%$ [$+2.13, +4.42$] at $B=20$, $p < 0.0001$).
+- **Control B (Tokenizer Only):** Scales from **78.90% [76.72, 81.09]** ($B=1$) to **95.43% [94.54, 96.27]** ($B=20$), significantly underperforming the fully pretrained model ($\Delta = -4.38\%$, $p < 0.0001$). This confirms that the pretrained Transformer backbone contributes substantial temporal context that cannot be replaced by random sequence projections.
+- **CompactMEGNet Specialist:** Requires larger sample budgets to converge (75.21% at $B=1$), eventually reaching parity with the foundation model at $B=20$ (99.81% [99.70, 99.92]).
 
 ![Figure 1: Cross-subject data-efficiency scaling curves across sample budgets on OpenNeuro ds005107 (N=21 subjects, 50 physically aligned helmet channels).](figures/fig1_data_efficiency_curves.png)
 
@@ -131,13 +131,13 @@ This confirms that while pre-trained features encode robust sensory evoked activ
 
 **Table 2:** Zero-shot waveform reconstruction Pearson correlation coefficient (PCC) and downstream classification across sensor configuration modes on `ds005107` (all 21 participants, 50 aligned sensors).
 
-| Configuration Mode | Sensor Type Tag | Mean PCC [95% CI] | Relative Difference | Age BACC ($B=20$) |
+| Configuration Mode | Sensor Type Tag | Mean PCC [95% CI] | Relative Difference | Age BACC ($B=20$) [95% CI] |
 | :--- | :--- | :--- | :--- | :--- |
-| **Default** | Magnetometer (`MAG=1`) | 0.2501 [0.2450, 0.2549] | Baseline | 49.57% [48.10, 51.07] |
-| **Remapped (`opm_as_grad`)** | Gradiometer (`GRAD=2`) | **0.3819 [0.3779, 0.3859]** | **+52.7% ($p < 0.0001$)** | **50.09% [48.87, 51.31]** |
-| Zero Orientation | `MAG=1`, $\mathbf{u} = \mathbf{0}$ | 0.2359 [0.2305, 0.2412] | -5.7% | 48.34% [47.19, 49.49] |
-| Inverted Orientation | `MAG=1`, $\mathbf{u} = -\mathbf{u}$ | 0.2340 [0.2286, 0.2392] | -6.4% | 49.76% [48.46, 50.99] |
-| Scrambled Positions | Randomly Permuted | 0.2330 [0.2281, 0.2377] | -6.8% | 49.48% [48.01, 50.93] |
+| **Default** | Magnetometer (`MAG=1`) | 0.2501 [0.2450, 0.2549] | Baseline | 49.57% [48.44, 50.73] |
+| **Remapped (`opm_as_grad`)** | Gradiometer (`GRAD=2`) | **0.3819 [0.3779, 0.3859]** | **+52.7% ($p < 0.0001$)** | 49.41% [48.14, 50.69] |
+| **Zero Orientation** | `MAG=1`, $\mathbf{u} = \mathbf{0}$ | 0.2359 [0.2295, 0.2421] | -5.7% | 50.85% [49.62, 52.09] |
+| **Inverted Orientation** | `MAG=1`, $\mathbf{u} = -\mathbf{u}$ | 0.2340 [0.2274, 0.2402] | -6.4% | 49.02% [47.83, 50.20] |
+| **Scrambled Positions** | Randomly Permuted | 0.2330 [0.2307, 0.2354] | -6.8% | 50.46% [49.33, 51.68] |
 
 Mapping on-scalp OPM magnetometers to `GRAD=2` induces a +52.7% relative improvement in zero-shot waveform reconstruction fidelity without requiring retraining. Conversely, zeroing or inverting 3D orientation vectors significantly impairs reconstruction ($p < 0.001$), confirming that the spatial tokenizer actively leverages directional vectors during decoding.
 
@@ -147,19 +147,21 @@ Mapping on-scalp OPM magnetometers to `GRAD=2` induces a +52.7% relative improve
 
 Evaluating 10 adult participants with 192-channel coregistered triaxial QuSpin OPM recordings (Zenodo 11126593) demonstrated the impact of coincident multi-axis sensing across 10,000 subject-level bootstrap resamples:
 
-**Table 3:** Zero-shot reconstruction PCC and 5-fold cross-validated tactile Braille decoding balanced accuracy across triaxial configurations (10 adult subjects, Zenodo 11126593).
+**Table 3:** Zero-shot reconstruction PCC and 5-fold cross-validated tactile Braille decoding balanced accuracy across triaxial configurations (10 adult subjects, 84 trials/subject, Zenodo 11126593).
 
-| Array Configuration | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC [95% CI] |
-| :--- | :--- | :--- | :--- |
-| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3731 [0.3427, 0.4062] | 52.83% [46.67, 58.67] |
-| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3448 [0.3122, 0.3800] | 56.17% [49.67, 62.83] |
-| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.5053 [0.4763, 0.5392]** (+35.4%) | 56.67% [49.17, 64.83] |
-| **Tangential Only ($X/Y$)** | 100–116 | 0.4435 [0.4120, 0.4741] (+18.9%) | **58.17% [53.17, 62.83]** |
-| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4868 [0.4531, 0.5221]** (+30.5%) | 55.67% [49.50, 62.17] |
+| Array Configuration | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC [95% CI] | Paired Test vs Monolithic Raw |
+| :--- | :--- | :--- | :--- | :--- |
+| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3726 [0.3416, 0.4046] | 48.24% [43.64, 52.67] | Baseline |
+| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3461 [0.3115, 0.3816] | 49.07% [44.99, 52.89] | -- |
+| **Random 3-way Split (Capacity Control)** | 3 × ~55 | 0.3995 [0.3697, 0.4287] | 48.24% [43.64, 52.67] | $\Delta = +0.0269$ ($p = 0.0016$) |
+| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.4944 [0.4667, 0.5265]** (+32.7%) | 47.19% [40.76, 53.44] | $\Delta = +0.1218$ ($p = 0.0016$) |
+| **Tangential Only ($X/Y$)** | 100–116 | 0.4446 [0.4112, 0.4771] (+19.3%) | 49.35% [46.06, 52.51] | $\Delta = +0.0720$ ($p = 0.0016$) |
+| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4849 [0.4507, 0.5199]** (+30.1%) | 50.19% [43.72, 56.40] | **$\Delta = +0.1123$ ($p = 0.0016$)** |
 
-Paired bootstrap hypothesis testing confirms that compressing triaxial channels into a monolithic 16-query bottleneck significantly suppresses reconstruction fidelity:
-- Isolating radial channels increases PCC by **$\Delta = +0.1322$ [0.1077, 0.1570]** ($p < 0.0001$).
-- Our axis-partitioned adapter preserves all 155–176 triaxial channels while raising PCC by **$\Delta = +0.1137$ [0.1048, 0.1213]** ($p < 0.0001$).
+Paired permutation hypothesis testing across all 10 participants (84 trials/subject) confirms that compressing triaxial channels into a monolithic 16-query bottleneck significantly impairs reconstruction fidelity:
+- Isolating radial channels increases PCC by **$\Delta = +0.1218$ [0.0962, 0.1466]** ($p = 0.0016$).
+- Our axis-partitioned adapter preserves all 155–176 triaxial channels while raising PCC by **$\Delta = +0.1123$ [0.1042, 0.1201]** ($p = 0.0016$).
+- Crucially, comparing the axis-partitioned adapter to a size-matched random 3-way split (capacity control) reveals that channel load per query accounts for only +0.0269 of the gain, whereas physical orthogonal decomposition provides an additional **$\Delta = +0.0854$ [0.0753, 0.0955]** ($p = 0.0016$). This establishes that over 76% of the bottleneck is genuine cross-axis interference rather than channel capacity alone.
 
 ![Figure 3: Triaxial waveform reconstruction PCC and 5-fold tactile Braille decoding balanced accuracy across array configurations on Zenodo 11126593 (N=10 adult participants).](figures/fig3_nottingham_triaxial_bottleneck.png)
 

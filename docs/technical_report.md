@@ -30,7 +30,7 @@ Zero OPM-MEG data was present during pre-training.
 ### 2.2 Spatial Interference Filtering: Soft-HFC
 To attenuate homogeneous external magnetic interference without reducing array rank, we apply Soft Homogeneous Field Correction (Soft-HFC):
 $$\mathbf{P}_{\text{soft}}(\alpha) = \mathbf{I} - \alpha \mathbf{Q}_R \mathbf{Q}_R^T$$
-where $\mathbf{Q}_R \in \mathbb{R}^{C \times 3}$ is the orthonormal basis spanning sensor sensitive orientations. Setting $\alpha = 0.25$ attenuates homogeneous external interference by 75% in power while preserving full matrix rank $C$ and leaving signals in the orthogonal subspace unperturbed.
+where $\mathbf{Q}_R \in \mathbb{R}^{C \times 3}$ is the orthonormal basis spanning sensor sensitive orientations. Setting $\alpha = 0.25$ attenuates homogeneous external interference by 43.75% in power (25% amplitude shrinkage) while preserving full matrix rank $C$ and leaving signals in the orthogonal subspace unperturbed. Any neural signal projecting onto $\text{col}(\mathbf{Q})$ experiences the same 25% amplitude shrinkage.
 
 ### 2.3 Evaluation Protocol
 - **Evaluation Arms:**

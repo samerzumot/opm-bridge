@@ -358,15 +358,22 @@ def run_benchmark(
             payload = torch.load(p, weights_only=False)
             x_arr = payload["x"].float().numpy()
             if task == "visual_detection":
-                # High-SNR positive control: split independent trials 50/50 into
-                # Class 1 (Visual Evoked Response [+50ms, +550ms] at samples 64..192 / tokens 1..3)
-                # and Class 0 (Inter-trial Baseline [+1.05s, +1.55s] rolled by +256 samples to
-                # occupy the exact same sample indices 64..192 / tokens 1..3).
+                # High-SNR positive control: split independent trials 50/50 into:
+                # Class 1: Active Visual Evoked Response [+50ms, +550ms] (samples 64..192)
+                # Class 0: Genuine Pre-Stimulus Baseline [-200ms, 0ms] (samples 0..64) mapped to samples 64..192
+                # Both classes occupy the exact same temporal token slice [1..3] in 512-sample containers,
+                # eliminating cyclic roll boundary step discontinuities and late-epoch SOA confounds.
                 n_t = len(x_arr)
                 y_det = np.zeros(n_t, dtype=np.int64)
                 y_det[::2] = 1
-                x_det = x_arr.copy()
-                x_det[1::2] = np.roll(x_det[1::2], shift=256, axis=-1)
+
+                x_det = np.zeros_like(x_arr)
+                # Class 1 (Evoked): active window at samples 64..192
+                x_det[::2, :, 64:192] = x_arr[::2, :, 64:192]
+                # Class 0 (Baseline): pre-stimulus baseline at samples 64..192 (replicated)
+                x_det[1::2, :, 64:128] = x_arr[1::2, :, 0:64]
+                x_det[1::2, :, 128:192] = x_arr[1::2, :, 0:64]
+
                 all_x.append(x_det)
                 all_y.append(y_det)
             else:

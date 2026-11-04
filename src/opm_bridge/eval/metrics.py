@@ -34,6 +34,42 @@ class PrimaryComparisonResult:
     control_a_bacc: BootstrapResult
     sesoi: float
     verdict: DecisionVerdict
+    p_value: float = 1.0
+
+
+def compute_paired_permutation_p_value(
+    diff: np.ndarray,
+    n_permutations: int = 10_000,
+    rng_seed: int = 42,
+) -> float:
+    """Compute two-sided paired sign-flip permutation p-value under the null hypothesis H0: E[diff] = 0.
+
+    Args:
+        diff: Array of paired subject score differences (N_subjects,).
+        n_permutations: Number of random sign-flip resamples.
+        rng_seed: Deterministic random seed.
+
+    Returns:
+        p_value: Two-sided empirical p-value.
+    """
+    d = np.asarray(diff, dtype=np.float64).flatten()
+    n = len(d)
+    if n < 2:
+        return 1.0
+    obs_mean = float(np.mean(d))
+    if obs_mean == 0.0:
+        return 1.0
+
+    rng = np.random.default_rng(rng_seed)
+    # Generate random +1/-1 signs of shape (n_permutations, n)
+    signs = rng.choice([-1.0, 1.0], size=(n_permutations, n))
+    perm_means = np.mean(signs * d[None, :], axis=1)
+
+    # Two-sided p-value: proportion of permutations where |perm_mean| >= |obs_mean|
+    count = np.sum(np.abs(perm_means) >= np.abs(obs_mean))
+    # Standard unbiased p-value estimate with continuity correction
+    p_val = float((count + 1) / (n_permutations + 1))
+    return p_val
 
 
 def compute_classification_metrics(
@@ -126,6 +162,7 @@ def evaluate_primary_comparison(
     delta_boot = subject_bootstrap_ci(deltas, n_resamples=n_resamples, rng_seed=rng_seed)
     pt_boot = subject_bootstrap_ci(pt_subj, n_resamples=n_resamples, rng_seed=rng_seed + 1)
     ctrl_boot = subject_bootstrap_ci(ctrl_subj, n_resamples=n_resamples, rng_seed=rng_seed + 2)
+    p_val = compute_paired_permutation_p_value(deltas, n_permutations=n_resamples, rng_seed=rng_seed)
 
     if delta_boot.ci_low > 0.0 and delta_boot.mean >= sesoi:
         verdict: DecisionVerdict = "pre-training helped"
@@ -143,6 +180,7 @@ def evaluate_primary_comparison(
         control_a_bacc=ctrl_boot,
         sesoi=sesoi,
         verdict=verdict,
+        p_value=p_val,
     )
 
 

@@ -85,7 +85,8 @@ class HttpRangeFile(io.RawIOBase):
 def stream_nottingham_subjects(
     subjects: List[str],
     out_dir: str | Path = "data/cache/nottingham",
-    stream_seconds: int = 100,
+    stream_seconds: int | None = None,
+    overwrite: bool = False,
 ) -> List[Path]:
     """Stream and preprocess adult triaxial OPM subjects from Zenodo 11126593."""
     out_dir_p = Path(out_dir)
@@ -95,7 +96,7 @@ def stream_nottingham_subjects(
     pending = [
         s
         for s in subjects
-        if not (out_dir_p / f"{s}_ses-001_task-braille_run-001_256hz.pt").exists()
+        if overwrite or not (out_dir_p / f"{s}_ses-001_task-braille_run-001_256hz.pt").exists()
     ]
     if not pending:
         for s in subjects:
@@ -109,7 +110,7 @@ def stream_nottingham_subjects(
         all_names = set(zf.namelist())
         for sub in subjects:
             out_pt = out_dir_p / f"{sub}_ses-001_task-braille_run-001_256hz.pt"
-            if out_pt.exists():
+            if out_pt.exists() and not overwrite:
                 print(f"Already cached: {out_pt}")
                 saved.append(out_pt)
                 continue
@@ -133,7 +134,10 @@ def stream_nottingham_subjects(
                 ev_dict = parse_nottingham_braille_events(ev_p)
                 (n_rows, n_cols), dt, _ = parse_meg_read_info(ri_p)
 
-                n_samp_stream = min(n_cols, 1200 * stream_seconds)
+                if stream_seconds is not None:
+                    n_samp_stream = min(n_cols, int(1200 * stream_seconds))
+                else:
+                    n_samp_stream = n_cols
                 n_bytes = n_rows * n_samp_stream * 8
                 info = zf.getinfo(f"{prefix}_meg.dat")
                 with zf.open(info) as zstream:
@@ -199,11 +203,27 @@ def main() -> None:
     parser.add_argument(
         "--subjects",
         nargs="+",
-        default=[f"sub-{i}" for i in range(101, 111)],
-        help="Adult subjects to stream (default: sub-101..sub-110)",
+        default=[f"sub-{i}" for i in range(101, 127)],
+        help="Adult subjects to stream (default: sub-101..sub-126)",
     )
+    parser.add_argument("--out-dir", type=str, default="data/cache/nottingham")
+    parser.add_argument(
+        "--stream-seconds",
+        type=int,
+        default=None,
+        help="Optional limit on recording seconds to stream (default: None = full recording)",
+    )
+    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing cached files")
     args = parser.parse_args()
-    stream_nottingham_subjects(args.subjects)
+
+    print(f"Streaming {len(args.subjects)} subjects from Zenodo 11126593...")
+    paths = stream_nottingham_subjects(
+        args.subjects,
+        out_dir=args.out_dir,
+        stream_seconds=args.stream_seconds,
+        overwrite=args.overwrite,
+    )
+    print(f"Completed: cached {len(paths)} subjects in {args.out_dir}")
 
 
 if __name__ == "__main__":

@@ -31,19 +31,23 @@ def _configure_style() -> None:
 
 
 def plot_fig1_data_efficiency() -> None:
-    """Figure 1: Cross-subject data-efficiency scaling on ds005107 (Age & Visual Detection)."""
+    """Figure 1: Cross-subject data-efficiency scaling on ds005107 (Age & Clean Visual Detection)."""
+    clean_path = RESULTS_DIR / "summary_clean_visual_detection.json"
+    if clean_path.exists():
+        det = json.loads(clean_path.read_text())
+    else:
+        det = json.loads((RESULTS_DIR / "summary_aligned21_visual_detection.json").read_text())
     age = json.loads((RESULTS_DIR / "summary_aligned21_age.json").read_text())
-    det = json.loads((RESULTS_DIR / "summary_aligned21_visual_detection.json").read_text())
 
     budgets = [1, 2, 4, 10, 20]
     fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.2), sharex=True)
 
     arm_specs = [
-        ("pretrained_linear_probe", "BrainOmni Pre-trained (MAG=1)", "#1f77b4", "o", "-"),
+        ("pretrained_linear_probe", "Pretrained Linear Probe", "#1f77b4", "o", "-"),
         ("phase5_opm_aware_probe", "OPM-Aware Adapter (GRAD=2)", "#2ca02c", "s", "-"),
         ("control_b_linear_probe", "Control B (Tokenizer Only)", "#9467bd", "^", "--"),
         ("control_a_linear_probe", "Control A (Random Init)", "#7f7f7f", "d", ":"),
-        ("compact_megnet", "CompactMEGNet (1.5k CNN)", "#d62728", "v", "-."),
+        ("compact_megnet", "CompactMEGNet Specialist", "#d62728", "v", "-."),
         ("classical_bandpower", "Classical Band-Power", "#ff7f0e", "P", "--"),
     ]
 
@@ -57,12 +61,13 @@ def plot_fig1_data_efficiency() -> None:
         highs = [det["results_by_budget"][str(b)][arm_key]["ci_high"] * 100 for b in budgets]
         ax.plot(budgets, means, label=label, color=color, marker=marker, linestyle=ls, lw=1.8)
         ax.fill_between(budgets, lows, highs, color=color, alpha=0.12)
-    ax.set_title("A. Evoked Visual Detection (ds005107, N=21)")
+    ax.set_title("A. Evoked Visual Detection (Unconfounded, N=21)")
     ax.set_xlabel("Training Subject Budget (B)")
     ax.set_ylabel("Balanced Accuracy (%)")
     ax.set_xticks(budgets)
+    ax.set_ylim(65.0, 102.0)
     ax.grid(True, linestyle=":", alpha=0.5)
-    ax.legend(loc="lower right", frameon=True)
+    ax.legend(loc="lower right", frameon=True, fontsize=8)
 
     # Panel B: Cross-Subject Demographic Decoding (Age)
     ax2 = axes[1]
@@ -144,19 +149,24 @@ def plot_fig2_sensor_ablations() -> None:
 
 
 def plot_fig3_nottingham_triaxial() -> None:
-    """Figure 3: Triaxial spatial bottleneck and axis-partitioned adapter on Nottingham (N=10)."""
-    nott = json.loads((RESULTS_DIR / "summary_phase4_nottingham.json").read_text())
+    """Figure 3: Triaxial spatial bottleneck, capacity controls, and axis-partitioned adapter on Nottingham (N=10)."""
+    full_path = RESULTS_DIR / "summary_phase4_nottingham_full.json"
+    if full_path.exists():
+        nott = json.loads(full_path.read_text())
+    else:
+        nott = json.loads((RESULTS_DIR / "summary_phase4_nottingham.json").read_text())
     cs = nott["cohort_bootstrap_summary"]
 
     modes = [
         ("triaxial_xyz_raw", "Monolithic\nTriaxial (X/Y/Z)", "#7f7f7f"),
         ("triaxial_xyz_softhfc", "Triaxial +\nSoft-HFC", "#1f77b4"),
+        ("random_3way_split", "Random Split\n(Capacity Ctrl)", "#d62728"),
         ("tangential_only_xy", "Tangential\nOnly (X/Y)", "#ff7f0e"),
         ("phase5_axis_split_xyz", "Axis-Partitioned\nAdapter (X/Y/Z)", "#2ca02c"),
         ("radial_only_z", "Radial Isolation\n(Z-Axis Only)", "#9467bd"),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.1))
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.2))
     x = np.arange(len(modes))
     labels = [m[1] for m in modes]
     colors = [m[2] for m in modes]
@@ -174,35 +184,39 @@ def plot_fig3_nottingham_triaxial() -> None:
             bar.get_x() + bar.get_width() / 2, val + 0.038, f"{val:.3f}", ha="center", va="bottom", fontsize=8.5, fontweight="bold"
         )
     axes[0].set_xticks(x)
-    axes[0].set_xticklabels(labels, fontsize=8)
+    axes[0].set_xticklabels(labels, fontsize=7.5)
     axes[0].set_ylim(0.0, 0.62)
     axes[0].set_ylabel("Zero-Shot Reconstruction PCC")
-    axes[0].set_title("A. Triaxial Waveform Reconstruction (Zenodo 11126593, N=10)")
+    axes[0].set_title("A. Triaxial Waveform Reconstruction (84 trials/sub, N=10)")
     axes[0].grid(True, axis="y", linestyle=":", alpha=0.5)
 
     # Panel B: Tactile Braille Decoding BACC
     bacc_means = [cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["mean"] * 100 for m in modes]
     bacc_low = [
-        bacc_means[i] - cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["ci_low"] * 100
-        for i, m in enumerate(modes)
+        (cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["mean"]
+        - cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["ci_low"]) * 100
+        for m in modes
     ]
     bacc_high = [
-        cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["ci_high"] * 100 - bacc_means[i]
-        for i, m in enumerate(modes)
+        (cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["ci_high"]
+        - cs[m[0]]["braille_5fold_bacc"]["pretrained_linear_probe"]["mean"]) * 100
+        for m in modes
     ]
+
     bars2 = axes[1].bar(
         x, bacc_means, yerr=[bacc_low, bacc_high], capsize=4, color=colors, alpha=0.88, edgecolor="black", width=0.58
     )
     for bar, val in zip(bars2, bacc_means):
         axes[1].text(
-            bar.get_x() + bar.get_width() / 2, val + 7.2, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold"
+            bar.get_x() + bar.get_width() / 2, val + 2.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold"
         )
-    axes[1].axhline(50.0, color="black", linestyle="--", lw=1.0, alpha=0.6)
+    axes[1].axhline(50.0, color="gray", linestyle="--", linewidth=1.2, label="Chance Level (50%)")
     axes[1].set_xticks(x)
-    axes[1].set_xticklabels(labels, fontsize=8)
-    axes[1].set_ylim(35.0, 74.0)
-    axes[1].set_ylabel("5-Fold Tactile Braille BACC (%)")
-    axes[1].set_title("B. Somatosensory Finger Decoding (Start_index vs Start_pinky)")
+    axes[1].set_xticklabels(labels, fontsize=7.5)
+    axes[1].set_ylim(30.0, 75.0)
+    axes[1].set_ylabel("5-Fold Balanced Accuracy (%)")
+    axes[1].set_title("B. Somatosensory Braille Decoding (Index vs. Pinky)")
+    axes[1].legend(loc="upper left", framealpha=0.9, fontsize=8)
     axes[1].grid(True, axis="y", linestyle=":", alpha=0.5)
 
     fig.tight_layout()
@@ -222,3 +236,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

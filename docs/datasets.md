@@ -53,5 +53,5 @@ We apply Soft-HFC with shrinkage parameter $\alpha = 0.25$:
 $$\mathbf{P}_{\text{soft}}(\alpha) = \mathbf{I} - \alpha \mathbf{Q}_R \mathbf{Q}_R^T$$
 where $\mathbf{Q}_R$ is obtained via thin QR decomposition ($\mathbf{Q} = \mathbf{Q}_R \mathbf{R}$). This formulation guarantees:
 1. Full numerical rank ($\text{rank} = C$).
-2. 75% power attenuation of uniform external magnetic interference.
+2. 43.75% power attenuation (25% amplitude shrinkage at $\alpha = 0.25$) of uniform external magnetic interference. Any neural signal projecting onto $\text{col}(\mathbf{Q})$ experiences identical fractional shrinkage.
 3. Zero distortion of neural signals orthogonal to the uniform field subspace.

@@ -247,8 +247,10 @@ def compute_soft_hfc_projector(
 
     When alpha in [0, 1), all eigenvalues of P_soft are strictly in (0, 1], guaranteeing:
       1. Full numerical rank rank(P_soft) == C (no singular covariance matrices or zero eigenvalues).
-      2. Partial attenuation of homogeneous environmental interference by (1 - alpha).
-      3. Zero distortion of neural signals in the subspace orthogonal to col(Q).
+      2. Partial attenuation of homogeneous environmental interference by (1 - (1 - alpha)^2) in power
+         (43.75% power attenuation / 25% amplitude shrinkage at alpha=0.25).
+      3. Partial shrinkage of any neural signals projecting onto col(Q), with zero distortion of
+         neural signals in the orthogonal complement subspace.
 
     Uses QR decomposition Q = Q_R R where Q_R has orthonormal columns (Q_R^T Q_R = I),
     yielding P_soft = I - alpha * Q_R Q_R^T without explicit matrix inversion.
