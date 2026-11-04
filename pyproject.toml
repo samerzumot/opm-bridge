@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "opm-bridge"
+version = "0.1.0"
+description = "Open benchmark of how pre-trained MEG foundation models (BrainOmni) transfer to scarce OPM-MEG data"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "torch>=2.2.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "scikit-learn>=1.4.0",
+    "mne>=1.6.0",
+    "einops>=0.7.0",
+    "pandas>=2.1.0",
+    "pyyaml>=6.0",
+    "safetensors>=0.4.0",
+    "huggingface-hub>=0.20.0",
+    "tqdm>=4.66.0",
+    "einx>=0.4.3",
+    "vector-quantize-pytorch>=1.32.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/opm_bridge"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
