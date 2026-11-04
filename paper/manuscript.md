@@ -125,6 +125,8 @@ To verify that downstream transfer dynamics are not constrained by a single-tria
 
 This confirms that while pre-trained features encode robust sensory evoked activity, discrete codebook quantization trained on SQUID data acts as an information bottleneck when transferring to high-SNR on-scalp signals.
 
+![Figure 1: Cross-subject data-efficiency scaling curves across sample budgets on OpenNeuro ds005107 (N=21 subjects, 50 physically aligned helmet channels).](figures/fig1_data_efficiency_curves.png)
+
 ### 4.3 Sensor-Type Embedding Calibration
 
 **Table 2:** Zero-shot waveform reconstruction Pearson correlation coefficient (PCC) and downstream classification across sensor configuration modes on `ds005107` (all 21 participants, 50 aligned sensors).
@@ -138,6 +140,8 @@ This confirms that while pre-trained features encode robust sensory evoked activ
 | Scrambled Positions | Randomly Permuted | 0.2330 [0.2281, 0.2377] | -6.8% | 49.48% [48.01, 50.93] |
 
 Mapping on-scalp OPM magnetometers to `GRAD=2` induces a +52.7% relative improvement in zero-shot waveform reconstruction fidelity without requiring retraining. Conversely, zeroing or inverting 3D orientation vectors significantly impairs reconstruction ($p < 0.001$), confirming that the spatial tokenizer actively leverages directional vectors during decoding.
+
+![Figure 2: Zero-shot waveform reconstruction Pearson correlation coefficient (PCC) across sensor category embeddings and geometric perturbations on ds005107 (N=21).](figures/fig2_sensor_geometry_ablations.png)
 
 ### 4.4 Triaxial Sensor Geometry & Axis-Partitioned Tokenization
 
@@ -156,6 +160,8 @@ Evaluating 10 adult participants with 192-channel coregistered triaxial QuSpin O
 Paired bootstrap hypothesis testing confirms that compressing triaxial channels into a monolithic 16-query bottleneck significantly suppresses reconstruction fidelity:
 - Isolating radial channels increases PCC by **$\Delta = +0.1322$ [0.1077, 0.1570]** ($p < 0.0001$).
 - Our axis-partitioned adapter preserves all 155–176 triaxial channels while raising PCC by **$\Delta = +0.1137$ [0.1048, 0.1213]** ($p < 0.0001$).
+
+![Figure 3: Triaxial waveform reconstruction PCC and 5-fold tactile Braille decoding balanced accuracy across array configurations on Zenodo 11126593 (N=10 adult participants).](figures/fig3_nottingham_triaxial_bottleneck.png)
 
 ---
 

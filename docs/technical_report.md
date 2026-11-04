@@ -74,15 +74,17 @@ BrainOmni incorporates an integer sensor category embedding: `EEG=0`, `MAG=1`, `
 
 ### 3.3 Triaxial Sensor Geometry & Axis-Partitioned Tokenization
 
-In 192-channel triaxial QuSpin arrays, three orthogonal coils share identical 3D spatial coordinates. Passing full triaxial data through BrainOmni's single spatial attention bottleneck ($N_{\text{neuro}} = 16$) yields sub-optimal reconstruction fidelity due to cross-axis interference:
+In 192-channel triaxial QuSpin arrays (Zenodo 11126593, 10 adult participants, 10,000 bootstrap resamples), three orthogonal coils share identical 3D spatial coordinates. Passing full triaxial data through BrainOmni's single spatial attention bottleneck ($N_{\text{neuro}} = 16$) yields sub-optimal reconstruction fidelity due to cross-axis interference:
 
-| Processing Mode | Channels | Zero-Shot Reconstruction PCC | Braille 5-Fold BACC |
+| Processing Mode | Channels | Zero-Shot Reconstruction PCC [95% CI] | Braille 5-Fold BACC [95% CI] |
 | :--- | :--- | :--- | :--- |
-| **Monolithic Triaxial ($X/Y/Z$)** | 176 | 0.3229 | 48.33% |
-| **Radial Isolation ($Z$-axis only)** | 60 | **0.4758** (+40.6%) | 47.50% |
-| **Axis-Partitioned Adapter ($X/Y/Z$)** | 176 | **0.4587** (+42.1%) | **55.83%** |
+| **Monolithic Triaxial ($X/Y/Z$ Raw)** | 155–176 | 0.3731 [0.3427, 0.4062] | 52.83% [46.67, 58.67] |
+| **Triaxial ($X/Y/Z$ + Soft-HFC $\alpha=0.25$)** | 155–176 | 0.3448 [0.3122, 0.3800] | 56.17% [49.67, 62.83] |
+| **Radial Isolation ($Z$-axis only)** | 55–60 | **0.5053 [0.4763, 0.5392]** (+35.4%) | 56.67% [49.17, 64.83] |
+| **Tangential Only ($X/Y$)** | 100–116 | 0.4435 [0.4120, 0.4741] (+18.9%) | **58.17% [53.17, 62.83]** |
+| **Axis-Partitioned Adapter ($X/Y/Z$)** | 155–176 | **0.4868 [0.4531, 0.5221]** (+30.5%) | 55.67% [49.50, 62.17] |
 
-By partitioning triaxial channels into distinct orthogonal groups and allocating an independent query subspace to each, the axis-partitioned adapter restores reconstruction accuracy without discarding tangential sensor channels.
+By partitioning triaxial channels into distinct orthogonal groups and allocating an independent query subspace to each, the axis-partitioned adapter restores reconstruction accuracy ($\Delta = +0.1137$ [0.1048, 0.1213], $p < 0.0001$) without discarding tangential sensor channels.
 
 ---
 
