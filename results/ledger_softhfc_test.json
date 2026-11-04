@@ -1,0 +1,200 @@
+{
+  "ds005107_gender__compact_megnet__fold0__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 0,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-01",
+    "train_subjects": [
+      "sub-02"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.53125,
+      "macro_f1": 0.5311355311355311,
+      "auroc": 0.54681396484375
+    }
+  },
+  "ds005107_gender__compact_megnet__fold1__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 1,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-02",
+    "train_subjects": [
+      "sub-01"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.44921875,
+      "macro_f1": 0.44853716293636847,
+      "auroc": 0.46270751953125
+    }
+  },
+  "ds005107_gender__compact_megnet__fold2__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 2,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-03",
+    "train_subjects": [
+      "sub-01"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.546875,
+      "macro_f1": 0.5466259541984733,
+      "auroc": 0.54852294921875
+    }
+  },
+  "ds005107_gender__compact_megnet__fold0__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 0,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-01",
+    "train_subjects": [
+      "sub-02",
+      "sub-03"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.546875,
+      "macro_f1": 0.5450980392156863,
+      "auroc": 0.5555419921875
+    }
+  },
+  "ds005107_gender__compact_megnet__fold1__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 1,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-02",
+    "train_subjects": [
+      "sub-01",
+      "sub-03"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5234375,
+      "macro_f1": 0.5233211233211233,
+      "auroc": 0.51416015625
+    }
+  },
+  "ds005107_gender__compact_megnet__fold2__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "compact_megnet",
+    "fold": 2,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-03",
+    "train_subjects": [
+      "sub-01",
+      "sub-02"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5078125,
+      "macro_f1": 0.50633608815427,
+      "auroc": 0.51934814453125
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold0__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 0,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-01",
+    "train_subjects": [
+      "sub-02"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5,
+      "macro_f1": 0.34673046251993617,
+      "auroc": 0.511474609375
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold1__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 1,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-02",
+    "train_subjects": [
+      "sub-01"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5,
+      "macro_f1": 0.3333333333333333,
+      "auroc": 0.4932861328125
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold2__budget1__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 2,
+    "budget": 1,
+    "seed": 42,
+    "test_subject": "sub-03",
+    "train_subjects": [
+      "sub-01"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5,
+      "macro_f1": 0.3333333333333333,
+      "auroc": 0.55535888671875
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold0__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 0,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-01",
+    "train_subjects": [
+      "sub-02",
+      "sub-03"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.53125,
+      "macro_f1": 0.5156102175969726,
+      "auroc": 0.5499267578125
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold1__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 1,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-02",
+    "train_subjects": [
+      "sub-01",
+      "sub-03"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.5,
+      "macro_f1": 0.3333333333333333,
+      "auroc": 0.49615478515625
+    }
+  },
+  "ds005107_gender__classical_bandpower__fold2__budget2__seed42": {
+    "dataset": "ds005107_gender",
+    "arm": "classical_bandpower",
+    "fold": 2,
+    "budget": 2,
+    "seed": 42,
+    "test_subject": "sub-03",
+    "train_subjects": [
+      "sub-01",
+      "sub-02"
+    ],
+    "metrics": {
+      "balanced_accuracy": 0.50390625,
+      "macro_f1": 0.4895033523325011,
+      "auroc": 0.5341796875
+    }
+  }
+}

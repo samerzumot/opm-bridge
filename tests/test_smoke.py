@@ -27,6 +27,8 @@ from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
 from opm_bridge.models.vendor_brainomni.brainomni.model import BrainOmni
 from opm_bridge.models.wrapper import BrainOmniClassifier
 from opm_bridge.preprocessing.sensor_mapping import (
+    apply_soft_hfc,
+    compute_soft_hfc_projector,
     extract_sensor_metadata_from_mne,
     normalize_sensor_positions,
     sensortype_wise_normalize,
@@ -214,4 +216,66 @@ def test_baselines_and_statistical_protocol() -> None:
     # 4. Phase 1.5 signal gate
     passed, _ = check_phase15_signal_gate(pt_helped, ctrl_scores, chance_level=0.50)
     assert passed is True
+
+
+def test_soft_hfc_properties() -> None:
+    rng = np.random.default_rng(42)
+    n_ch = 12
+    n_time = 100
+
+    # Create synthetic 3D orientations on unit sphere
+    ori = rng.normal(size=(n_ch, 3))
+    ori /= np.linalg.norm(ori, axis=1, keepdims=True)
+
+    # 1. Rank preservation check:
+    # Hard HFC (alpha=1.0) must drop rank from 12 to 9
+    p_hard = compute_soft_hfc_projector(ori, alpha=1.0)
+    assert np.linalg.matrix_rank(p_hard) == n_ch - 3
+
+    # Soft HFC (alpha=0.25) must retain FULL rank (12)
+    p_soft = compute_soft_hfc_projector(ori, alpha=0.25)
+    assert np.linalg.matrix_rank(p_soft) == n_ch
+    eigenvals = np.linalg.eigvalsh(p_soft)
+    assert np.all(eigenvals > 0.0)
+    # The 3 lowest eigenvalues should be exactly (1 - 0.25) = 0.75
+    assert np.isclose(eigenvals[0], 0.75, atol=1e-5)
+    assert np.isclose(eigenvals[1], 0.75, atol=1e-5)
+    assert np.isclose(eigenvals[2], 0.75, atol=1e-5)
+    # The remaining eigenvalues must be 1.0
+    assert np.allclose(eigenvals[3:], 1.0, atol=1e-5)
+
+    # 2. Pure homogeneous interference attenuation
+    # Field B_ext = [1.0, -0.5, 2.0]^T across time
+    b_ext = np.array([[1.0], [-0.5], [2.0]])  # [3, 1]
+    time_series = np.sin(np.linspace(0, 4 * np.pi, n_time))[None, :]  # [1, T]
+    x_homo = (ori @ b_ext) @ time_series  # [C, T]
+
+    # Hard HFC should completely eliminate homogeneous field
+    x_hard_clean = apply_soft_hfc(x_homo, ori, alpha=1.0)
+    assert np.allclose(x_hard_clean, 0.0, atol=1e-5)
+
+    # Soft HFC (alpha=0.25) should attenuate by exactly 25% (leaving 75% amplitude)
+    x_soft_clean = apply_soft_hfc(x_homo, ori, alpha=0.25)
+    assert np.allclose(x_soft_clean, 0.75 * x_homo, atol=1e-5)
+
+    # 3. Orthogonal signal preservation
+    # Construct signal orthogonal to ori: X_ortho in nullspace of ori.T
+    u, s, vh = np.linalg.svd(ori)
+    null_basis = u[:, 3:]  # [C, C - 3]
+    x_ortho = null_basis @ rng.normal(size=(n_ch - 3, n_time))  # [C, T]
+
+    x_ortho_clean = apply_soft_hfc(x_ortho, ori, alpha=0.25)
+    assert np.allclose(x_ortho_clean, x_ortho, atol=1e-5)
+
+    # 4. 3D batch shape support [B, C, T]
+    batch_data = np.stack([x_homo, x_ortho], axis=0)  # [2, C, T]
+    batch_cleaned = apply_soft_hfc(batch_data, ori, alpha=0.25)
+    assert batch_cleaned.shape == (2, n_ch, n_time)
+    assert np.allclose(batch_cleaned[0], 0.75 * x_homo, atol=1e-5)
+    assert np.allclose(batch_cleaned[1], x_ortho, atol=1e-5)
+
+    # 5. Invalid alpha check
+    with pytest.raises(ValueError):
+        compute_soft_hfc_projector(ori, alpha=1.5)
+
 

@@ -38,6 +38,7 @@ from opm_bridge.eval.metrics import (
 )
 from opm_bridge.models.baselines import ClassicalBandPowerDecoder, CompactMEGNet
 from opm_bridge.models.wrapper import BrainOmniClassifier, load_brainomni_backbone
+from opm_bridge.preprocessing.sensor_mapping import apply_soft_hfc
 from opm_bridge.train.runner import (
     ResumableBenchmarkLedger,
     build_subject_kfold_splits,
@@ -191,6 +192,9 @@ def run_benchmark(
     seeds: Sequence[int] = (42, 3407),
     epochs: int = 5,
     batch_size: int = 16,
+    use_soft_hfc: bool = False,
+    hfc_alpha: float = 0.25,
+    mapping_mode: str = "default",
     ledger_path: str | Path = "results/benchmark_ledger.json",
     summary_path: str | Path = "results/transfer_benchmark_summary.json",
 ) -> dict:
@@ -241,15 +245,37 @@ def run_benchmark(
     X_by_subj: Dict[str, np.ndarray] = {
         s: subj_X[s][:, :min_ch, :].numpy().astype(np.float32) for s in valid_subjects
     }
-    y_by_subj: Dict[str, np.ndarray] = {
-        s: subj_labels[s].numpy().astype(np.int64) for s in valid_subjects
-    }
     pos_by_subj: Dict[str, np.ndarray] = {
         s: subj_pos[s][:min_ch].numpy().astype(np.float32) for s in valid_subjects
+    }
+
+    if use_soft_hfc:
+        print(f"Applying Soft-HFC spatial filtering (alpha={hfc_alpha}) to all subjects...")
+        for s in valid_subjects:
+            X_by_subj[s] = apply_soft_hfc(X_by_subj[s], pos_by_subj[s][:, 3:6], alpha=hfc_alpha)
+
+    y_by_subj: Dict[str, np.ndarray] = {
+        s: subj_labels[s].numpy().astype(np.int64) for s in valid_subjects
     }
     st_by_subj: Dict[str, np.ndarray] = {
         s: subj_st[s][:min_ch].numpy().astype(np.int64) for s in valid_subjects
     }
+
+    if mapping_mode != "default":
+        print(f"Applying sensor geometry ablation: mapping_mode={mapping_mode}")
+        for s in valid_subjects:
+            if mapping_mode == "opm_as_grad":
+                st_by_subj[s][:] = 2
+            elif mapping_mode == "zero_orientation":
+                pos_by_subj[s][:, 3:] = 0.0
+            elif mapping_mode == "flip_orientation":
+                pos_by_subj[s][:, 3:] = -pos_by_subj[s][:, 3:]
+            elif mapping_mode == "scramble_channels":
+                rng = np.random.default_rng(42)
+                perm = rng.permutation(min_ch)
+                pos_by_subj[s] = pos_by_subj[s][perm]
+                st_by_subj[s] = st_by_subj[s][perm]
+
 
     ledger = ResumableBenchmarkLedger(ledger_path)
     splits = build_subject_kfold_splits(
@@ -449,6 +475,15 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, nargs="+", default=[42, 3407])
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--soft-hfc", action="store_true", help="Apply Soft-HFC spatial filtering")
+    parser.add_argument("--hfc-alpha", type=float, default=0.25, help="Soft-HFC shrinkage factor (default: 0.25)")
+    parser.add_argument(
+        "--mapping-mode",
+        type=str,
+        default="default",
+        choices=["default", "opm_as_grad", "zero_orientation", "flip_orientation", "scramble_channels"],
+        help="Sensor geometry ablation mode for Phase 3 (FR7 / RQ3)",
+    )
     parser.add_argument("--ledger", type=str, default="results/benchmark_ledger.json")
     parser.add_argument("--out", type=str, default="results/transfer_benchmark_summary.json")
     args = parser.parse_args()
@@ -461,6 +496,9 @@ def main() -> None:
         seeds=args.seeds,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        use_soft_hfc=args.soft_hfc,
+        hfc_alpha=args.hfc_alpha,
+        mapping_mode=args.mapping_mode,
         ledger_path=args.ledger,
         summary_path=args.out,
     )

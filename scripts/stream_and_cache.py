@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
 from typing import List
@@ -26,6 +27,7 @@ from opm_bridge.data.ds005107 import (
     stimulus_id_to_face_labels,
 )
 from opm_bridge.preprocessing.sensor_mapping import (
+    apply_soft_hfc,
     extract_sensor_metadata_from_mne,
     normalize_sensor_positions,
     sensortype_wise_normalize,
@@ -34,10 +36,26 @@ from opm_bridge.preprocessing.sensor_mapping import (
 S3_BASE = "https://s3.amazonaws.com/openneuro.org/ds005107"
 
 
-def _download_bytes(url: str, timeout: int = 120) -> bytes:
+def _download_bytes(url: str, timeout: int = 180, max_retries: int = 4, backoff: float = 2.0) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "opm-bridge/0.1"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    for attempt in range(max_retries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                chunks: List[bytes] = []
+                while True:
+                    chunk = r.read(2 * 1024 * 1024)  # 2 MB chunks
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                return b"".join(chunks)
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            print(f"Download warning on {url} (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {backoff:.1f}s...")
+            time.sleep(backoff)
+            backoff *= 2
+    raise RuntimeError(f"Failed to download {url} after {max_retries} attempts.")
+
 
 
 def stream_and_cache_ds005107_run(
@@ -46,9 +64,12 @@ def stream_and_cache_ds005107_run(
     run: str = "run-01",
     out_dir: str | Path = "data/cache/ds005107",
     reject_outlier_channels: bool = True,
+    use_soft_hfc: bool = False,
+    hfc_alpha: float = 0.25,
 ) -> Path:
     """Stream a single ds005107 run from S3, preprocess to 256 Hz epochs, and save `.pt` cache."""
-    out_path = Path(out_dir) / subject / f"{subject}_{session}_{run}_256hz.pt"
+    tag = "_softhfc" if use_soft_hfc else ""
+    out_path = Path(out_dir) / subject / f"{subject}_{session}_{run}{tag}_256hz.pt"
     if out_path.exists():
         return out_path
 
@@ -108,6 +129,9 @@ def stream_and_cache_ds005107_run(
                 pos_ori = pos_ori[good_ch]
                 sensor_type = sensor_type[good_ch]
 
+        if use_soft_hfc:
+            ep_data = apply_soft_hfc(ep_data, pos_ori[:, 3:6], alpha=hfc_alpha)
+
         # Normalize each epoch using BrainOmni sensor-type-wise group normalization
         norm_epochs = np.stack(
             [sensortype_wise_normalize(ep_data[i], sensor_type) for i in range(len(ep_data))],
@@ -139,15 +163,24 @@ def stream_and_cache_ds005107_run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stream and cache ds005107 runs at 256 Hz")
-    parser.add_argument("--subjects", nargs="+", default=list(DS005107_SUBJECTS[:2]))
+    parser.add_argument("--subjects", nargs="+", default=list(DS005107_SUBJECTS))
     parser.add_argument("--runs", nargs="+", default=["run-01"])
     parser.add_argument("--out-dir", type=str, default="data/cache/ds005107")
+    parser.add_argument("--soft-hfc", action="store_true", help="Apply Soft-HFC spatial filtering")
+    parser.add_argument("--hfc-alpha", type=float, default=0.25, help="Soft-HFC shrinkage factor (default: 0.25)")
     args = parser.parse_args()
 
     saved: List[str] = []
     for subj in args.subjects:
         for run in args.runs:
-            p = stream_and_cache_ds005107_run(subj, session="ses-01", run=run, out_dir=args.out_dir)
+            p = stream_and_cache_ds005107_run(
+                subj,
+                session="ses-01",
+                run=run,
+                out_dir=args.out_dir,
+                use_soft_hfc=args.soft_hfc,
+                hfc_alpha=args.hfc_alpha,
+            )
             saved.append(str(p))
             print(f"Cached {subj} {run} -> {p}")
 

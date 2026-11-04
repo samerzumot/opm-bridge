@@ -227,3 +227,103 @@ def sensortype_wise_normalize(
             out[mask, :] = sub / std
     return out.astype(np.float32)
 
+
+def compute_soft_hfc_projector(
+    orientations: np.ndarray,
+    alpha: float = 0.25,
+) -> np.ndarray:
+    """Compute the Soft Homogeneous Field Correction (Soft-HFC) spatial projection matrix.
+
+    Homogeneous external interference in OPM-MEG manifests as a uniform 3D magnetic field:
+        B_ext = [Bx, By, Bz]^T
+    Sensor responses are given by the projection onto sensitive axes Q in R^{C x 3}.
+
+    Hard HFC projects orthogonally away from col(Q):
+        P_hard = I - Q (Q^T Q)^{-1} Q^T
+    which removes 3 degrees of freedom and creates a rank-deficient covariance matrix.
+
+    Soft-HFC (Tierney et al. 2021 / Mellor et al. 2022) introduces shrinkage alpha in [0, 1]:
+        P_soft(alpha) = I - alpha * Q (Q^T Q)^{-1} Q^T
+
+    When alpha in [0, 1), all eigenvalues of P_soft are strictly in (0, 1], guaranteeing:
+      1. Full numerical rank rank(P_soft) == C (no singular covariance matrices or zero eigenvalues).
+      2. Partial attenuation of homogeneous environmental interference by (1 - alpha).
+      3. Zero distortion of neural signals in the subspace orthogonal to col(Q).
+
+    Uses QR decomposition Q = Q_R R where Q_R has orthonormal columns (Q_R^T Q_R = I),
+    yielding P_soft = I - alpha * Q_R Q_R^T without explicit matrix inversion.
+
+    Args:
+        orientations: Sensor orientation matrix [C, 3] or [C, 6] (if pos_ori is passed).
+        alpha: Shrinkage parameter in [0.0, 1.0]. alpha=0.0 is identity, alpha=1.0 is hard HFC,
+            default alpha=0.25.
+
+    Returns:
+        P_soft: Spatial projection matrix [C, C] (float32).
+    """
+    if not (0.0 <= alpha <= 1.0):
+        raise ValueError(f"alpha must be in [0.0, 1.0], got {alpha}")
+
+    q = np.asarray(orientations, dtype=np.float64)
+    if q.ndim != 2:
+        raise ValueError(f"orientations must be 2D [C, 3], got shape {q.shape}")
+    if q.shape[1] > 3:
+        # If pos_ori [C, 6] was passed, extract orientation slice [:, 3:6]
+        q = q[:, 3:6]
+    if q.shape[1] != 3:
+        raise ValueError(f"orientations must have 3 columns, got {q.shape[1]}")
+
+    c = q.shape[0]
+    if alpha == 0.0 or c == 0:
+        return np.eye(c, dtype=np.float32)
+
+    # Check for near-zero orientation vectors and normalize non-zero rows
+    norms = np.linalg.norm(q, axis=1, keepdims=True)
+    valid_mask = (norms > 1e-8).flatten()
+    if not valid_mask.any():
+        return np.eye(c, dtype=np.float32)
+
+    # QR decomposition on valid orientations to get orthonormal basis Q_R
+    # If some sensors have zero orientation (e.g. EEG in hybrid setup), project only MEG channels
+    q_valid = q[valid_mask] / np.maximum(norms[valid_mask], 1e-8)
+    qr_basis, _ = np.linalg.qr(q_valid, mode="reduced")  # [C_valid, k <= 3]
+
+    p_valid = np.eye(q_valid.shape[0], dtype=np.float64) - alpha * (qr_basis @ qr_basis.T)
+
+    p_full = np.eye(c, dtype=np.float64)
+    valid_indices = np.where(valid_mask)[0]
+    p_full[np.ix_(valid_indices, valid_indices)] = p_valid
+
+    return p_full.astype(np.float32)
+
+
+def apply_soft_hfc(
+    data: np.ndarray,
+    orientations: np.ndarray,
+    alpha: float = 0.25,
+) -> np.ndarray:
+    """Apply Soft-HFC spatial filtering to multichannel OPM data.
+
+    Args:
+        data: Multichannel continuous or epoched array of shape [C, T] or [B, C, T].
+        orientations: Sensor orientation matrix [C, 3] or [C, 6].
+        alpha: Shrinkage parameter in [0.0, 1.0], default 0.25.
+
+    Returns:
+        Filtered array of same shape and float32 dtype.
+    """
+    p_soft = compute_soft_hfc_projector(orientations=orientations, alpha=alpha)
+
+    if data.ndim == 2:
+        # [C, T] -> P @ X
+        return (p_soft @ data.astype(np.float32)).astype(np.float32)
+    elif data.ndim == 3:
+        # [B, C, T] -> einsum or matmul
+        b, c, t = data.shape
+        reshaped = data.astype(np.float32).reshape(b, c, t)
+        filtered = np.matmul(p_soft, reshaped)
+        return filtered.astype(np.float32)
+    else:
+        raise ValueError(f"data must be 2D [C, T] or 3D [B, C, T], got shape {data.shape}")
+
+

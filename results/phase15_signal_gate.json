@@ -1,0 +1,17 @@
+{
+  "gate_passed": true,
+  "simple_specialist": {
+    "mean": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n_subjects": 10,
+    "n_resamples": 10000
+  },
+  "classical_decoder": {
+    "mean": 1.0,
+    "ci_low": 1.0,
+    "ci_high": 1.0,
+    "n_subjects": 10,
+    "n_resamples": 10000
+  }
+}
