@@ -22,6 +22,7 @@ from typing import Dict, List
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from einops import rearrange
 from sklearn.model_selection import StratifiedKFold
 
@@ -137,6 +138,48 @@ def reconstruct_random_split(
     return float(np.mean(batch_pccs))
 
 
+def encode_random_split_latents(
+    backbone: torch.nn.Module,
+    x: torch.Tensor,
+    pos: torch.Tensor,
+    st: torch.Tensor,
+    groups: list[np.ndarray],
+    batch_size: int = 16,
+    device: torch.device = torch.device("cpu"),
+) -> np.ndarray:
+    """Encode random-split capacity control latents matching the 3-way axis adapter representation."""
+    backbone.eval()
+    tok = backbone.tokenizer
+    latents_all: List[np.ndarray] = []
+    with torch.no_grad():
+        for i in range(0, len(x), batch_size):
+            xb = x[i : i + batch_size].to(device)
+            b = len(xb)
+            pb = pos.unsqueeze(0).expand(b, -1, -1).to(device)
+            sb = st.unsqueeze(0).expand(b, -1).to(device)
+
+            group_latents: List[torch.Tensor] = []
+            for grp in groups:
+                idx_t = torch.tensor(grp, dtype=torch.long, device=device)
+                x_sub = xb.index_select(dim=1, index=idx_t)
+                pos_sub = pb.index_select(dim=1, index=idx_t)
+                st_sub = sb.index_select(dim=1, index=idx_t)
+
+                feat, _ = tok.tokenize(x_sub, pos_sub, st_sub, backbone.overlap_ratio)
+                c_lat = feat.shape[1]
+                neuro = tok.encoder.neuros.type_as(feat).detach().view(1, c_lat, 1, -1)
+                h = backbone.projection(feat + neuro)
+                for block in backbone.blocks[:-1]:
+                    h = block(h)
+                h = F.normalize(h, p=2.0, dim=-1, eps=1e-6)
+                group_latents.append(h)
+
+            h_cat = torch.cat(group_latents, dim=1)
+            pooled = h_cat[:, :, 1:3, :].mean(dim=2).reshape(b, -1).cpu().numpy()
+            latents_all.append(pooled)
+    return np.concatenate(latents_all, axis=0)
+
+
 def main() -> None:
     device = torch.device("mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu"))
     print(f"Device: {device} | Loading full Nottingham 84-trial datasets...")
@@ -157,6 +200,8 @@ def main() -> None:
         "radial_only_z",
         "tangential_only_xy",
         "random_3way_split",
+        "random_3way_split_softhfc",
+        "axis_split_raw",
         "phase5_axis_split_xyz",
     ]
 
@@ -185,12 +230,12 @@ def main() -> None:
 
             x_sel = x_raw_ft[:, keep_mask, :].copy()
 
-            if gm in ("triaxial_xyz_softhfc", "phase5_axis_split_xyz"):
+            if gm in ("triaxial_xyz_softhfc", "random_3way_split_softhfc", "phase5_axis_split_xyz"):
                 x_sel = apply_soft_hfc(x_sel, pos_ori[:, 3:6], alpha=0.25)
 
             x_norm = np.stack([sensortype_wise_normalize(x_sel[i], st) for i in range(len(x_sel))], axis=0)
 
-            if gm == "phase5_axis_split_xyz":
+            if gm in ("phase5_axis_split_xyz", "axis_split_raw"):
                 xb = torch.from_numpy(x_norm).float()
                 pb = torch.from_numpy(pos_ori).float()
                 sb = torch.from_numpy(st).long()
@@ -220,17 +265,25 @@ def main() -> None:
                         latents_rand.append(h_rand[:, :, 1:3, :].mean(dim=2).reshape(len(x_batch), -1).cpu().numpy())
                 emb_pt = np.concatenate(latents_pt, axis=0)
                 emb_rand = np.concatenate(latents_rand, axis=0)
-            elif gm == "random_3way_split":
+            elif gm in ("random_3way_split", "random_3way_split_softhfc"):
                 xb = torch.from_numpy(x_norm).float().to(device)
                 pb = torch.from_numpy(pos_ori).float().unsqueeze(0).expand(len(xb), -1, -1).to(device)
                 sb = torch.from_numpy(st).long().unsqueeze(0).expand(len(xb), -1).to(device)
+                
+                n_ch = xb.shape[1]
+                rng = np.random.default_rng(42)
+                perm = rng.permutation(n_ch)
+                groups = np.array_split(perm, 3)
+
                 pcc_val = reconstruct_random_split(bb_pt, xb, pb, sb, n_splits=3, seed=42, batch_size=16)
 
-                # Use monolithic embeddings for linear probe comparison
-                sea_pt = precompute_seanet_features(bb_pt, {sub: x_norm}, device=device, batch_size=32)
-                emb_pt = encode_from_seanet_features(bb_pt, sea_pt, {sub: pos_ori}, {sub: st}, device=device, batch_size=32)[sub]
-                sea_rand = precompute_seanet_features(bb_rand, {sub: x_norm}, device=device, batch_size=32)
-                emb_rand = encode_from_seanet_features(bb_rand, sea_rand, {sub: pos_ori}, {sub: st}, device=device, batch_size=32)[sub]
+                # Genuine capacity-control random partition embeddings (Run 2 fix)
+                emb_pt = encode_random_split_latents(
+                    bb_pt, xb, torch.from_numpy(pos_ori).float(), torch.from_numpy(st).long(), groups, batch_size=16, device=device
+                )
+                emb_rand = encode_random_split_latents(
+                    bb_rand, xb, torch.from_numpy(pos_ori).float(), torch.from_numpy(st).long(), groups, batch_size=16, device=device
+                )
             else:
                 pcc_val = evaluate_zero_shot_tokenizer_pcc(bb_pt, {sub: x_norm}, {sub: pos_ori}, {sub: st}, device=device)
                 sea_pt = precompute_seanet_features(bb_pt, {sub: x_norm}, device=device, batch_size=32)
@@ -261,10 +314,11 @@ def main() -> None:
         subj_results[sub] = modes_out
         print(
             f"  [Nottingham {sub}] PCC raw={modes_out['triaxial_xyz_raw']['zero_shot_tokenizer_pcc']:.4f} "
-            f"-> random_3way={modes_out['random_3way_split']['zero_shot_tokenizer_pcc']:.4f} "
-            f"-> axis_split={modes_out['phase5_axis_split_xyz']['zero_shot_tokenizer_pcc']:.4f} "
-            f"| BACC raw={modes_out['triaxial_xyz_raw']['braille_5fold_bacc']['pretrained_linear_probe']*100:.1f}% "
-            f"-> axis={modes_out['phase5_axis_split_xyz']['braille_5fold_bacc']['pretrained_linear_probe']*100:.1f}%"
+            f"-> random_raw={modes_out['random_3way_split']['zero_shot_tokenizer_pcc']:.4f} "
+            f"-> random_hfc={modes_out['random_3way_split_softhfc']['zero_shot_tokenizer_pcc']:.4f} "
+            f"-> axis_hfc={modes_out['phase5_axis_split_xyz']['zero_shot_tokenizer_pcc']:.4f} "
+            f"| BACC axis_hfc={modes_out['phase5_axis_split_xyz']['braille_5fold_bacc']['pretrained_linear_probe']*100:.1f}% "
+            f"vs rand_hfc={modes_out['random_3way_split_softhfc']['braille_5fold_bacc']['pretrained_linear_probe']*100:.1f}%"
         )
 
     subs = sorted(subj_results.keys())
@@ -283,19 +337,26 @@ def main() -> None:
         }
 
     raw_pcc = np.array([subj_results[s]["triaxial_xyz_raw"]["zero_shot_tokenizer_pcc"] for s in subs])
+    hfc_pcc = np.array([subj_results[s]["triaxial_xyz_softhfc"]["zero_shot_tokenizer_pcc"] for s in subs])
     rad_pcc = np.array([subj_results[s]["radial_only_z"]["zero_shot_tokenizer_pcc"] for s in subs])
-    rnd_pcc = np.array([subj_results[s]["random_3way_split"]["zero_shot_tokenizer_pcc"] for s in subs])
-    p5_pcc = np.array([subj_results[s]["phase5_axis_split_xyz"]["zero_shot_tokenizer_pcc"] for s in subs])
+    rnd_raw_pcc = np.array([subj_results[s]["random_3way_split"]["zero_shot_tokenizer_pcc"] for s in subs])
+    rnd_hfc_pcc = np.array([subj_results[s]["random_3way_split_softhfc"]["zero_shot_tokenizer_pcc"] for s in subs])
+    axis_raw_pcc = np.array([subj_results[s]["axis_split_raw"]["zero_shot_tokenizer_pcc"] for s in subs])
+    axis_hfc_pcc = np.array([subj_results[s]["phase5_axis_split_xyz"]["zero_shot_tokenizer_pcc"] for s in subs])
 
     rad_diff = subject_bootstrap_ci(rad_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
-    p5_diff = subject_bootstrap_ci(p5_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
-    rnd_diff = subject_bootstrap_ci(rnd_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
-    axis_vs_rnd = subject_bootstrap_ci(p5_pcc - rnd_pcc, n_resamples=10_000, rng_seed=42)
+    axis_hfc_vs_raw = subject_bootstrap_ci(axis_hfc_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
+    rnd_raw_vs_raw = subject_bootstrap_ci(rnd_raw_pcc - raw_pcc, n_resamples=10_000, rng_seed=42)
+    
+    # Direct matched comparisons removing any additivity assumptions:
+    axis_vs_rnd_softhfc = subject_bootstrap_ci(axis_hfc_pcc - rnd_hfc_pcc, n_resamples=10_000, rng_seed=42)
+    axis_vs_rnd_raw = subject_bootstrap_ci(axis_raw_pcc - rnd_raw_pcc, n_resamples=10_000, rng_seed=42)
 
     rad_pval = compute_paired_permutation_p_value(rad_pcc - raw_pcc)
-    p5_pval = compute_paired_permutation_p_value(p5_pcc - raw_pcc)
-    rnd_pval = compute_paired_permutation_p_value(rnd_pcc - raw_pcc)
-    axis_vs_rnd_pval = compute_paired_permutation_p_value(p5_pcc - rnd_pcc)
+    axis_hfc_pval = compute_paired_permutation_p_value(axis_hfc_pcc - raw_pcc)
+    rnd_raw_pval = compute_paired_permutation_p_value(rnd_raw_pcc - raw_pcc)
+    axis_vs_rnd_softhfc_pval = compute_paired_permutation_p_value(axis_hfc_pcc - rnd_hfc_pcc)
+    axis_vs_rnd_raw_pval = compute_paired_permutation_p_value(axis_raw_pcc - rnd_raw_pcc)
 
     payload = {
         "dataset": "nottingham_opm_triaxial_zenodo_11126593_full84trials",
@@ -304,9 +365,12 @@ def main() -> None:
         "cohort_bootstrap_summary": cohort_summary,
         "paired_hypothesis_tests": {
             "radial_vs_raw": {"delta": rad_diff.mean, "ci_low": rad_diff.ci_low, "ci_high": rad_diff.ci_high, "p_value": rad_pval},
-            "axis_split_vs_raw": {"delta": p5_diff.mean, "ci_low": p5_diff.ci_low, "ci_high": p5_diff.ci_high, "p_value": p5_pval},
-            "random_split_vs_raw": {"delta": rnd_diff.mean, "ci_low": rnd_diff.ci_low, "ci_high": rnd_diff.ci_high, "p_value": rnd_pval},
-            "axis_split_vs_random_split": {"delta": axis_vs_rnd.mean, "ci_low": axis_vs_rnd.ci_low, "ci_high": axis_vs_rnd.ci_high, "p_value": axis_vs_rnd_pval},
+            "axis_split_hfc_vs_raw": {"delta": axis_hfc_vs_raw.mean, "ci_low": axis_hfc_vs_raw.ci_low, "ci_high": axis_hfc_vs_raw.ci_high, "p_value": axis_hfc_pval},
+            "random_split_raw_vs_raw": {"delta": rnd_raw_vs_raw.mean, "ci_low": rnd_raw_vs_raw.ci_low, "ci_high": rnd_raw_vs_raw.ci_high, "p_value": rnd_raw_pval},
+            "axis_split_vs_random_split_softhfc": {"delta": axis_vs_rnd_softhfc.mean, "ci_low": axis_vs_rnd_softhfc.ci_low, "ci_high": axis_vs_rnd_softhfc.ci_high, "p_value": axis_vs_rnd_softhfc_pval},
+            "axis_split_vs_random_split_raw": {"delta": axis_vs_rnd_raw.mean, "ci_low": axis_vs_rnd_raw.ci_low, "ci_high": axis_vs_rnd_raw.ci_high, "p_value": axis_vs_rnd_raw_pval},
+            # Backward-compatible alias for existing plotting scripts:
+            "axis_split_vs_random_split": {"delta": axis_vs_rnd_softhfc.mean, "ci_low": axis_vs_rnd_softhfc.ci_low, "ci_high": axis_vs_rnd_softhfc.ci_high, "p_value": axis_vs_rnd_softhfc_pval},
         },
         "per_subject": subj_results,
     }
@@ -316,9 +380,13 @@ def main() -> None:
     print(f"\nSaved verified full Nottingham summary to {out_p}")
     print("Key Results:")
     print(f"  Raw Monolithic PCC: {cohort_summary['triaxial_xyz_raw']['zero_shot_pcc']['mean']:.4f}")
-    print(f"  Random 3-way Split PCC (Capacity Control): {cohort_summary['random_3way_split']['zero_shot_pcc']['mean']:.4f} (p = {rnd_pval:.4f})")
-    print(f"  Axis-Partitioned Split PCC: {cohort_summary['phase5_axis_split_xyz']['zero_shot_pcc']['mean']:.4f} (p = {p5_pval:.4f})")
-    print(f"  Axis-Partitioned vs Random Split: Δ = {axis_vs_rnd.mean:+.4f} [{axis_vs_rnd.ci_low:+.4f}, {axis_vs_rnd.ci_high:+.4f}] (p = {axis_vs_rnd_pval:.4f})")
+    print(f"  Soft-HFC Monolithic PCC: {cohort_summary['triaxial_xyz_softhfc']['zero_shot_pcc']['mean']:.4f}")
+    print(f"  Random 3-way Split (Raw) PCC: {cohort_summary['random_3way_split']['zero_shot_pcc']['mean']:.4f}")
+    print(f"  Random 3-way Split (Soft-HFC) PCC [Run 1]: {cohort_summary['random_3way_split_softhfc']['zero_shot_pcc']['mean']:.4f}")
+    print(f"  Axis-Partitioned Split (Raw) PCC: {cohort_summary['axis_split_raw']['zero_shot_pcc']['mean']:.4f}")
+    print(f"  Axis-Partitioned Split (Soft-HFC) PCC: {cohort_summary['phase5_axis_split_xyz']['zero_shot_pcc']['mean']:.4f}")
+    print(f"  Matched Soft-HFC: Axis vs Random Δ = {axis_vs_rnd_softhfc.mean:+.4f} [{axis_vs_rnd_softhfc.ci_low:+.4f}, {axis_vs_rnd_softhfc.ci_high:+.4f}] (p = {axis_vs_rnd_softhfc_pval:.4f})")
+    print(f"  Matched Raw: Axis vs Random Δ = {axis_vs_rnd_raw.mean:+.4f} [{axis_vs_rnd_raw.ci_low:+.4f}, {axis_vs_rnd_raw.ci_high:+.4f}] (p = {axis_vs_rnd_raw_pval:.4f})")
 
 
 if __name__ == "__main__":

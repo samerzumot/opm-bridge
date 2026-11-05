@@ -31,16 +31,12 @@ def _configure_style() -> None:
 
 
 def plot_fig1_data_efficiency() -> None:
-    """Figure 1: Cross-subject data-efficiency scaling on ds005107 (Age & Clean Visual Detection)."""
-    clean_path = RESULTS_DIR / "summary_clean_visual_detection.json"
-    if clean_path.exists():
-        det = json.loads(clean_path.read_text())
-    else:
-        det = json.loads((RESULTS_DIR / "summary_aligned21_visual_detection.json").read_text())
+    """Figure 1: Cross-subject data-efficiency scaling on ds005107 across stimulus facial dimensions."""
     age = json.loads((RESULTS_DIR / "summary_aligned21_age.json").read_text())
+    gender = json.loads((RESULTS_DIR / "summary_aligned21_gender.json").read_text())
 
     budgets = [1, 2, 4, 10, 20]
-    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.2), sharex=True)
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.2), sharex=True)
 
     arm_specs = [
         ("pretrained_linear_probe", "Pretrained Linear Probe", "#1f77b4", "o", "-"),
@@ -51,39 +47,41 @@ def plot_fig1_data_efficiency() -> None:
         ("classical_bandpower", "Classical Band-Power", "#ff7f0e", "P", "--"),
     ]
 
-    # Panel A: High-SNR Evoked Visual Detection
-    ax = axes[0]
-    for arm_key, label, color, marker, ls in arm_specs:
-        if arm_key not in det["results_by_budget"]["1"]:
-            continue
-        means = [det["results_by_budget"][str(b)][arm_key]["mean"] * 100 for b in budgets]
-        lows = [det["results_by_budget"][str(b)][arm_key]["ci_low"] * 100 for b in budgets]
-        highs = [det["results_by_budget"][str(b)][arm_key]["ci_high"] * 100 for b in budgets]
-        ax.plot(budgets, means, label=label, color=color, marker=marker, linestyle=ls, lw=1.8)
-        ax.fill_between(budgets, lows, highs, color=color, alpha=0.12)
-    ax.set_title("A. Evoked Visual Detection (Unconfounded, N=21)")
-    ax.set_xlabel("Training Subject Budget (B)")
-    ax.set_ylabel("Balanced Accuracy (%)")
-    ax.set_xticks(budgets)
-    ax.set_ylim(65.0, 102.0)
-    ax.grid(True, linestyle=":", alpha=0.5)
-    ax.legend(loc="lower right", frameon=True, fontsize=8)
-
-    # Panel B: Cross-Subject Demographic Decoding (Age)
-    ax2 = axes[1]
+    # Panel A: Face Age Decoding across Subject Sample Budgets
+    ax1 = axes[0]
     for arm_key, label, color, marker, ls in arm_specs:
         if arm_key not in age["results_by_budget"]["1"]:
             continue
         means = [age["results_by_budget"][str(b)][arm_key]["mean"] * 100 for b in budgets]
         lows = [age["results_by_budget"][str(b)][arm_key]["ci_low"] * 100 for b in budgets]
         highs = [age["results_by_budget"][str(b)][arm_key]["ci_high"] * 100 for b in budgets]
+        ax1.plot(budgets, means, label=label, color=color, marker=marker, linestyle=ls, lw=1.8)
+        ax1.fill_between(budgets, lows, highs, color=color, alpha=0.12)
+    ax1.axhline(50.0, color="black", linestyle="--", lw=1.0, alpha=0.6, label="Chance Floor (50%)")
+    ax1.set_title("A. Facial Stimulus Age Decoding (N=21)")
+    ax1.set_xlabel("Training Subject Budget (B)")
+    ax1.set_ylabel("Balanced Accuracy (%)")
+    ax1.set_xticks(budgets)
+    ax1.set_ylim(44.0, 56.0)
+    ax1.grid(True, linestyle=":", alpha=0.5)
+    ax1.legend(loc="lower right", frameon=True, fontsize=7.5)
+
+    # Panel B: Face Sex Decoding across Subject Sample Budgets
+    ax2 = axes[1]
+    for arm_key, label, color, marker, ls in arm_specs:
+        if arm_key not in gender["results_by_budget"]["1"]:
+            continue
+        means = [gender["results_by_budget"][str(b)][arm_key]["mean"] * 100 for b in budgets]
+        lows = [gender["results_by_budget"][str(b)][arm_key]["ci_low"] * 100 for b in budgets]
+        highs = [gender["results_by_budget"][str(b)][arm_key]["ci_high"] * 100 for b in budgets]
         ax2.plot(budgets, means, label=label, color=color, marker=marker, linestyle=ls, lw=1.8)
         ax2.fill_between(budgets, lows, highs, color=color, alpha=0.12)
-    ax2.axhline(50.0, color="black", linestyle="--", lw=1.0, alpha=0.6, label="Chance (50%)")
-    ax2.set_title("B. Cross-Subject Face Attribute Decoding (Age, N=21)")
+    ax2.axhline(50.0, color="black", linestyle="--", lw=1.0, alpha=0.6, label="Chance Floor (50%)")
+    ax2.set_title("B. Facial Stimulus Sex Decoding (N=21)")
     ax2.set_xlabel("Training Subject Budget (B)")
     ax2.set_ylabel("Balanced Accuracy (%)")
     ax2.set_xticks(budgets)
+    ax2.set_ylim(44.0, 56.0)
     ax2.grid(True, linestyle=":", alpha=0.5)
 
     fig.tight_layout()
@@ -158,15 +156,17 @@ def plot_fig3_nottingham_triaxial() -> None:
     cs = nott["cohort_bootstrap_summary"]
 
     modes = [
-        ("triaxial_xyz_raw", "Monolithic\nTriaxial (X/Y/Z)", "#7f7f7f"),
-        ("triaxial_xyz_softhfc", "Triaxial +\nSoft-HFC", "#1f77b4"),
-        ("random_3way_split", "Random Split\n(Capacity Ctrl)", "#d62728"),
-        ("tangential_only_xy", "Tangential\nOnly (X/Y)", "#ff7f0e"),
-        ("phase5_axis_split_xyz", "Axis-Partitioned\nAdapter (X/Y/Z)", "#2ca02c"),
-        ("radial_only_z", "Radial Isolation\n(Z-Axis Only)", "#9467bd"),
+        ("triaxial_xyz_raw", "Monolithic\n(Raw)", "#7f7f7f"),
+        ("triaxial_xyz_softhfc", "Monolithic\n(Soft-HFC)", "#1f77b4"),
+        ("random_3way_split", "Random 3-way\n(Raw)", "#e377c2"),
+        ("random_3way_split_softhfc", "Random 3-way\n(Soft-HFC)", "#d62728"),
+        ("radial_only_z", "Radial Only\n(Z-Axis)", "#9467bd"),
+        ("tangential_only_xy", "Tangential\n(X/Y)", "#ff7f0e"),
+        ("axis_split_raw", "Axis Split\n(Raw)", "#17becf"),
+        ("phase5_axis_split_xyz", "Axis Split\n(Soft-HFC)", "#2ca02c"),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.2))
+    fig, axes = plt.subplots(1, 2, figsize=(14.0, 4.4))
     x = np.arange(len(modes))
     labels = [m[1] for m in modes]
     colors = [m[2] for m in modes]

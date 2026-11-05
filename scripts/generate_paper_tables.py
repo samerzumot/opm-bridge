@@ -139,27 +139,29 @@ def generate_table3_markdown() -> str:
     cs = nott_data["cohort_bootstrap_summary"]
 
     lines = [
-        "| Array Configuration | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC [95% CI] | Paired Test vs Monolithic Raw |",
-        "| :--- | :--- | :--- | :--- | :--- |",
+        "| Array Configuration | Filtering | Channel Count | Reconstruction PCC [95% CI] | Braille Decoding BACC [95% CI] | Statistical Comparison |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
 
     mode_info = [
-        ("triaxial_xyz_raw", "Monolithic Triaxial ($X/Y/Z$ Raw)", "155–176", "Baseline"),
-        ("triaxial_xyz_softhfc", "Triaxial ($X/Y/Z$ + Soft-HFC $\\alpha=0.25$)", "155–176", "--"),
-        ("random_3way_split", "Random 3-way Split (Capacity Control)", "3 × ~55", "Δ = +0.0269 (p = 0.0016)"),
-        ("radial_only_z", "Radial Isolation ($Z$-axis only)", "55–60", "Δ = +0.1218 (p = 0.0016)"),
-        ("tangential_only_xy", "Tangential Only ($X/Y$)", "100–116", "Δ = +0.0720 (p = 0.0016)"),
-        ("phase5_axis_split_xyz", "Axis-Partitioned Adapter ($X/Y/Z$)", "155–176", "**Δ = +0.1123 (p = 0.0016)**"),
+        ("triaxial_xyz_raw", "Monolithic Triaxial", "Raw", "155–176", "Baseline (Raw)"),
+        ("triaxial_xyz_softhfc", "Monolithic Triaxial", "Soft-HFC", "155–176", "Baseline (Soft-HFC)"),
+        ("random_3way_split", "Random 3-way Split (Capacity Control)", "Raw", "3 × ~55", "Δ = +0.0269 vs Raw Mono (p = 0.0016)"),
+        ("random_3way_split_softhfc", "Random 3-way Split (Capacity Control)", "Soft-HFC", "3 × ~55", "Δ = +0.0292 vs HFC Mono (p = 0.0016)"),
+        ("radial_only_z", "Radial Isolation ($Z$-axis only)", "Raw", "55–60", "Δ = +0.1218 vs Raw Mono (p = 0.0016)"),
+        ("tangential_only_xy", "Tangential Only ($X/Y$)", "Raw", "100–116", "Δ = +0.0720 vs Raw Mono (p = 0.0016)"),
+        ("axis_split_raw", "Axis-Partitioned Adapter ($Z, X, Y$)", "Raw", "155–176", "**Δ = +0.1135 vs Random Raw (p = 0.0016)**"),
+        ("phase5_axis_split_xyz", "Axis-Partitioned Adapter ($Z, X, Y$)", "Soft-HFC", "155–176", "**Δ = +0.1096 vs Random HFC (p = 0.0016)**"),
     ]
 
-    for mode_key, label, ch_count, stat in mode_info:
+    for mode_key, label, filt, ch_count, stat in mode_info:
         if mode_key not in cs:
             continue
         pcc = cs[mode_key]["zero_shot_pcc"]
         bacc = cs[mode_key]["braille_5fold_bacc"]["pretrained_linear_probe"]
         pcc_str = f"{pcc['mean']:.4f} [{pcc['ci_low']:.4f}, {pcc['ci_high']:.4f}]"
         bacc_str = f"{bacc['mean']*100:.2f}% [{bacc['ci_low']*100:.2f}, {bacc['ci_high']*100:.2f}]"
-        lines.append(f"| **{label}** | {ch_count} | {pcc_str} | {bacc_str} | {stat} |")
+        lines.append(f"| **{label}** | {filt} | {ch_count} | {pcc_str} | {bacc_str} | {stat} |")
 
     return "\n".join(lines)
 
@@ -169,7 +171,6 @@ def generate_table4_markdown() -> str:
     squid_data = json.loads((RESULTS_DIR / "summary_ds000117_squid_baseline.json").read_text())
     ab_data = json.loads((RESULTS_DIR / "summary_phase3_ablations.json").read_text())
     pcc = squid_data["reconstruction_pcc"]
-    det = squid_data["visual_detection"]
     face = squid_data["face_decoding"]
 
     opm_pcc_def = ab_data["zero_shot_tokenizer_pcc_by_geometry_mode"]["default"]["mean_pcc"]
@@ -178,14 +179,14 @@ def generate_table4_markdown() -> str:
     opm_gain_pct = (opm_delta / opm_pcc_def) * 100
 
     lines = [
-        "| Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Evoked Detection (Pretrained vs Ctrl A) | Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
-        f"| **SQUID (`ds000117`, sub-01)** | Full Array (306 ch) | `MAG=1, GRAD=2` | {pcc['full_306ch']:.4f} | {det['pretrained']['accuracy']*100:.2f}% vs {det['control_a']['accuracy']*100:.2f}% (Δ = {det['delta_vs_ctrl_a']*100:+.2f}%) | {face['pretrained']['accuracy']*100:.2f}% vs {face['control_a']['accuracy']*100:.2f}% (Δ = {face['delta_vs_ctrl_a']*100:+.2f}%) | Native Dual-Sensor Baseline |",
-        f"| **SQUID (`ds000117`, sub-01)** | Magnetometers (102 ch) | `MAG=1` | {pcc['mag_102ch']:.4f} | -- | -- | SQUID Magnetometer Baseline |",
-        f"| **SQUID (`ds000117`, sub-01)** | Gradiometers (204 ch) | `GRAD=2` | {pcc['grad_204ch']:.4f} | -- | -- | SQUID Gradiometer Baseline |",
-        f"| **SQUID (`ds000117`, sub-01)** | Inverse Control (102 ch Mag) | `GRAD=2` | **{pcc['mag_as_grad']:.4f}** | -- | -- | **Δ = {pcc['delta_mag_remapped_to_grad']:+.4f} (+73.7% gain)** |",
-        f"| **OPM (`ds005107`, N=21)** | Whole-Head (50 ch) | `MAG=1` | {opm_pcc_def:.4f} | 99.81% vs 96.60% (Δ = +3.22%, p < 0.0001) | Floor (~50%) | OPM Magnetometer Baseline |",
-        f"| **OPM (`ds005107`, N=21)** | Remapped (`opm_as_grad`) | `GRAD=2` | **{opm_pcc_grad:.4f}** | -- | Floor (~50%) | **Δ = {opm_delta:+.4f} (+{opm_gain_pct:.1f}% gain)** |",
+        "| Hardware & Dataset | Array & Channels | Sensor Type Tag | Zero-Shot PCC | Downstream Face Decoding (Pretrained vs Ctrl A) | Sensor-Type Remapping Effect |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        f"| **SQUID (`ds000117`, sub-01)** | Full Array (306 ch) | `MAG=1, GRAD=2` | {pcc['full_306ch']:.4f} | {face['pretrained']['accuracy']*100:.2f}% vs {face['control_a']['accuracy']*100:.2f}% (Δ = {face['delta_vs_ctrl_a']*100:+.2f}%) | Native Dual-Sensor Baseline |",
+        f"| **SQUID (`ds000117`, sub-01)** | Magnetometers (102 ch) | `MAG=1` | {pcc['mag_102ch']:.4f} | -- | SQUID Magnetometer Baseline |",
+        f"| **SQUID (`ds000117`, sub-01)** | Gradiometers (204 ch) | `GRAD=2` | {pcc['grad_204ch']:.4f} | -- | SQUID Gradiometer Baseline |",
+        f"| **SQUID (`ds000117`, sub-01)** | Inverse Control (102 ch Mag) | `GRAD=2` | **{pcc['mag_as_grad']:.4f}** | -- | **Δ = {pcc['delta_mag_remapped_to_grad']:+.4f} (+73.7% gain)** |",
+        f"| **OPM (`ds005107`, N=21)** | Whole-Head (50 ch) | `MAG=1` | {opm_pcc_def:.4f} | Floor (~50%) | OPM Magnetometer Baseline |",
+        f"| **OPM (`ds005107`, N=21)** | Remapped (`opm_as_grad`) | `GRAD=2` | **{opm_pcc_grad:.4f}** | Floor (~50%) | **Δ = {opm_delta:+.4f} (+{opm_gain_pct:.1f}% gain)** |",
     ]
     return "\n".join(lines)
 
