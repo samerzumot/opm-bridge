@@ -1,0 +1,1 @@
+PASS: all 18 triaxial table values agree with saved summaries; cohort counts match; no em dash or checked author identifiers; no overfull boxes or unresolved references.

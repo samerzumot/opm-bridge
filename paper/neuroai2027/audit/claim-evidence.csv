@@ -1,0 +1,9 @@
+claim_id,location,claim_text,claim_type,evidence_id,evidence_location,support_status,verification_method,reviewer,notes
+C1,Abstract; Table 1,Remapping PCC 0.2501 to 0.3819,result,results/summary_phase3_ablations.json,reconstruction summary,supported,Reviewer JSON comparison,numerical,"Saved outputs, not raw replay"
+C2,Table 2,Six triaxial PCC means and intervals,result,results/summary_phase4_nottingham_full.json,cohort_bootstrap_summary,supported,verify.py and independent review,numerical,Batch-weighted within subject
+C3,Results,SQUID PCC 0.4105 to 0.7130,result,results/summary_ds000117_squid_baseline.json,reconstruction_pcc,supported,Reviewer JSON comparison,numerical,One participant/run
+C4,Methods,"Axis adapter filtered, random split unfiltered",method,scripts/run_nottingham_full_benchmark.py,188-189,supported,Source inspection,methods,Explicitly disclosed
+C5,Methods,Masked-token pretraining,method,BrainOmni NeurIPS 2025 paper,Section 2.3,supported,Primary full-text and vendor code,citation,Original autoregressive claim corrected
+C6,Limitations,Detection has class-dependent baseline repetition,method,scripts/run_transfer_benchmark.py,349-354,supported,Source inspection,methods,Excluded as transfer evidence
+C7,Datasets,FACE-DEC coordinates approximate,method,https://github.com/OpenNeuroDatasets/ds005107,README,supported,Primary documentation,editor,Not anatomical alignment
+C8,Entire manuscript,Raw data reproduce all saved values,result,raw data and execution,not replayed,not_verifiable,Not performed,editor,Pending provenance check

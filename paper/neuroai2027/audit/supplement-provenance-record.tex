@@ -1,0 +1,47 @@
+% Internal reproducibility record. Not included in the supplement.
+\paragraph{Environment.}
+The implementation targets macOS on Apple Silicon. Table~\ref{tab:s-environment}
+lists package versions from the supplied dependency lockfile; these describe the
+packaged software environment rather than a verified record of the run-time environment.
+
+\paragraph{Model and configuration identifiers.}
+Table~\ref{tab:s-hashes} lists configuration checksums and the pretrained model
+repository, revision, and file hashes. Configuration checksums correspond to the
+supplied files. Checkpoint identifiers are author-reported; the checkpoint is
+obtained separately from the upstream repository.
+
+\begin{table*}[htbp]\centering\small
+\begin{tabular}{lll}
+\toprule
+Artifact & Status & SHA-256 or identifier \\
+\midrule
+\texttt{configs/ds005107\_primary.yaml} & recomputed & \texttt{ef7187c8942800e45402ed2ff8e9fc22} \\
+ & & \texttt{a6776c0af31a2c391cee6eec2d3162f3} \\
+\texttt{configs/nottingham\_adults.yaml} & recomputed & \texttt{19817ef73b7e0dfebac56bc1dd55043a} \\
+ & & \texttt{2de47205dffad015c2103ee5d96bd8a0} \\
+\midrule
+Hugging Face repository & reported & \texttt{OpenTSLab/BrainOmni} \\
+Revision commit & reported & \texttt{9a4d3c70495370397ccfbfd6d2496f25} \\
+ & & \texttt{647545a5} \\
+BrainOmni.pt SHA-256 & reported & \texttt{62c67ba6a84ea0625e67a3b5e7463fe3} \\
+ & & \texttt{930bfee88a612a225e9062a052542ffc} \\
+model\_cfg.json SHA-256 & reported & \texttt{4b994b38f1a8dccc8136f2b837a8ad2d} \\
+ & & \texttt{3ebb028a1af0c527f9e0902a1a5c252e} \\
+\bottomrule\end{tabular}
+\caption{Provenance identifiers. Configuration hashes are recomputed from the files in the supplied code package. The pretrained checkpoint is obtained separately; its repository, revision and hashes are author-reported.}
+\label{tab:s-hashes}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\begin{tabular}{ll}
+\toprule
+Package & Version (from \texttt{uv.lock}) \\
+\midrule
+\texttt{torch} & \texttt{2.14.1} \\
+\texttt{mne} & \texttt{1.12.1} \\
+\texttt{scikit-learn} & \texttt{1.7.2} \\
+\texttt{numpy} & \texttt{2.2.6} \\
+\texttt{scipy} & \texttt{1.15.3} \\
+Python & \texttt{$\geq$3.10, $<$3.14} \\
+\bottomrule\end{tabular}
+\caption{Package versions from the supplied dependency lockfile. These describe the packaged software environment, not a verified run-time environment.}
+\label{tab:s-environment}\end{table*}

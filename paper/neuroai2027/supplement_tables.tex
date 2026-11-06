@@ -1,0 +1,129 @@
+\begin{table*}[htbp]\centering\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lrrrrr}
+\toprule
+Participant & Default & GRAD tag & Zero ori. & Rev. ori. & Scrambled \\
+\midrule
+P01 & 0.2717 & 0.3950 & 0.2600 & 0.2563 & 0.2327 \\
+P02 & 0.2522 & 0.3735 & 0.2413 & 0.2418 & 0.2331 \\
+P03 & 0.2435 & 0.3713 & 0.2299 & 0.2268 & 0.2265 \\
+P04 & 0.2444 & 0.3976 & 0.2310 & 0.2250 & 0.2420 \\
+P05 & 0.2484 & 0.3944 & 0.2386 & 0.2445 & 0.2466 \\
+P06 & 0.2573 & 0.3910 & 0.2461 & 0.2439 & 0.2279 \\
+P07 & 0.2580 & 0.3940 & 0.2501 & 0.2511 & 0.2350 \\
+P08 & 0.2630 & 0.3890 & 0.2518 & 0.2502 & 0.2327 \\
+P09 & 0.2641 & 0.3736 & 0.2549 & 0.2504 & 0.2382 \\
+P10 & 0.2486 & 0.3708 & 0.2352 & 0.2306 & 0.2376 \\
+P11 & 0.2546 & 0.3855 & 0.2384 & 0.2384 & 0.2300 \\
+P12 & 0.2415 & 0.3839 & 0.2270 & 0.2241 & 0.2355 \\
+P13 & 0.2302 & 0.3680 & 0.2134 & 0.2063 & 0.2347 \\
+P14 & 0.2579 & 0.3864 & 0.2431 & 0.2425 & 0.2352 \\
+P15 & 0.2352 & 0.3753 & 0.2159 & 0.2109 & 0.2251 \\
+P16 & 0.2571 & 0.3836 & 0.2462 & 0.2446 & 0.2350 \\
+P17 & 0.2564 & 0.3884 & 0.2467 & 0.2425 & 0.2251 \\
+P18 & 0.2509 & 0.3745 & 0.2327 & 0.2307 & 0.2303 \\
+P19 & 0.2562 & 0.3813 & 0.2363 & 0.2370 & 0.2268 \\
+P20 & 0.2373 & 0.3771 & 0.2163 & 0.2137 & 0.2258 \\
+P21 & 0.2226 & 0.3647 & 0.1990 & 0.2020 & 0.2368 \\
+\midrule
+Mean & 0.2501 & 0.3819 & 0.2359 & 0.2340 & 0.2330 \\
+\bottomrule\end{tabular}
+\caption{Zero-shot reconstruction PCC per participant on FACE-DEC (ds005107), 50 shared channels, Soft-HFC $\alpha=0.25$. Participants are indexed in the saved record order, which is not the dataset's own participant numbering. Waveforms are identical across columns; only the metadata supplied to the tokenizer differs.}
+\label{tab:s-single-per-subject}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Contrast vs default & Mean $\Delta$ & 95\% CI & Consistent & Exact $p$ \\
+\midrule
+Gradiometer tag & $+0.1318$ & $[+0.1275, +0.1360]$ & 21/21 & 9.54e-07 \\
+Zero orientation & $-0.0142$ & $[-0.0160, -0.0124]$ & 21/21 & 9.54e-07 \\
+Reversed orientation & $-0.0161$ & $[-0.0183, -0.0139]$ & 21/21 & 9.54e-07 \\
+Scrambled geometry & $-0.0171$ & $[-0.0225, -0.0115]$ & 19/21 & 4.58e-05 \\
+\bottomrule\end{tabular}
+\caption{Paired single-axis contrasts, 21 participants. Confidence intervals are percentile bootstrap over participants, 20{,}000 resamples, seed 0. The consistency column counts participants moving in the stated direction. $p$ is the exact two-sided sign-flip permutation value enumerating all $2^{21}$ assignments.}
+\label{tab:s-single-contrasts}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\begin{tabular}{llrr}
+\toprule
+Configuration & HFC & Mean PCC & 95\% CI \\
+\midrule
+Monolithic & no & 0.3726 & $[0.3405, 0.4048]$ \\
+Monolithic & Soft & 0.3461 & $[0.3100, 0.3815]$ \\
+Random 3-way & no & 0.3995 & $[0.3689, 0.4286]$ \\
+Random 3-way & Soft & 0.3753 & $[0.3414, 0.4074]$ \\
+Axis partition & no & 0.5130 & $[0.4832, 0.5436]$ \\
+Axis partition & Soft & 0.4849 & $[0.4500, 0.5197]$ \\
+\midrule
+Radial only ($Z$) & no & 0.4944 & $[0.4666, 0.5273]$ \\
+Tangential only ($X,Y$) & no & 0.4446 & $[0.4111, 0.4773]$ \\
+\bottomrule\end{tabular}
+\caption{Triaxial reconstruction, 10 adult participants, 84 trials each. The upper block is the complete $2\times3$ grid crossing partition type with filtering. The lower block reconstructs channel subsets and is not comparable to the full-array rows. Confidence intervals use participant bootstrap with 20{,}000 resamples and seed 0.}
+\label{tab:s-tri-cohort}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Participant & Mono. raw & Mono. Soft & Rand. raw & Rand. Soft & Axis raw & Axis Soft & Radial & Tangential \\
+\midrule
+P01 & 0.3167 & 0.2813 & 0.3512 & 0.3206 & 0.4495 & 0.4094 & 0.4669 & 0.3837 \\
+P02 & 0.3365 & 0.2991 & 0.3646 & 0.3334 & 0.4662 & 0.4290 & 0.4600 & 0.3869 \\
+P03 & 0.3076 & 0.2734 & 0.3379 & 0.3077 & 0.4514 & 0.4136 & 0.4659 & 0.3736 \\
+P04 & 0.3035 & 0.2698 & 0.3250 & 0.2932 & 0.4801 & 0.4348 & 0.4939 & 0.3746 \\
+P05 & 0.4342 & 0.4038 & 0.4465 & 0.4275 & 0.5780 & 0.5530 & 0.5817 & 0.4800 \\
+P06 & 0.4585 & 0.4369 & 0.4711 & 0.4523 & 0.5957 & 0.5744 & 0.5908 & 0.4744 \\
+P07 & 0.4096 & 0.3948 & 0.4257 & 0.4052 & 0.5268 & 0.5113 & 0.4658 & 0.4911 \\
+P08 & 0.3758 & 0.3560 & 0.4061 & 0.3890 & 0.5080 & 0.4908 & 0.4353 & 0.4907 \\
+P09 & 0.3867 & 0.3667 & 0.4250 & 0.4062 & 0.5300 & 0.5102 & 0.4802 & 0.4865 \\
+P10 & 0.3970 & 0.3796 & 0.4420 & 0.4183 & 0.5443 & 0.5228 & 0.5037 & 0.5048 \\
+\midrule
+Mean & 0.3726 & 0.3461 & 0.3995 & 0.3753 & 0.5130 & 0.4849 & 0.4944 & 0.4446 \\
+\bottomrule\end{tabular}
+\caption{Zero-shot reconstruction PCC per participant across the triaxial grid (Zenodo 11126593, the 10 adult participants). Every contrast in the main text is computed from these columns within a single filtering regime.}
+\label{tab:s-tri-per-subject}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Contrast (matched filtering) & Mean $\Delta$ & 95\% CI & Consistent & Exact $p$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Grouping: axis partition against a size-matched random partition}} \\
+Soft-HFC & $+0.1096$ & $[+0.1009, +0.1193]$ & 10/10 & 1.95e-03 \\
+Raw & $+0.1135$ & $[+0.1040, +0.1253]$ & 10/10 & 1.95e-03 \\
+\midrule
+\multicolumn{5}{l}{\textit{Capacity: random partition against the monolithic tokenizer}} \\
+Soft-HFC & $+0.0292$ & $[+0.0228, +0.0349]$ & 10/10 & 1.95e-03 \\
+Raw & $+0.0269$ & $[+0.0205, +0.0333]$ & 10/10 & 1.95e-03 \\
+\midrule
+\multicolumn{5}{l}{\textit{Total: axis partition against the monolithic tokenizer}} \\
+Soft-HFC & $+0.1388$ & $[+0.1313, +0.1467]$ & 10/10 & 1.95e-03 \\
+Raw & $+0.1404$ & $[+0.1320, +0.1502]$ & 10/10 & 1.95e-03 \\
+\midrule
+\multicolumn{5}{l}{\textit{Filtering: Soft-HFC applied within each partition type}} \\
+Monolithic & $-0.0265$ & $[-0.0314, -0.0215]$ & 10/10 & 1.95e-03 \\
+Random 3-way & $-0.0242$ & $[-0.0278, -0.0206]$ & 10/10 & 1.95e-03 \\
+Axis partition & $-0.0281$ & $[-0.0346, -0.0219]$ & 10/10 & 1.95e-03 \\
+\bottomrule\end{tabular}
+\caption{All paired triaxial contrasts, 10 participants. Every row compares two conditions with identical filtering, or one partition type under both filtering settings. With $n=10$ the smallest attainable exact $p$ is $2/2^{10}\approx0.002$, so values at that floor indicate perfect sign consistency rather than a resolved tail.}
+\label{tab:s-tri-contrasts}\end{table*}
+
+\begin{table*}[htbp]\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Configuration & HFC & Probe & Ctrl A & Classical & Classical 95\% CI & Cl. $>$ Pr. \\
+\midrule
+Monolithic & no & 48.24 & 46.71 & 53.54 & $[49.93, 56.75]$ & 8/10 \\
+Monolithic & Soft & 49.07 & 46.67 & 54.50 & $[51.03, 57.65]$ & 8/10 \\
+Random 3-way & no & 50.83 & 48.69 & 53.54 & $[49.93, 56.75]$ & 7/10 \\
+Random 3-way & Soft & 48.51 & 48.61 & 54.50 & $[51.03, 57.65]$ & 7/10 \\
+Axis partition & no & 47.53 & 51.61 & 53.54 & $[49.93, 56.75]$ & 7/10 \\
+Axis partition & Soft & 50.19 & 50.12 & 54.50 & $[51.03, 57.65]$ & 8/10 \\
+Radial only ($Z$) & no & 47.19 & 47.79 & 53.33 & $[49.94, 57.01]$ & 8/10 \\
+Tangential only ($X,Y$) & no & 49.35 & 46.78 & 52.76 & $[48.54, 56.75]$ & 8/10 \\
+\bottomrule\end{tabular}
+\caption{Braille decoding balanced accuracy (\%), five-fold within participant, 10 adult participants. The classical arm computes six log band powers spanning 1--96\,Hz plus four temporal window means per channel, so it does not depend on how channels are grouped for the tokenizer and takes the same value across partitions sharing a channel set and filtering. Its interval excludes chance only in the Soft-HFC full-array conditions. The final column counts participants in which the classical decoder exceeds the pretrained probe.}
+\label{tab:s-decoding}\end{table*}
+
