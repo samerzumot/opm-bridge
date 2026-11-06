@@ -15,6 +15,3 @@ __pycache__/
 # LaTeX build artifacts
 paper/neuroai2027/build/
 
-# Built submission PDFs: held back while the paper is under double-blind review
-paper/neuroai2027/short_paper.pdf
-paper/neuroai2027/supplement.pdf
