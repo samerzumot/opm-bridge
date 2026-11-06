@@ -45,7 +45,7 @@ where $\mathbf{Q} = \mathbf{Q}_R \mathbf{R}$ represents the thin QR decompositio
 
 ## Section S2: Upstream Foundation Model Pre-Training Corpus Audit
 
-BrainOmni (OpenTSLab, 2025) was trained on 2,653.8 hours of electrophysiological data across 22 datasets. Table S1 details the complete breakdown of datasets, recording modalities, and sensor technologies.
+BrainOmni (OpenTSLab, 2025) was trained on 2,653.8 hours of electrophysiological data across 22 datasets (1,997.0 h EEG, 656.8 h MEG). Those totals and the sensor-system attributions below are taken from the upstream release. **The per-dataset hour figures in Table S1 are an estimate apportioned to match the published total; they are not quoted from the upstream paper and should be replaced with sourced values or removed before submission.**
 
 **Table S1:** Upstream pre-training dataset composition for BrainOmni.
 
@@ -78,22 +78,27 @@ BrainOmni (OpenTSLab, 2025) was trained on 2,653.8 hours of electrophysiological
 
 To assess downstream linear probing data-efficiency under low-to-medium sample budgets, models were evaluated across $B \in \{1, 2, 4, 10, 20\}$ subjects on OpenNeuro `ds005107` (256 to 5,120 single trials).
 
-**Table S2:** Complete cross-subject balanced accuracy (%) and 95% bootstrap confidence intervals across four facial stimulus dimensions on `ds005107`.
+**Table S2:** Cross-subject balanced accuracy (%) with 95% bootstrap confidence intervals on `ds005107`, seeds 42 and 3407. Every value is read from `results/summary_aligned21_*.json`. Cells marked "not run" have no saved result for that arm; they are not estimates.
 
-| Stimulus Attribute | Subject Budget ($B$) | Pretrained Linear Probe | Control A (Random Init) | Control B (Tokenizer Only) | CompactMEGNet | Classical Baseline | Statistical Verdict |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Face Age** | 1 (256 trials) | 49.50% [48.55, 50.49] | 50.41% [49.40, 51.38] | 49.04% [48.47, 49.59] | 49.25% [48.18, 50.41] | 49.13% [48.07, 50.12] | Equivalent |
-| | 2 (512 trials) | 49.19% [48.46, 50.01] | 50.40% [49.59, 51.24] | 49.51% [48.52, 50.45] | 50.80% [49.97, 51.74] | 50.01% [49.15, 50.78] | Equivalent |
-| | 4 (1,024 trials) | 48.94% [48.10, 49.86] | 50.86% [49.83, 51.83] | 50.08% [49.40, 50.82] | 50.70% [49.92, 51.55] | 50.63% [49.68, 51.56] | Inconclusive |
-| | 10 (2,560 trials) | 50.08% [49.02, 51.06] | 50.27% [49.11, 51.42] | 49.72% [48.54, 50.92] | 50.73% [49.81, 51.60] | 50.10% [49.12, 51.08] | Equivalent |
-| | 20 (5,120 trials) | 49.57% [48.44, 50.73] | 50.68% [49.28, 52.06] | 50.01% [48.55, 51.45] | **51.85% [50.33, 53.34]** | 50.56% [49.28, 51.79] | CompactMEGNet Superior ($p < 0.025$) |
-| **Face Sex** | 1 (256 trials) | 49.45% [48.20, 50.68] | 49.68% [48.52, 50.80] | 49.88% [48.70, 51.10] | 49.00% [47.50, 50.40] | 49.50% [48.20, 50.80] | Equivalent |
-| | 2 (512 trials) | 49.62% [48.40, 50.85] | 49.80% [48.60, 51.00] | 50.12% [48.90, 51.30] | 50.20% [48.90, 51.50] | 49.90% [48.60, 51.20] | Equivalent |
-| | 4 (1,024 trials) | 49.80% [48.65, 50.95] | 49.10% [47.90, 50.30] | 50.40% [49.20, 51.60] | 50.45% [49.10, 51.80] | 50.20% [48.90, 51.50] | Equivalent |
-| | 10 (2,560 trials) | 50.15% [48.90, 51.40] | 48.60% [47.30, 49.90] | 50.80% [49.60, 52.00] | 50.90% [49.60, 52.20] | 50.80% [49.40, 52.20] | Equivalent |
-| | 20 (5,120 trials) | 49.59% [48.47, 50.75] | 47.97% [46.92, 49.05] | 51.14% [50.05, 52.35] | 51.06% [49.41, 52.64] | 51.06% [49.41, 52.64] | Inconclusive |
-| **Face Ancestry**| 20 (5,120 trials) | 51.22% [49.81, 52.62] | 48.95% [47.33, 50.65] | 51.45% [50.37, 52.55] | -- | 50.67% [49.22, 52.12] | Inconclusive |
-| **Face Emotion** | 20 (5,120 trials) | 50.24% [49.02, 51.48] | 49.85% [48.60, 51.10] | 50.05% [48.80, 51.30] | 50.40% [49.10, 51.70] | 50.15% [48.80, 51.50] | Equivalent |
+| Stimulus Attribute | Subject Budget ($B$) | Pretrained Linear Probe | Control A (Random Init) | Control B (Tokenizer Only) | CompactMEGNet | Classical Baseline |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Face Age** | 1 (256 trials) | 49.50% [48.55, 50.49] | 50.41% [49.40, 51.38] | 49.04% [48.47, 49.59] | 49.25% [48.18, 50.41] | 49.13% [48.07, 50.12] |
+|  | 2 (512 trials) | 49.19% [48.46, 50.01] | 50.40% [49.59, 51.24] | 49.51% [48.52, 50.45] | 50.80% [49.97, 51.74] | 50.01% [49.15, 50.78] |
+|  | 4 (1,024 trials) | 48.94% [48.10, 49.86] | 50.86% [49.83, 51.83] | 50.08% [49.40, 50.82] | 50.70% [49.92, 51.55] | 50.63% [49.68, 51.56] |
+|  | 10 (2,560 trials) | 50.08% [49.02, 51.06] | 50.27% [49.11, 51.42] | 49.72% [48.54, 50.92] | 50.73% [49.81, 51.60] | 50.10% [49.12, 51.08] |
+|  | 20 (5,120 trials) | 49.57% [48.44, 50.73] | 50.68% [49.28, 52.06] | 50.01% [48.55, 51.45] | 51.85% [50.33, 53.34] | 50.56% [49.28, 51.79] |
+| **Face Sex** | 1 (256 trials) | 49.15% [48.11, 50.11] | 49.82% [48.88, 50.70] | 50.41% [49.63, 51.20] | not run | 50.29% [49.59, 50.98] |
+|  | 2 (512 trials) | 49.24% [48.17, 50.32] | 49.74% [48.90, 50.61] | 50.00% [49.23, 50.78] | not run | 49.96% [49.12, 50.79] |
+|  | 4 (1,024 trials) | 49.16% [48.31, 49.99] | 49.34% [48.58, 50.10] | 50.05% [49.07, 51.06] | not run | 49.78% [48.91, 50.63] |
+|  | 10 (2,560 trials) | 50.46% [49.55, 51.36] | 49.33% [48.35, 50.34] | 50.43% [49.45, 51.45] | not run | 50.37% [49.16, 51.60] |
+|  | 20 (5,120 trials) | 49.59% [48.47, 50.75] | 47.97% [46.92, 49.05] | 51.14% [50.05, 52.35] | not run | 51.06% [49.41, 52.64] |
+| **Face Ancestry** | 1 (256 trials) | 50.29% [49.38, 51.17] | 51.25% [50.48, 52.07] | 51.22% [50.11, 52.26] | not run | 50.42% [49.35, 51.50] |
+|  | 2 (512 trials) | 51.00% [50.08, 51.87] | 50.61% [49.83, 51.44] | 50.89% [49.70, 52.05] | not run | 50.64% [49.90, 51.46] |
+|  | 4 (1,024 trials) | 50.67% [49.49, 51.89] | 50.91% [49.80, 52.07] | 50.37% [49.41, 51.27] | not run | 50.69% [49.84, 51.53] |
+|  | 10 (2,560 trials) | 51.01% [50.19, 51.84] | 49.81% [48.65, 50.90] | 50.52% [49.49, 51.50] | not run | 50.42% [49.25, 51.55] |
+|  | 20 (5,120 trials) | 51.22% [49.81, 52.62] | 48.95% [47.33, 50.65] | 51.45% [50.37, 52.55] | not run | 50.67% [49.22, 52.12] |
+
+No emotion-attribute benchmark was run, so no emotion row is reported.
 
 ---
 
@@ -122,11 +127,11 @@ To assess downstream linear probing data-efficiency under low-to-medium sample b
 ## Section S5: Model Architectures & Implementation Details
 
 ### S5.1 BrainOmni Architecture Specifications
-- **Backbone Parameters:** 8.4M parameters (`tiny` configuration).
-- **Temporal Encoder (`SEANet`):** 1D multi-scale temporal convolutions mapping $L=512$ raw audio/electrophysiological samples to temporal token slices.
+- **Backbone Parameters:** 8.4M parameters (`tiny` configuration), as reported upstream and not independently verified here.
+- **Temporal Encoder (`SEANet`):** 1D multi-scale temporal convolutions mapping $L=512$ raw electrophysiological samples to temporal token slices.
 - **Spatial Tokenizer (`BrainSensorModule`):** Cross-attention module with $N_{\text{neuro}} = 16$ learnable latent queries. Position embeddings $\mathbf{p} \in \mathbb{R}^3$, unit orientation $\mathbf{u} \in \mathbb{R}^3$, and integer sensor type tags $\{0, 1, 2\}$ projected into query space.
 - **Quantization:** Residual vector quantization (RVQ) with codebook size 1,024.
-- **Sequence Model:** 12-layer causal Transformer backbone ($d_{\text{model}} = 256, n_{\text{head}} = 8, d_{\text{ffn}} = 1,024$).
+- **Sequence Model:** Bidirectional Transformer backbone constructed with `causal=False`, trained by masked-token prediction over codebook entries at a hard-coded 0.25 mask ratio. It is not autoregressive and does not attend across trials. Depth, width and parameter count are upstream release values; the checkpoint configuration is not vendored in this repository and these were not independently verified here.
 
 ### S5.2 CompactMEGNet Specialist Baseline
 - **Parameter Count:** 1,514 trainable parameters.
