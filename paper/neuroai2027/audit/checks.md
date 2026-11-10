@@ -76,3 +76,59 @@
 - Three pdflatex passes for each document: exit 0, no overfull box, no undefined reference.
 - `python3 audit/verify.py`: exit 0, with the new standing checks.
 - Not rerun: raw data and model inference, consistent with every prior revision.
+
+## Revision 9
+- Read src/opm_bridge/models/baselines.py and every call site: ClassicalBandPowerDecoder is always constructed with the default c_reg=1.0 and no fold-wise tuning.
+- Inspected the per-subject records: each mode stores a single scalar zero_shot_tokenizer_pcc with no per-batch or per-trial array, so trial-weighted aggregation is not computable from saved outputs.
+- Recomputed the classical arm's bootstrap intervals: exactly three of eight configurations exclude chance, and all three are the Soft-HFC full-array rows that share one underlying measurement.
+- Three pdflatex passes for each document: exit 0, no overfull box, no undefined reference. Paper 5 pages with page 5 references only; supplement 4 pages.
+- python3 audit/verify.py: exit 0.
+- Not addressed, each requiring model inference: random-seed distribution for the random partition, a matched 48-query monolithic arm, the tag by partition cross, and a raw-data replay.
+
+
+## Revision 10
+
+- `python3 paper/neuroai2027/audit/rebuild.py`: exit 0. Figure and supplement regeneration, three main LaTeX passes, BibTeX, three supplement LaTeX passes and final verification all completed successfully. Exact commands, outputs and exit statuses are saved in `rebuild-log.txt`.
+- `python3 audit/verify.py`: exit 0. Independently recomputed all 560 records from their 84 trial scores, the seed-averaged factorial, paired contrasts and interactions, seed robustness, weighting bound, all labelled new table rows, and all figure numerical panels. Source hashes, original-grid replication and subset provenance checks pass.
+- Paper: 5 pages, page 5 references only, hence 4 content pages. Supplement: 8 pages. Neither final LaTeX log contains an overfull box or undefined reference.
+- Anonymous PDF text and source checks pass. No em dashes in either document or their generated inputs. Both titles use Shape.
+- `manuscript_lint.py short_paper.tex supplement.tex supplement_tables.tex --bib references.bib --json`: exit 0, zero findings; result saved as `interaction-lint.json`. Generated table inputs were included in the scan so references could be resolved.
+- Rendered all 13 PDF pages with `pdftoppm -r 100 -png` and visually inspected every page, plus the full-resolution generated figure. No clipped tables, overlapping labels or unreadable plot annotations found. Proofs are in `/tmp/opm-proof/`.
+- After replacing repeated literal factorial counts and p-values with generated macros, rebuilt the main PDF and reran verification. Extracted PDF text was asserted identical to the inspected proof.
+- The result JSON and generating script match commit `46dac60` byte-for-byte. Manuscript numbers are newly analysed from saved outputs; neither raw data nor model inference was replayed. Group assignments are unavailable for metadata-level verification. The raw monolithic decoding difference between runs remains unexplained and is not described as exact replication.
+- Current citation-status, author disclosure, consent/licence and portal checks were outside this scoped revision and remain as previously recorded.
+
+
+## Revision 11
+
+- `python3 paper/neuroai2027/audit/rebuild.py`: exit 0. Regenerated figure, numeric macros and supplement tables, rebuilt both PDFs, and ran verification. Two further LaTeX passes per document and final verification after independent-review wording corrections also exited 0; exact outputs are in `rebuild-log.txt`.
+- `audit/verify.py`: exit 0. The three geometry counts are independently recomputed as negative differences and checked in main prose, Table 1, Figure 1B sidecar and Table S2. The verifier also enforces the narrowed title and guards against the rejected dissociation and capacity-fraction claims.
+- Independent focused reviewer confirmed the four requested corrections and raw geometry counts. Accepted follow-up: replace two residual absence-of-effect phrases with chance-overlapping intervals and no detectable improvement.
+- `manuscript_lint.py` over both documents and generated tables with `references.bib`: exit 0, zero findings (`kimi-lint.json`). `git diff --check`: exit 0.
+- Paper remains 5 pages, with page 5 references only; supplement remains 8 pages. Final logs have no overfull boxes or undefined references. Anonymous source/PDF and no-em-dash checks pass.
+- Rendered all 13 pages at 100 dpi in `/tmp/opm-kimi-proof/`. Inspected all changed pages and the full figure. Main page 5 and supplement pages 4, 6, 7 and 8 are pixel-identical to the previously inspected proofs. No new clipping, overlaps or unreadable labels found.
+- Raw result files and reported effect estimates are unchanged. The changes correct the direction counted and narrow the interpretation; they do not represent new model runs or new statistical evidence.
+
+
+## Revision 12
+
+- Primary full-text source checks completed for the three added references and the rewritten BrainOmni architecture claim. Independent methods, hardware and final-integration reviewers found the final citation wording supported. Exact URLs, sections/equations, claim boundaries and correction-status limitations are in `reference-audit.json` and `reference-audit.md`.
+- `python3 paper/neuroai2027/audit/rebuild.py`: exit 0. Figure/macro/table regeneration, both BibTeX runs, three LaTeX passes per document, and final verification succeeded. Exact command/output/exit records are in `rebuild-log.txt`.
+- `audit/verify.py`: exit 0. Eight unique main-paper references; every cited key resolves and every printed bibliography entry matches a citation. Both BibTeX logs are clean. Full numerical, directional-count, figure, subset provenance, anonymity and source-attribution checks also pass.
+- Paper: 5 total pages; content ends on page 4, where references begin, and page 5 contains references only. Supplement: 9 pages, including its new standalone reference page. No overfull boxes or undefined references in either final log.
+- `manuscript_lint.py` over the two documents plus generated tables, with `references.bib`: exit 0, zero findings (`reference-lint.json`). `git diff --check`: exit 0.
+- Rendered all 14 pages at 100 dpi in `/tmp/opm-reference-proof/`. Inspected every changed page, including both bibliographies. Supplement pages 2, 4, 5, 6, 7 and 8 are pixel-identical to the previously inspected revision. No clipped text, overlapping labels or malformed citations found.
+- Published PDF files are byte-identical to their verified build outputs. No new model inference or changed result estimates. Existing dataset citation audits were retained; no comprehensive new correction-status audit of those references was claimed.
+
+
+## Revision 13
+
+- `python3 paper/neuroai2027/audit/rebuild.py`: exit 0 after the final control-label clarification. Regenerated the figure, macros, numerical report and all eight supplement tables; ran both BibTeX passes, three LaTeX passes per document and full verification. Exact outputs are in `rebuild-log.txt`.
+- `audit/verify.py`: exit 0. All 560 saved trial records, factorial estimates, paired interactions, seed sensitivity, weighting integrity, current decoding summaries, all eight paired decoding contrasts, every figure panel, table rows, macros, citations, source/PDF anonymity and layout logs pass. Historical source comparisons remain internal; submitted-text guards reject superseded grids and withdrawn-task narration.
+- Independent focused reviewer found no material issues and independently recomputed the eight paired decoding intervals. All span zero. Accepted the minor request to expand Ctrl A as the random-initialization control in Table S7.
+- Paper: 4 total pages, with references beginning on page 4. Supplement: 6 pages, including its bibliography. Neither final log has overfull boxes or undefined references.
+- `manuscript_lint.py` across both documents and generated tables: exit 0, zero findings (`final-narrative-lint.json`). `git diff --check`: exit 0 after normalizing audit CSV line endings.
+- Rendered and visually inspected all ten pages and the full-resolution figure. Re-rendered both final PDFs after the minor caption clarification: all main pages and five supplement pages are pixel-identical to the inspected proofs; visually inspected the changed supplement page 5. No clipped text, overlapping labels or malformed references. Proofs: `/tmp/opm-final-narrative-proof/`.
+- Both delivered PDFs are byte-identical to their verified build outputs. No new inference or raw-data replay was performed. Earlier versions and exclusion evidence remain preserved in the internal audit and the pre-edit snapshot `/tmp/opm-before-final-scientific-narrative.tar.gz`.
+
+- Push preflight: `git diff --cached --check -- paper/neuroai2027` passes. The imported factorial script has whitespace warnings already present in Samer's commit `46dac60`; it remains byte-identical to that source for provenance. The imported result JSON also matches that commit exactly.

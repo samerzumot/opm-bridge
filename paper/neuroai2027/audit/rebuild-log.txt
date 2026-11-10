@@ -1,0 +1,653 @@
+$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 generate_figures.py
+Generated factorial_values.tex and audit/factorial-results.json from 560 trial records.
+single_axis_remap: delta=+0.1318 [+0.1275, +0.1360] consistent=21/21 p_exact=9.54e-07
+raw_mag_grouping: delta=+0.1120 [+0.1048, +0.1208] consistent=10/10 p_exact=1.95e-03
+raw_mag_mono_to_random: delta=+0.0292 [+0.0262, +0.0322] consistent=10/10 p_exact=1.95e-03
+raw_grad_grouping: delta=+0.0688 [+0.0567, +0.0805] consistent=10/10 p_exact=1.95e-03
+raw_grad_mono_to_random: delta=+0.0446 [+0.0390, +0.0504] consistent=10/10 p_exact=1.95e-03
+softhfc_mag_grouping: delta=+0.1071 [+0.1002, +0.1143] consistent=10/10 p_exact=1.95e-03
+softhfc_mag_mono_to_random: delta=+0.0328 [+0.0292, +0.0363] consistent=10/10 p_exact=1.95e-03
+softhfc_grad_grouping: delta=+0.0745 [+0.0656, +0.0833] consistent=10/10 p_exact=1.95e-03
+softhfc_grad_mono_to_random: delta=+0.0507 [+0.0448, +0.0564] consistent=10/10 p_exact=1.95e-03
+raw_tag_monolithic: delta=+0.0002 [-0.0104, +0.0106] consistent=5/10 p_exact=9.69e-01
+raw_tag_random: delta=+0.0155 [+0.0065, +0.0234] consistent=9/10 p_exact=1.37e-02
+raw_tag_axis_partitioned: delta=-0.0277 [-0.0408, -0.0150] consistent=9/10 p_exact=5.86e-03
+raw_interaction: delta=-0.0432 [-0.0548, -0.0329] consistent=10/10 p_exact=1.95e-03
+softhfc_tag_monolithic: delta=+0.0014 [-0.0108, +0.0120] consistent=6/10 p_exact=8.24e-01
+softhfc_tag_random: delta=+0.0193 [+0.0083, +0.0287] consistent=9/10 p_exact=1.17e-02
+softhfc_tag_axis_partitioned: delta=-0.0133 [-0.0276, +0.0008] consistent=5/10 p_exact=1.15e-01
+softhfc_interaction: delta=-0.0326 [-0.0431, -0.0233] consistent=10/10 p_exact=1.95e-03
+decoding MAG mono: probe=49.07 classical=54.50 classical_leads=8/10
+decoding MAG rand: probe=50.14 classical=54.50 classical_leads=6/10
+decoding MAG axis: probe=50.19 classical=54.50 classical_leads=8/10
+decoding GRAD mono: probe=50.32 classical=54.50 classical_leads=6/10
+decoding GRAD rand: probe=50.88 classical=54.50 classical_leads=7/10
+decoding GRAD axis: probe=51.88 classical=54.50 classical_leads=7/10
+Wrote figures/transfer_overview.{pdf,png} and transfer_overview_values.json.
+
+exit_status=0
+$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 make_supplement.py
+Generated factorial_values.tex and audit/factorial-results.json from 560 trial records.
+wrote /Users/marziehzare/Desktop/papers/opm-bridge-latest/paper/neuroai2027/supplement_tables.tex (180 lines)
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build short_paper.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./short_paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/short_paper.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) [1{/usr/local/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map
+}{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}
+] (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 1048) in paragraph at lines 107--108
+\T1/ntxtlf/m/n/10 ($\OT1/cmr/m/n/10 [+0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1002\O
+ML/cmm/m/it/10 ; \OT1/cmr/m/n/10 +0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1143]$\T1/
+ntxtlf/m/n/10 ) un-der MAG with Soft-HFC and
+[2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/base/8r.enc}]
+[3 <./figures/transfer_overview.pdf>] (build/short_paper.bbl
+Underfull \hbox (badness 1264) in paragraph at lines 11--15
+\T1/ntxtlf/m/n/10 Doc-u-men-ta-tion.  $https : / / github . com / OpenNeuroData
+sets /
+) [4] (build/short_paper.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/
+2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texli
+ve/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/te
+xlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/
+texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
+</usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
+ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
+/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Transcript written on build/short_paper.log.
+
+exit_status=0
+$ bibtex build/short_paper
+This is BibTeX, Version 0.99e (TeX Live 2026)
+The top-level auxiliary file: build/short_paper.aux
+The style file: aaai2027.bst
+Database file #1: references.bib
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build short_paper.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./short_paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/short_paper.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) [1{/usr/local/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map
+}{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}
+] (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 1048) in paragraph at lines 107--108
+\T1/ntxtlf/m/n/10 ($\OT1/cmr/m/n/10 [+0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1002\O
+ML/cmm/m/it/10 ; \OT1/cmr/m/n/10 +0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1143]$\T1/
+ntxtlf/m/n/10 ) un-der MAG with Soft-HFC and
+[2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/base/8r.enc}]
+[3 <./figures/transfer_overview.pdf>] (build/short_paper.bbl
+Underfull \hbox (badness 1264) in paragraph at lines 11--15
+\T1/ntxtlf/m/n/10 Doc-u-men-ta-tion.  $https : / / github . com / OpenNeuroData
+sets /
+) [4] (build/short_paper.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/
+2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texli
+ve/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/te
+xlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/
+texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
+</usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
+ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
+/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Transcript written on build/short_paper.log.
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build short_paper.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./short_paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/short_paper.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) [1{/usr/local/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map
+}{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}
+] (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 1048) in paragraph at lines 107--108
+\T1/ntxtlf/m/n/10 ($\OT1/cmr/m/n/10 [+0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1002\O
+ML/cmm/m/it/10 ; \OT1/cmr/m/n/10 +0\OML/cmm/m/it/10 :\OT1/cmr/m/n/10 1143]$\T1/
+ntxtlf/m/n/10 ) un-der MAG with Soft-HFC and
+[2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/dvips/base/8r.enc}]
+[3 <./figures/transfer_overview.pdf>] (build/short_paper.bbl
+Underfull \hbox (badness 1264) in paragraph at lines 11--15
+\T1/ntxtlf/m/n/10 Doc-u-men-ta-tion.  $https : / / github . com / OpenNeuroData
+sets /
+) [4] (build/short_paper.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/
+2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texli
+ve/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/te
+xlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/
+texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
+</usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></u
+sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
+ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
+/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Transcript written on build/short_paper.log.
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build supplement.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./supplement.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/supplement.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsb.fd) [1{/usr/lo
+cal/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/
+texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}]
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
+\T1/ntxtlf/m/n/10 The clas-si-cal de-coder uses scikit-learn
+
+Underfull \hbox (badness 1490) in paragraph at lines 87--88
+\T1/pcr/m/n/10 LogisticRegression \T1/ntxtlf/m/n/10 with $\OML/cmm/m/it/10 L[]$
+ \T1/ntxtlf/m/n/10 penalty at the li-
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/ntxtlf/m/n/10 FACE-DEC, Open-Neuro \T1/pcr/m/n/10 ds005107 \T1/ntxtlf/m/n/1
+0 v1.0.0, DOI
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/pcr/m/n/10 10.18112/openneuro.ds005107.v1.0.0\T1/ntxtlf/m/n/10 , 21
+(./supplement_tables.tex) [2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/
+dvips/base/8r.enc}] [3] [4] [5] (build/supplement.bbl) [6]
+(build/supplement.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive
+/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texl
+ive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/t
+exlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/lo
+cal/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></
+usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
+></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.
+pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/symbol
+s/msbm10.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/u
+crr8a.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztm
+b.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pf
+b></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/supplement.pdf (6 pages, 238373 bytes).
+Transcript written on build/supplement.log.
+
+exit_status=0
+$ bibtex build/supplement
+This is BibTeX, Version 0.99e (TeX Live 2026)
+The top-level auxiliary file: build/supplement.aux
+The style file: aaai2027.bst
+Database file #1: references.bib
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build supplement.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./supplement.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/supplement.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsb.fd) [1{/usr/lo
+cal/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/
+texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}]
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
+\T1/ntxtlf/m/n/10 The clas-si-cal de-coder uses scikit-learn
+
+Underfull \hbox (badness 1490) in paragraph at lines 87--88
+\T1/pcr/m/n/10 LogisticRegression \T1/ntxtlf/m/n/10 with $\OML/cmm/m/it/10 L[]$
+ \T1/ntxtlf/m/n/10 penalty at the li-
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/ntxtlf/m/n/10 FACE-DEC, Open-Neuro \T1/pcr/m/n/10 ds005107 \T1/ntxtlf/m/n/1
+0 v1.0.0, DOI
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/pcr/m/n/10 10.18112/openneuro.ds005107.v1.0.0\T1/ntxtlf/m/n/10 , 21
+(./supplement_tables.tex) [2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/
+dvips/base/8r.enc}] [3] [4] [5] (build/supplement.bbl) [6]
+(build/supplement.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive
+/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texl
+ive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/t
+exlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/lo
+cal/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></
+usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
+></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.
+pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/symbol
+s/msbm10.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/u
+crr8a.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztm
+b.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pf
+b></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/supplement.pdf (6 pages, 238373 bytes).
+Transcript written on build/supplement.log.
+
+exit_status=0
+$ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build supplement.tex
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./supplement.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2026-03-20>
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/size10.clo))
+(./aaai2027.sty
+Conference Style for AAAI for LaTeX 2e
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.744, 2024/04/01 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.d
+ef))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/xkvutils.tex
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xkeyval/keyval.tex))))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/fontaxes/fontaxes.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/figureversions/figureversion
+s.sty))) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/helvet.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/courier.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/placeins/placeins.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+ (/usr/local/texlive/2026basic/texmf-dist/tex/latex/natbib/natbib.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/caption/caption3.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(./factorial_values.tex)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/newtx/t1ntxtlf.fd)
+(build/supplement.aux)
+(/usr/local/texlive/2026basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.s
+ty
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+)) (/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/amsfonts/umsb.fd) [1{/usr/lo
+cal/texlive/2026basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/
+texlive/2026basic/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}]
+(/usr/local/texlive/2026basic/texmf-dist/tex/latex/psnfss/t1pcr.fd)
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
+\T1/ntxtlf/m/n/10 The clas-si-cal de-coder uses scikit-learn
+
+Underfull \hbox (badness 1490) in paragraph at lines 87--88
+\T1/pcr/m/n/10 LogisticRegression \T1/ntxtlf/m/n/10 with $\OML/cmm/m/it/10 L[]$
+ \T1/ntxtlf/m/n/10 penalty at the li-
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/ntxtlf/m/n/10 FACE-DEC, Open-Neuro \T1/pcr/m/n/10 ds005107 \T1/ntxtlf/m/n/1
+0 v1.0.0, DOI
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--115
+\T1/pcr/m/n/10 10.18112/openneuro.ds005107.v1.0.0\T1/ntxtlf/m/n/10 , 21
+(./supplement_tables.tex) [2{/usr/local/texlive/2026basic/texmf-dist/fonts/enc/
+dvips/base/8r.enc}] [3] [4] [5] (build/supplement.bbl) [6]
+(build/supplement.aux) )
+(see the transcript file for additional information)</usr/local/texlive/2026bas
+ic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/202
+6basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive
+/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texl
+ive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/t
+exlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loca
+l/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/lo
+cal/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/
+local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></
+usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
+></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.
+pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/symbol
+s/msbm10.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/urw/courier/u
+crr8a.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztm
+b.pfb></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pf
+b></usr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on build/supplement.pdf (6 pages, 238373 bytes).
+Transcript written on build/supplement.log.
+
+exit_status=0
+$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 audit/verify.py
+PASS: 8 unique references; both compiled bibliographies match their citations, and new citations have full-text support records and scoped attribution.
+PASS: paper has 4 total pages; references begin on page 4 and content fits four pages. PDF text is anonymous and references resolve.
+PASS: final scientific narrative uses the current full-array factorial; 560 trial records, all factorial estimates, interactions, seed robustness, weighting scope, full-array decoding, figure sidecar, generated macros, supplement, anonymity and build logs verified.
+
+exit_status=0

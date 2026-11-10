@@ -23,6 +23,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from factorial_results import write as write_factorial
+
 BASE = Path(__file__).resolve().parent
 RESULTS = BASE.parents[1] / "results"
 OUT = BASE / "figures"
@@ -107,16 +109,17 @@ def contrast_panel(ax, rows: Sequence[tuple[str, np.ndarray]], xlabel: str) -> l
     for i, (label, delta) in enumerate(rows):
         lo, hi = bootstrap_ci(delta)
         mean = float(delta.mean())
-        n_pos = int((delta > 0).sum())
+        direction = 1 if mean >= 0 else -1
+        n_consistent = int((delta * direction > 0).sum())
         ax.errorbar(
             mean, i, xerr=[[mean - lo], [hi - mean]], fmt="o",
             color=ACCENT if mean > 0 else SAGE,
             markersize=4, capsize=2.5, linewidth=1.2,
         )
-        labels.append(f"{label}\n{n_pos}/{len(delta)}")
+        labels.append(f"{label}\n{n_consistent}/{len(delta)}")
         records.append(
             {"row": label, "mean": mean, "ci_low": lo, "ci_high": hi,
-             "consistent": n_pos, "n": len(delta)}
+             "consistent": n_consistent, "direction": "positive" if direction > 0 else "negative", "n": len(delta)}
         )
     ax.axvline(0.0, color=INK, linewidth=0.7)
     ax.set_yticks(range(len(rows)), labels)
@@ -137,7 +140,7 @@ def dumbbell_panel(
     """Two paired arms per row, drawn as connected markers with bootstrap CIs.
 
     Row labels, consistency counts and the legend all sit outside the data area,
-    so nothing competes with the markers. Alternating bands keep eight rows
+    so nothing competes with the markers. Alternating bands keep the rows
     readable without gridlines crossing the intervals.
     """
     labels, records = [], []
@@ -187,20 +190,13 @@ single = json.loads((RESULTS / "summary_phase3_ablations.json").read_text())
 single = single["zero_shot_tokenizer_pcc_by_geometry_mode"]
 per_subject = {k: np.asarray(v["per_subject_pcc"], dtype=float) for k, v in single.items()}
 
-tri = json.loads((RESULTS / "summary_phase4_nottingham_full.json").read_text())
+tri = json.loads((RESULTS / "summary_phase4_nottingham_factorial_and_seeds.json").read_text())
 subjects = sorted(tri["per_subject"])
-pcc = {
-    mode: np.asarray(
-        [tri["per_subject"][s][mode]["zero_shot_tokenizer_pcc"] for s in subjects], dtype=float
-    )
-    for mode in tri["cohort_bootstrap_summary"]
-}
 
 
-def bacc(mode: str, arm: str) -> np.ndarray:
-    return 100.0 * np.asarray(
-        [tri["per_subject"][s][mode]["braille_5fold_bacc"][arm] for s in subjects], dtype=float
-    )
+def bacc(tag: str, mode: str, arm: str) -> np.ndarray:
+    blocks = [tri["per_subject"][s]["softhfc"][tag] for s in subjects]
+    return 100.0 * np.asarray([(b["random_partitions"]["42"] if mode == "random" else b[mode])["braille_5fold_bacc"][arm] for b in blocks])
 
 
 squid = json.loads((RESULTS / "summary_ds000117_squid_baseline.json").read_text())
@@ -252,48 +248,44 @@ axes[0, 2].grid(axis="y", color=GRID, linewidth=0.5)
 axes[0, 2].set_axisbelow(True)
 panel_label(axes[0, 2], "C", "SQUID control (1 participant)")
 
+factorial_report, fx, factorial_contrasts = write_factorial()
+
 # D: paired monolithic vs axis-partitioned tokenisation, matched filtering
 slopegraph(
     axes[1, 0],
-    [pcc["triaxial_xyz_softhfc"], pcc["random_3way_split_softhfc"], pcc["phase5_axis_split_xyz"]],
+    [fx["softhfc_mag_monolithic"], fx["softhfc_mag_random"], fx["softhfc_mag_axis_partitioned"]],
     ["Mono", "Rand", "Axis"], "Reconstruction PCC",
 )
-panel_label(axes[1, 0], "D", "Partition, Soft-HFC")
+panel_label(axes[1, 0], "D", "MAG, Soft-HFC")
 
 # E: triaxial contrasts, each against a baseline with identical filtering
 tri_rows = contrast_panel(
     axes[1, 1],
     [
-        ("Axis vs random, Soft-HFC", pcc["phase5_axis_split_xyz"] - pcc["random_3way_split_softhfc"]),
-        ("Axis vs random, raw", pcc["axis_split_raw"] - pcc["random_3way_split"]),
-        ("Random vs mono, Soft-HFC", pcc["random_3way_split_softhfc"] - pcc["triaxial_xyz_softhfc"]),
-        ("Random vs mono, raw", pcc["random_3way_split"] - pcc["triaxial_xyz_raw"]),
+        ("MAG, Soft-HFC", factorial_contrasts["softhfc_mag_grouping"]),
+        ("MAG, raw", factorial_contrasts["raw_mag_grouping"]),
+        ("GRAD, Soft-HFC", factorial_contrasts["softhfc_grad_grouping"]),
+        ("GRAD, raw", factorial_contrasts["raw_grad_grouping"]),
     ],
-    r"$\Delta$ PCC, matched filtering",
+    r"Axis minus random, $\Delta$ PCC",
 )
 panel_label(axes[1, 1], "E", "Triaxial OPM (N=10)")
 axes[1, 1].set_xlim(-0.012, 0.155)
 
 # F: the decoding endpoint, probe against a classical baseline on the same trials
-DEC_CONFIGS = [
-    ("Monolithic, raw", "triaxial_xyz_raw"),
-    ("Monolithic, HFC", "triaxial_xyz_softhfc"),
-    ("Random, raw", "random_3way_split"),
-    ("Random, HFC", "random_3way_split_softhfc"),
-    ("Axis, raw", "axis_split_raw"),
-    ("Axis, HFC", "phase5_axis_split_xyz"),
-    ("Radial, raw", "radial_only_z"),
-    ("Tangential, raw", "tangential_only_xy"),
-]
+DEC_CONFIGS = [(f"{tag.upper()} {label}", tag, mode)
+               for tag in ("mag", "grad")
+               for mode, label in (("monolithic", "mono"), ("random", "rand"), ("axis_partitioned", "axis"))]
 dec_rows = dumbbell_panel(
     axes[1, 2],
-    [(label, bacc(mode, "pretrained_linear_probe"), bacc(mode, "classical_bandpower"))
-     for label, mode in DEC_CONFIGS],
+    [(label, bacc(tag, mode, "pretrained_linear_probe"), bacc(tag, mode, "classical_bandpower"))
+     for label, tag, mode in DEC_CONFIGS],
     "Braille balanced accuracy (%)",
+    rule_after=2,
 )
-panel_label(axes[1, 2], "F", "Braille decoding (N=10)")
+panel_label(axes[1, 2], "F", "Decoding, Soft-HFC")
 axes[1, 2].set_xlim(39, 59)
-axes[1, 2].set_ylim(7.6, -1.2)
+axes[1, 2].set_ylim(5.6, -1.0)
 legend_handles = [
     plt.Line2D([], [], marker="o", linestyle="none", markerfacecolor="white",
                markeredgecolor=SAGE, markeredgewidth=1.0, markersize=4.5,
@@ -326,8 +318,9 @@ sidecar = {
     "slopegraph_means": {
         "single_axis_default": float(per_subject["default"].mean()),
         "single_axis_opm_as_grad": float(per_subject["opm_as_grad"].mean()),
-        "triaxial_monolithic_softhfc": float(pcc["triaxial_xyz_softhfc"].mean()),
-        "triaxial_axis_split": float(pcc["phase5_axis_split_xyz"].mean()),
+        "triaxial_monolithic_softhfc": float(fx["softhfc_mag_monolithic"].mean()),
+        "triaxial_random_softhfc": float(fx["softhfc_mag_random"].mean()),
+        "triaxial_axis_split": float(fx["softhfc_mag_axis_partitioned"].mean()),
     },
 }
 (OUT / "transfer_overview_values.json").write_text(json.dumps(sidecar, indent=2) + "\n")
@@ -335,22 +328,12 @@ sidecar = {
 # ---------------------------------------------------------------------------
 # Console report: the contrasts quoted in the manuscript text
 # ---------------------------------------------------------------------------
-report = {
-    "single_axis_remap": per_subject["opm_as_grad"] - per_subject["default"],
-    "axis_vs_random_softhfc": pcc["phase5_axis_split_xyz"] - pcc["random_3way_split_softhfc"],
-    "axis_vs_random_raw": pcc["axis_split_raw"] - pcc["random_3way_split"],
-    "random_vs_mono_softhfc": pcc["random_3way_split_softhfc"] - pcc["triaxial_xyz_softhfc"],
-    "random_vs_mono_raw": pcc["random_3way_split"] - pcc["triaxial_xyz_raw"],
-    "axis_vs_mono_softhfc": pcc["phase5_axis_split_xyz"] - pcc["triaxial_xyz_softhfc"],
-    "axis_vs_mono_raw": pcc["axis_split_raw"] - pcc["triaxial_xyz_raw"],
-    "softhfc_on_monolithic": pcc["triaxial_xyz_softhfc"] - pcc["triaxial_xyz_raw"],
-    "softhfc_on_axis": pcc["phase5_axis_split_xyz"] - pcc["axis_split_raw"],
-}
+report = {"single_axis_remap": per_subject["opm_as_grad"] - per_subject["default"], **factorial_contrasts}
 for name, delta in report.items():
     lo, hi = bootstrap_ci(delta)
     print(
         f"{name}: delta={delta.mean():+.4f} [{lo:+.4f}, {hi:+.4f}] "
-        f"consistent={int((delta > 0).sum())}/{len(delta)} p_exact={exact_sign_flip_p(delta):.2e}"
+        f"consistent={int((delta * np.sign(delta.mean()) > 0).sum())}/{len(delta)} p_exact={exact_sign_flip_p(delta):.2e}"
     )
 for row in dec_rows:
     print(

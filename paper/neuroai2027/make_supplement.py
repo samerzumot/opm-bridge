@@ -8,6 +8,8 @@ from pathlib import Path
 
 import numpy as np
 
+from factorial_results import write as write_factorial, SEEDS
+
 BASE = Path(__file__).resolve().parent
 ROOT = BASE.parents[1]
 RESULTS = ROOT / "results"
@@ -19,16 +21,6 @@ SINGLE_MODES = [
     ("zero_orientation", "Zero orientation"),
     ("flip_orientation", "Reversed orientation"),
     ("scramble_channels", "Scrambled geometry"),
-]
-TRI_MODES = [
-    ("triaxial_xyz_raw", "Monolithic", "no"),
-    ("triaxial_xyz_softhfc", "Monolithic", "Soft"),
-    ("random_3way_split", "Random 3-way", "no"),
-    ("random_3way_split_softhfc", "Random 3-way", "Soft"),
-    ("axis_split_raw", "Axis partition", "no"),
-    ("phase5_axis_split_xyz", "Axis partition", "Soft"),
-    ("radial_only_z", r"Radial only ($Z$)", "no"),
-    ("tangential_only_xy", r"Tangential only ($X,Y$)", "no"),
 ]
 DEC_ARMS = [
     ("pretrained_linear_probe", "Pretrained probe"),
@@ -63,18 +55,6 @@ def contrast_row(label: str, delta: np.ndarray, positive: bool) -> str:
 single = json.loads((RESULTS / "summary_phase3_ablations.json").read_text())
 single = single["zero_shot_tokenizer_pcc_by_geometry_mode"]
 sa = {k: np.asarray(v["per_subject_pcc"], dtype=float) for k, v in single.items()}
-
-tri = json.loads((RESULTS / "summary_phase4_nottingham_full.json").read_text())
-subjects = sorted(tri["per_subject"])
-pcc = {m: np.asarray([tri["per_subject"][s][m]["zero_shot_tokenizer_pcc"] for s in subjects])
-       for m, _, _ in TRI_MODES}
-
-
-def bacc(mode: str, arm: str) -> np.ndarray:
-    return 100.0 * np.asarray(
-        [tri["per_subject"][s][mode]["braille_5fold_bacc"][arm] for s in subjects]
-    )
-
 
 L: list[str] = []
 A = L.append
@@ -116,98 +96,77 @@ A(r"\caption{Paired single-axis contrasts, 21 participants. Confidence intervals
 A(r"\label{tab:s-single-contrasts}\end{table*}")
 A("")
 
-# --- triaxial grid, cohort --------------------------------------------------
-A(r"\begin{table*}[htbp]\centering\small")
-A(r"\begin{tabular}{llrr}")
-A(r"\toprule")
-A(r"Configuration & HFC & Mean PCC & 95\% CI \\")
-A(r"\midrule")
-for i, (mode, label, hfc) in enumerate(TRI_MODES):
-    if i == 6:
-        A(r"\midrule")
-    lo, hi = bootstrap_ci(pcc[mode])
-    A(f"{label} & {hfc} & {pcc[mode].mean():.4f} & $[{lo:.4f}, {hi:.4f}]$ \\\\")
-A(r"\bottomrule\end{tabular}")
-A(r"\caption{Triaxial reconstruction, 10 adult participants, 84 trials each. The upper "
-  r"block is the complete $2\times3$ grid crossing partition type with filtering. The "
-  r"lower block reconstructs channel subsets and is not comparable to the full-array "
-  r"rows. Confidence intervals use participant bootstrap with 20{,}000 resamples "
-  r"and seed 0.}")
-A(r"\label{tab:s-tri-cohort}\end{table*}")
-A("")
+# Full-array factorial.
+report, fx, delta = write_factorial()
+data = json.loads((RESULTS / "summary_phase4_nottingham_factorial_and_seeds.json").read_text())
+subjects = sorted(data["per_subject"])
+labels = {"monolithic": "Monolithic", "random": "Random", "axis_partitioned": "Axis"}
 
-# --- triaxial per-participant ----------------------------------------------
-A(r"\begin{table*}[htbp]\centering\small")
-A(r"\setlength{\tabcolsep}{4pt}")
-A(r"\begin{tabular}{l" + "r" * len(TRI_MODES) + "}")
-A(r"\toprule")
-A(r"Participant & Mono. raw & Mono. Soft & Rand. raw & Rand. Soft & Axis raw & "
-  r"Axis Soft & Radial & Tangential \\")
-A(r"\midrule")
-for i, s in enumerate(subjects):
-    A(f"P{i + 1:02d} & " + " & ".join(f"{pcc[m][i]:.4f}" for m, _, _ in TRI_MODES) + r" \\")
-A(r"\midrule")
-A("Mean & " + " & ".join(f"{pcc[m].mean():.4f}" for m, _, _ in TRI_MODES) + r" \\")
-A(r"\bottomrule\end{tabular}")
-A(r"\caption{Zero-shot reconstruction PCC per participant across the triaxial grid "
-  r"(Zenodo 11126593, the 10 adult participants). Every contrast in the main text is "
-  r"computed from these columns within a single filtering regime.}")
-A(r"\label{tab:s-tri-per-subject}\end{table*}")
-A("")
+def start_table(columns, header):
+    A(r"\begin{table*}[htbp]\centering\small")
+    A(r"\begin{tabular}{" + columns + "}")
+    A(r"\toprule")
+    A(header + r" \\")
+    A(r"\midrule")
 
-# --- all matched triaxial contrasts ----------------------------------------
-A(r"\begin{table*}[htbp]\centering\small")
-A(r"\begin{tabular}{lrrrr}")
-A(r"\toprule")
-A(r"Contrast (matched filtering) & Mean $\Delta$ & 95\% CI & Consistent & Exact $p$ \\")
-A(r"\midrule")
-A(r"\multicolumn{5}{l}{\textit{Grouping: axis partition against a size-matched random partition}} \\")
-A(contrast_row("Soft-HFC", pcc["phase5_axis_split_xyz"] - pcc["random_3way_split_softhfc"], True))
-A(contrast_row("Raw", pcc["axis_split_raw"] - pcc["random_3way_split"], True))
-A(r"\midrule")
-A(r"\multicolumn{5}{l}{\textit{Capacity: random partition against the monolithic tokenizer}} \\")
-A(contrast_row("Soft-HFC", pcc["random_3way_split_softhfc"] - pcc["triaxial_xyz_softhfc"], True))
-A(contrast_row("Raw", pcc["random_3way_split"] - pcc["triaxial_xyz_raw"], True))
-A(r"\midrule")
-A(r"\multicolumn{5}{l}{\textit{Total: axis partition against the monolithic tokenizer}} \\")
-A(contrast_row("Soft-HFC", pcc["phase5_axis_split_xyz"] - pcc["triaxial_xyz_softhfc"], True))
-A(contrast_row("Raw", pcc["axis_split_raw"] - pcc["triaxial_xyz_raw"], True))
-A(r"\midrule")
-A(r"\multicolumn{5}{l}{\textit{Filtering: Soft-HFC applied within each partition type}} \\")
-A(contrast_row("Monolithic", pcc["triaxial_xyz_softhfc"] - pcc["triaxial_xyz_raw"], False))
-A(contrast_row("Random 3-way", pcc["random_3way_split_softhfc"] - pcc["random_3way_split"], False))
-A(contrast_row("Axis partition", pcc["phase5_axis_split_xyz"] - pcc["axis_split_raw"], False))
-A(r"\bottomrule\end{tabular}")
-A(r"\caption{All paired triaxial contrasts, 10 participants. Every row compares two "
-  r"conditions with identical filtering, or one partition type under both filtering "
-  r"settings. With $n=10$ the smallest attainable exact $p$ is $2/2^{10}\approx0.002$, "
-  r"so values at that floor indicate perfect sign consistency rather than a resolved tail.}")
-A(r"\label{tab:s-tri-contrasts}\end{table*}")
-A("")
+def finish_table(caption, label):
+    A(r"\bottomrule\end{tabular}")
+    A(r"\caption{" + caption + "}")
+    A(r"\label{" + label + r"}\end{table*}")
+    A("")
 
-# --- decoding ---------------------------------------------------------------
-A(r"\begin{table*}[htbp]\centering\small")
-A(r"\setlength{\tabcolsep}{4pt}")
-A(r"\begin{tabular}{llrrrrr}")
-A(r"\toprule")
-A(r"Configuration & HFC & Probe & Ctrl A & Classical & Classical 95\% CI & Cl. $>$ Pr. \\")
+start_table("lllrr", r"Filter & Tag & Partition & Mean PCC & 95\% CI")
+for f in ("raw", "softhfc"):
+    for t in ("mag", "grad"):
+        for m, label in labels.items():
+            v = report["cohort"][f"{f}_{t}_{m}"]
+            A(f"{'Raw' if f == 'raw' else 'Soft-HFC'} & {t.upper()} & {label} & {v['mean']:.4f} & [{v['ci_low']:.4f}, {v['ci_high']:.4f}]" + r" \\")
+finish_table(r"Full-array factorial reconstruction. Trial-weighted participant PCC; random scores average ten seeds within participant. All intervals use 20{,}000 participant bootstrap draws with seed 0. Neither seeds nor trials are treated as independent participants.", "tab:s-factorial-cohort")
+
+start_table("llrrrr", r"Filter & Contrast & Mean $\Delta$ & 95\% CI & Positive & Exact $p$")
+for f in ("raw", "softhfc"):
+    rows = [(f"{f}_{t}_{c}", f"{t.upper()}: {lab}") for t in ("mag", "grad") for c, lab in (("grouping", "Axis minus random"), ("mono_to_random", "Random minus mono"))]
+    rows += [(f"{f}_tag_{m}", f"GRAD minus MAG: {label}") for m, label in labels.items()]
+    rows += [(f"{f}_interaction", "Grouping interaction")]
+    for key, label in rows:
+        A(("Raw" if f == "raw" else "Soft-HFC") + " & " + contrast_row(label, delta[key], True))
+finish_table(r"Paired factorial contrasts. Positive counts strictly positive participant differences, including when the mean is negative. The grouping interaction is $(A-R)_{\mathrm{GRAD}}-(A-R)_{\mathrm{MAG}}$, with $R$ averaged across seeds within participant. Exact two-sided sign-flip tests are exploratory and unadjusted for multiplicity.", "tab:s-factorial-contrasts")
+
+start_table("llrrrrrr", r"Filter & Participant & MAG mono & MAG rand & MAG axis & GRAD mono & GRAD rand & GRAD axis")
+for f in ("raw", "softhfc"):
+    for i, sub in enumerate(subjects):
+        A(("Raw" if f == "raw" else "Soft-HFC") + f" & P{i+1:02d} & " + " & ".join(f"{fx[f'{f}_{t}_{m}'][i]:.4f}" for t in ("mag", "grad") for m in labels) + r" \\")
+finish_table(r"Full-array factorial PCC per participant. Indices follow sorted dataset participant IDs. Random columns average the ten saved seeds; other columns use one condition per participant.", "tab:s-factorial-participants")
+
+start_table("lrrrr", r"Seed & Raw MAG & Raw GRAD & Soft-HFC MAG & Soft-HFC GRAD")
+for i, seed in enumerate(SEEDS):
+    A(seed + " & " + " & ".join(f"{report['seed_sensitivity'][f'{f}_{t}']['means'][i]:+.4f}" for f in ("raw", "softhfc") for t in ("mag", "grad")) + r" \\")
 A(r"\midrule")
-for mode, label, hfc in TRI_MODES:
-    vals = [bacc(mode, arm) for arm, _ in DEC_ARMS]
-    lo, hi = bootstrap_ci(vals[2])
-    lead = int((vals[2] > vals[0]).sum())
-    A(f"{label} & {hfc} & " + " & ".join(f"{v.mean():.2f}" for v in vals)
-      + f" & $[{lo:.2f}, {hi:.2f}]$ & {lead}/{len(subjects)} \\\\")
-A(r"\bottomrule\end{tabular}")
-A(r"\caption{Braille decoding balanced accuracy (\%), five-fold within participant, "
-  r"10 adult participants. The classical arm computes six log band powers spanning "
-  r"1--96\,Hz plus four temporal window means per channel, so it does not depend on how "
-  r"channels are grouped for the tokenizer and takes the same value across partitions "
-  r"sharing a channel set and filtering. Its interval excludes chance only in the "
-  r"Soft-HFC full-array conditions. The final column counts participants in which the "
-  r"classical decoder exceeds the pretrained probe.}")
-A(r"\label{tab:s-decoding}\end{table*}")
-A("")
+A("SD & " + " & ".join(f"{report['seed_sensitivity'][f'{f}_{t}']['sd']:.4f}" for f in ("raw", "softhfc") for t in ("mag", "grad")) + r" \\")
+finish_table(r"Seed-specific cohort axis-minus-random PCC contrasts, trial-weighted. SD is the descriptive population SD across the ten observed seed-specific means (divisor ten), not a standard error. Group sizes exactly match axis counts in the generating script. Every participant contrast is positive for every seed in all four tag/filter combinations.", "tab:s-factorial-seeds")
+
+start_table("lllrrrr", r"Filter & Tag & Partition & Probe [95\% CI] & Ctrl A & Classical [95\% CI] & Cl. $>$ Pr.")
+for f in ("raw", "softhfc"):
+    for t in ("mag", "grad"):
+        for m, label in labels.items():
+            vals = []
+            for arm, _ in DEC_ARMS:
+                vals.append(100*np.asarray([data['per_subject'][sub][f][t]['random_partitions']['42']['braille_5fold_bacc'][arm] if m == 'random' else data['per_subject'][sub][f][t][m]['braille_5fold_bacc'][arm] for sub in subjects]))
+            pr, ctrl, cl = vals
+            pl, ph = bootstrap_ci(pr); cll, clh = bootstrap_ci(cl)
+            assert pl <= 50 <= ph and cl.mean() > pr.mean()
+            A(f"{'Raw' if f == 'raw' else 'Soft-HFC'} & {t.upper()} & {label} & {pr.mean():.2f} [{pl:.2f}, {ph:.2f}] & {ctrl.mean():.2f} & {cl.mean():.2f} [{cll:.2f}, {clh:.2f}] & {int((cl > pr).sum())}/{len(subjects)}" + r" \\")
+finish_table(r"Full-array factorial Braille balanced accuracy (\%), with participant bootstrap intervals. Ctrl A denotes the random-initialization control. Random decoding is available only at seed 42, with group sizes exactly matched to the axes; reconstruction averages ten seeds. Every pretrained-probe interval includes chance; this does not establish equivalence.", "tab:s-factorial-decoding")
+
+start_table("lllrrrr", r"Filter & Tag & Probe contrast & Mean $\Delta$ & 95\% CI & Positive & Exact $p$")
+for f in ("raw", "softhfc"):
+    for t in ("mag", "grad"):
+        scores = {}
+        for m in labels:
+            scores[m] = 100*np.asarray([(data['per_subject'][sub][f][t]['random_partitions']['42'] if m == 'random' else data['per_subject'][sub][f][t][m])['braille_5fold_bacc']['pretrained_linear_probe'] for sub in subjects])
+        for m, label in (("monolithic", "Axis minus mono"), ("random", "Axis minus random")):
+            A(("Raw" if f == "raw" else "Soft-HFC") + " & " + t.upper() + " & " + contrast_row(label, scores['axis_partitioned']-scores[m], True))
+finish_table(r"Paired pretrained-probe decoding contrasts in balanced-accuracy percentage points, ten participants. Random partitions use seed 42. Intervals use 20{,}000 participant bootstrap draws; exact two-sided sign-flip tests are exploratory and unadjusted for multiplicity. Positive counts strictly positive participant differences. Every interval includes zero; this does not establish equivalence.", "tab:s-decoding-contrasts")
 
 OUT.write_text("\n".join(L) + "\n")
 print(f"wrote {OUT} ({len(L)} lines)")

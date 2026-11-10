@@ -7,7 +7,6 @@
 \usepackage{natbib}
 \usepackage{caption}
 \usepackage{booktabs}
-\usepackage{verbatim}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \frenchspacing
@@ -15,9 +14,10 @@
 \setcounter{secnumdepth}{2}
 \renewcommand{\thesection}{S\arabic{section}}
 \renewcommand{\thetable}{S\arabic{table}}
-\title{Supplementary Material:\\Sensor Metadata and Axis-Aware Tokenization Govern Foundation-Model Transfer to OPM-MEG}
+\title{Supplementary Material:\\Sensor Metadata and Axis-Aware Tokenization Shape Zero-Shot Reconstruction in OPM-MEG}
 \author{Anonymous Authors}
 \affiliations{}
+\input{factorial_values}
 \begin{document}
 \maketitle
 
@@ -28,25 +28,21 @@ paired comparisons, decoding results, and dataset details.
 \section{Soft Homogeneous Field Correction}
 
 \subsection{Setup}
-Ambient interference in a magnetically shielded room is dominated by a spatially
-uniform field $\mathbf{B}_{\mathrm{ext}} \in \mathbb{R}^{3}$. A sensor $c$ with unit
+Following \citet{tierney2021hfc}, we approximate distant magnetic interference as a spatially uniform field $\mathbf{B}_{\mathrm{ext}} \in \mathbb{R}^{3}$. A sensor $c$ with unit
 sensitive orientation $\mathbf{u}_{c}$ measures the projection
 $m_{c} = \mathbf{u}_{c}^{\top}\mathbf{B}_{\mathrm{ext}}$, so across an array of $C$
 channels the induced measurement is $\mathbf{m}_{\mathrm{ext}} = \mathbf{Q}\mathbf{B}_{\mathrm{ext}}$,
 where row $c$ of $\mathbf{Q} \in \mathbb{R}^{C \times 3}$ is $\mathbf{u}_{c}^{\top}$.
 
-Conventional homogeneous field correction projects onto the null space of
+Conventional homogeneous field correction \citep{tierney2021hfc} projects onto the null space of
 $\mathbf{Q}^{\top}$:
 \[
 \mathbf{P}_{\mathrm{hard}} = \mathbf{I}_{C} - \mathbf{Q}(\mathbf{Q}^{\top}\mathbf{Q})^{-1}\mathbf{Q}^{\top}.
 \]
-For non-coplanar orientations $\mathbf{Q}$ has rank 3, so
-$\mathrm{rank}(\mathbf{P}_{\mathrm{hard}}) = C - 3$ and the data covariance becomes
-singular, which forces pseudo-inversion or explicit truncation in any downstream
-linear estimator.
+When $\mathbf{Q}$ has full column rank, $\mathrm{rank}(\mathbf{P}_{\mathrm{hard}}) = C - 3$, making the projected channel covariance rank-deficient.
 
 \subsection{Soft variant}
-We use a shrinkage form parameterized by $\alpha \in [0,1)$:
+The cited method uses full projection. Here we evaluate a soft shrinkage variant parameterized by $\alpha \in [0,1)$:
 \[
 \mathbf{P}_{\mathrm{soft}}(\alpha) = \mathbf{I}_{C} - \alpha\,\mathbf{Q}_{R}\mathbf{Q}_{R}^{\top},
 \]
@@ -55,7 +51,7 @@ $\mathbf{Q}_{R}^{\top}\mathbf{Q}_{R} = \mathbf{I}_{3}$. Its eigenvalues are $1-\
 on the three directions spanning $\mathrm{col}(\mathbf{Q})$ and $1$ on the remaining
 $C-3$, so for any $\alpha < 1$ the operator has full rank $C$.
 
-At the $\alpha = 0.25$ used throughout, components lying in the uniform-field subspace
+The coefficient $\alpha = 0.25$ is an analysis choice here, not a value established by \citet{tierney2021hfc}. At this value, components lying in the uniform-field subspace
 are scaled by $0.75$ in amplitude, a power reduction of $1 - 0.75^{2} = 43.75\%$.
 
 \subsection{What this does to neural signal}
@@ -66,9 +62,7 @@ orthogonal to the uniform-field subspace, and whatever part of it does project o
 $\mathrm{col}(\mathbf{Q})$ receives the same $25\%$ amplitude shrinkage as the
 interference. Soft-HFC is therefore a lossy operation on signal as well as noise,
 which is why the main paper holds filtering constant within every contrast rather
-than treating it as a neutral preprocessing step. The measured cost is reported in
-Table~\ref{tab:s-tri-contrasts}: Soft-HFC lowers reconstruction in every participant
-under all three partition types, by a similar amount in each.
+than treating it as a neutral preprocessing step.
 
 \section{Single-Axis Metadata Interventions}
 
@@ -82,84 +76,26 @@ from an Elekta layout for topographic display and are not measured OPM positions
 geometry rows should therefore be read as sensitivity to supplied metadata, not as
 evidence about forward-field accuracy.
 
-\section{Triaxial Grid}
+\section{Tag by Partition Factorial}
+The experiment crosses MAG/GRAD tags, raw/Soft-HFC inputs and monolithic/random/axis partitions. Random group sizes match each participant's $Z$, $X$ and $Y$ counts exactly in the generating script, with seeds 42 and 101--109. Saved group assignments are unavailable for an independent metadata-level check. We average seeds within participant before paired inference, retaining ten independent participants. Tables~\ref{tab:s-factorial-cohort}--\ref{tab:s-factorial-seeds} report the full-array reconstruction results.
 
-Table~\ref{tab:s-tri-cohort} gives cohort means for the complete $2\times3$ grid
-crossing partition type with filtering, plus the two channel-subset conditions.
-Table~\ref{tab:s-tri-per-subject} gives the per-participant values those means are
-computed from, and Table~\ref{tab:s-tri-contrasts} gives every paired contrast,
-each one within a single filtering regime.
+PCC is averaged over channels and temporal windows within each trial, then over trials within participant. Each participant contributes equally to cohort estimates.
 
-The decomposition quoted in the main paper follows from two rows of
-Table~\ref{tab:s-tri-contrasts}. Under Soft-HFC the random partition gains
-$+0.0292$ over the monolithic tokenizer and the axis partition gains a further
-$+0.1096$ over the random partition, summing to the total $+0.1388$. The split
-is an algebraic partition of that total rather than an independent test, but both
-components are measured under constant filtering.
-
-Group sizes in the random partition are approximately equal thirds and were drawn
-with a single seed. Repeated seeds and exactly size-matched groups would tighten
-the capacity estimate; as it stands the grouping component is an upper bound on
-what orientation contributes.
+The tag effect is configuration-dependent. The raw monolithic contrast is $\FxRawTagMonolithicMean$ ($\FxRawTagMonolithicCI$, $p=\FxRawTagMonolithicP$), while axis grouping retains its advantage under both tags. The paired change in the grouping advantage under GRAD is $\FxRawInteractionMean$ raw and $\FxSofthfcInteractionMean$ with Soft-HFC, both negative in every participant. This interaction does not by itself identify a shared mechanism. Under Soft-HFC, the monolithic-to-random contrast accounts for $\FxSofthfcMagMonoToRandomPercent\%$ under MAG and $\FxSofthfcGradMonoToRandomPercent\%$ under GRAD of the respective axis-over-monolithic gains. These are descriptive partition components: random partitioning changes attention composition as well as query budget, so a capacity contribution cannot be isolated. Tests are exploratory and unadjusted for multiple comparisons.
 
 \section{Decoding}
+The classical decoder uses scikit-learn \texttt{LogisticRegression} with $L_2$ penalty at the library default $C=1.0$, fixed for every configuration and never tuned on a held-out fold, so no selection leakage is possible. The pretrained probe uses the same solver and folds. The sensor-type codes are checkpoint-specific integers, \texttt{MAG=1} and \texttt{GRAD=2} in the released tiny configuration, and any reuse of this intervention must read them from the checkpoint rather than assume them.
 
-Table~\ref{tab:s-decoding} gives all eight configurations and three decoders. Two
-features of it carry the argument in the main paper.
 
-First, the pretrained probe never leaves chance, including in the two axis-partitioned
-configurations that gained roughly $+0.14$ PCC in reconstruction. Second, the classical arm is invariant to partition by construction. Its features are
-six log band powers spanning 1--96\,Hz plus four temporal window means per channel, none
-of which depends on how channels are grouped for the tokenizer, so it takes four distinct
-values across the eight rows, one per combination of channel set and filtering.
-That invariance is a control rather than a redundancy: partitioning moves the probe by
-up to 3.3 points while leaving the information available to a spectral decoder untouched,
-and the probe still does not reach it.
+Table~\ref{tab:s-factorial-decoding} gives all twelve full-array configurations and three decoders, evaluated with five-fold cross-validation within participant. Random-partition decoding uses seed 42 with group sizes matched to the axes, while reconstruction averages ten seeds. Every pretrained-probe interval includes chance. Table~\ref{tab:s-decoding-contrasts} gives the paired axis-minus-monolithic and axis-minus-random probe contrasts; every interval includes zero. These are exploratory tests without multiplicity correction, not evidence of equivalence.
 
-Per-configuration paired tests are weak at $n=10$ and most intervals cross zero, and no
-correction is applied across the eight configurations. The classical arm's own interval
-excludes chance only in the three Soft-HFC full-array rows, which share one underlying
-measurement because the classical features are partition-invariant. The evidence is
-therefore one condition in which a classical decoder separates the classes while the
-probe does not, together with a direction that never reverses across eight configurations.
-These results do not rule out a task-level noise floor.
-
-\section{The Excluded Evoked-Detection Task}
-
-The evoked-detection task is excluded because its two classes differ in window
-construction. The same construction is used for the SQUID detection task, which is
-also excluded. The following code constructs the two classes:
-
-\begin{scriptsize}
-\begin{verbatim}
-y_det = np.zeros(n_t, dtype=np.int64)
-y_det[::2] = 1
-x_det = np.zeros_like(x_arr)
-# Class 1 (Evoked): active window
-x_det[::2, :, 64:192] = x_arr[::2, :, 64:192]
-# Class 0 (Baseline): pre-stimulus
-# segment written twice
-x_det[1::2, :, 64:128]  = x_arr[1::2, :, 0:64]
-x_det[1::2, :, 128:192] = x_arr[1::2, :, 0:64]
-\end{verbatim}
-\end{scriptsize}
-
-\noindent
-Class 1 occupies 128 consecutive samples of the post-stimulus window. Class 0 writes a
-single 64-sample pre-stimulus segment twice into the same 128-sample slot, so it is
-exactly periodic at lag 64 and class 1 is not. Any decoder sensitive to that
-autocorrelation separates the classes without using evoked physiology, and a model with
-more capacity to represent the artifact will appear to transfer better.
-
-Both classes occupy the same temporal token slice, but only the baseline class
-contains a repeated segment. A valid evoked-detection comparison requires equal-duration
-windows constructed identically, trial-grouped splits, and a classical baseline.
+The classical features are six log band powers spanning 1--96\,Hz plus four temporal window means per channel. They depend on filtering but not on sensor tag or tokenizer partition. The six classical rows within each filtering regime therefore share one underlying measurement. The Soft-HFC interval excludes chance, while the unfiltered interval does not. The classical cohort mean exceeds the pretrained probe in every configuration, but this ordering alone does not establish a significant paired advantage or rule out a task-level noise floor.
 
 \section{Model Architecture}
 
 The pretrained BrainOmni tiny configuration is evaluated with frozen weights.
 The tokenizer conditions on sensor position, unit orientation, and a discrete
-sensor type, and uses residual vector quantization. The sequence backbone is
+sensor type, and uses residual vector quantization \citep{xiao2025brainomni}. In the evaluated configuration, the sequence backbone is
 bidirectional (\texttt{causal=False}) and uses masked-token prediction over
 codebook entries with a mask ratio of $0.25$. Attention operates within trials,
 not across trials. The number of learned spatial queries is loaded from the
@@ -179,4 +115,6 @@ OpenNeuro \texttt{ds000117} v1.0.4, participant \texttt{sub-01}, run \texttt{01}
 
 \input{supplement_tables}
 
+\clearpage
+\bibliography{references}
 \end{document}

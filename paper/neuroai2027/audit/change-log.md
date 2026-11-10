@@ -91,3 +91,67 @@ An independent review raised four points. All four were checked against the code
 **Supplement inconsistencies.** Confirmed and extended. The manuscript's triaxial table quoted the benchmark run's saved bootstrap intervals while the supplement recomputed them with a different seed, so the two documents disagreed in the third and fourth decimal in all eight rows; both now quote intervals recomputed from the per-participant records with a fixed seed, and verify.py enforces it. Every package version in the supplement's environment block disagreed with uv.lock: torch 2.15.0 against 2.14.1, MNE 1.9.0 against 1.12.1, scikit-learn 1.6.1 against 1.7.2, NumPy 2.2.3 against 2.2.6, SciPy 1.15.2 against 1.15.3. That block had been transcribed from the run author's message while the hashes beside it were recomputed, which was inconsistent. The environment is now generated from the lockfile at build time. The checkpoint repository, revision and hashes are now present in the provenance table, marked as reported rather than recomputed, with the participant indexing note made explicit.
 
 verify.py now fails if the baseline is described as four-band, if the band count or temporal window count in the source changes, if the noise-floor claim reappears, if the chance-excluding interval is not quoted, if any supplement version disagrees with the lockfile, or if the superseded transcribed versions reappear.
+
+## Revision 9: acting on an external referee report
+A referee report raised eight major points and eight minor ones. Two were checkable against the repository and were checked before anything else.
+
+Confirmed: the classical decoder uses scikit-learn's default $C=1.0$, constructed identically at every call site and never tuned on a held-out fold, so no selection leakage is possible. This is now stated in the supplement rather than left for a reader to find in the code.
+
+Not confirmed: the report states that the trial-weighted aggregation check is "computable from saved records in minutes" and that omitting it "reads as selective." The saved records hold one scalar PCC per participant per mode, with no per-batch or per-trial values, so trial weighting cannot be recomputed without replaying inference. The manuscript already says the check has not been run; no change was made on this point beyond verifying that the omission is a compute constraint rather than a choice.
+
+Claims brought back to what the data support. The title's "Govern" became "Shape". The abstract no longer says the SQUID result "reproduces" the OPM effect, since one participant cannot establish reproduction; it now says the effect moves the same way in a single-participant diagnostic. The abstract no longer asserts that the tokenizer is keyed to a label carrying no waveform information, which the approximate FACE-DEC coordinates cannot support; it says the tokenizer responds far more to the tag than to the geometry we perturbed on this cohort, and notes that both endpoints remain poor reconstructions. The decoding sentence now leads with the one condition whose interval excludes chance and states that ten participants bound rather than settle the dissociation. The decomposition is labelled descriptive in the abstract.
+
+The interaction confound is now stated. The results section claimed the grid separated grouping from capacity "by direct measurement rather than by assumption". Holding filtering constant does not address an interaction between pass structure and grouping, which this design cannot measure. That sentence is removed and the decomposition is described as an algebraic partition that treats the two as non-interacting. The limitations no longer claim the grouping component is an "upper bound", a direction that was asserted and never derived; it now says the components are not separately identified if the two interact.
+
+The Soft-HFC result is restated as no evidence of an interaction rather than evidence of none, with the power limitation named.
+
+Two alternatives and one cost that the paper had omitted. The tag effect now carries the simpler competing account, that the two embeddings encode learned gain and unit priors and OPM amplitudes sit nearer the gradiometer prior, with the note that this design cannot separate it from the pretraining-imbalance account although the two differ in what they predict under a continuous parameterization. The axis partition is no longer presented as a free win: it severs attention between the three orthogonal channels at one coordinate, which is the vector a triaxial sensor exists to measure, and triples tokenizer compute, and axis-conditioned queries within one bank would test the same idea at neither cost. The limitations now state that every positive result uses the same endpoint family as the withdrawn result, where a model can gain by matching artifact structure.
+
+Minor corrections: the geometry ratio is reported as seven to nine times rather than the largest value, the near-tautology of the classical arm leading a chance-level probe is named as such, the checkpoint-specific \texttt{MAG=1} and \texttt{GRAD=2} encoding is documented in the supplement, and duplicated statements of the approximate-coordinate caveat and of the one chance-excluding interval were removed.
+
+Four requested experiments are not addressed because each needs model inference: repeated random-partition seeds, a monolithic arm with a matched 48-query budget, crossing the tag intervention with the partition grid on one cohort, and replaying the raw data through the corrected pipeline. They are recorded in the README as the work that would close the remaining gaps.
+
+
+## Revision 10: verified factorial and interaction
+
+- Preserved Claude's working tree before editing and retained her title, softened claims, baseline specification, tag-code caveat, anonymity and withdrawal disclosure.
+- Imported only the factorial JSON and generating script from `46dac60`, byte-identically. Added `factorial_results.py` to derive the new manuscript macros, audit report and supplement estimates from saved trial records.
+- Replaced the main triaxial reconstruction grid with the two-tag factorial, averaging ten random seeds within each participant. Added paired interaction estimates, tag-conditional capacity fractions, seed sensitivity and a correctly scoped weighting bound.
+- Qualified the abstract, interpretation and conclusion: tag effects depend on configuration; the monolithic triaxial estimates do not establish equivalence; the interaction does not identify a shared mechanism.
+- Resolved the subset discrepancy as a difference in normalization scope, with an additional radial-coordinate change. Kept the original subset results labelled by provenance and generated a comparison table rather than substituting incompatible values.
+- Excluded invalid new subset classical decoding controls, which reuse full-array features. Preserved the original decoding figure and added the new full-array decoding table, explicitly using seed 42 for random decoding.
+- Updated Figure 1D/E to the factorial reconstruction and added Tables S7-S12. Supplement title now matches Claude's revised main title.
+- Added row-level numerical checks, full figure checks, source hashes, macro checks, weighting/seed validation, PDF text checks and a reproducible `audit/rebuild.py` command.
+- Removed the redundant bibliography-style command supplied already by the AAAI package, resolving a BibTeX build failure.
+- Independent numerical, methods and consistency reviews completed; accepted findings are recorded in `interaction-audit.md` and the issue ledger.
+
+
+## Revision 11: Kimi minor revisions
+
+- Adopted the narrower title, Sensor Metadata and Axis-Aware Tokenization Shape Zero-Shot Reconstruction in OPM-MEG, in both documents.
+- Unified the three negative geometry consistency counts across the main prose, Table 1, Figure 1B and Table S2. Counts are computed from participant records and follow the stated negative direction. Generated macros carry the main-text and Table 1 counts; the figure sidecar records the counted direction explicitly.
+- Replaced the asserted reconstruction/decoding dissociation with improved reconstruction without a detectable improvement in linear decoding. Removed equivalent overstatements from the abstract, contribution list and subsection heading.
+- Relabelled the random-minus-monolithic quantities as monolithic-to-random contrasts and descriptive partition components, including the supplement and generated table heading. Renamed the authoring pipeline's contrast keys and percentage macros to avoid continuing to encode a capacity interpretation.
+- Stated that random partitioning changes attention composition as well as query budget and that a capacity contribution cannot be isolated without the missing matched-query control.
+- Added standing verification checks for directional counts in all four locations, the narrowed title, and the absence of the rejected dissociation and capacity-fraction wording.
+
+
+## Revision 12: targeted references and full-text verification
+
+- Added LaBraM (Jiang et al., ICLR 2024), triaxial OPM hardware (Rea et al., 2022), and conventional homogeneous field correction (Tierney et al., 2021), bringing the main bibliography to eight cited sources.
+- Verified each new citation against primary full text, including exact methods/figure/equation locators. Also rechecked the rewritten BrainOmni architecture claim. Evidence and status-check limitations are in `reference-audit.json` and `reference-audit.md`.
+- Replaced the broad field-wide training-corpus and growth claim in the abstract with a narrower motivation. Rewrote the introduction to situate LaBraM and BrainOmni and to cite the qualitative hardware comparison. Removed unsupported precise hardware distances, the pretraining sensor-ratio statement and exact physical co-location wording.
+- Cited conventional HFC separately from the evaluated soft variant. The supplement now presents homogeneity as an approximation, states the full-column-rank condition and identifies the shrinkage coefficient as this analysis's choice.
+- Added a standalone supplement bibliography with the HFC and BrainOmni sources and added its BibTeX pass to the rebuild script.
+- Extended verification to check unique citation keys, cited versus printed bibliography entries, BibTeX logs and source-attribution boundaries. The page-budget check now explicitly permits unlimited reference pages while requiring all content to fit four pages.
+- Independent source and final integration reviews completed. No new model runs or changes to effect estimates were made.
+
+
+## Revision 13: final scientific narrative
+
+- At the author's request, removed analysis history from both submitted documents. The introduction now lists three scientific contributions. The withdrawn evoked-detection task, its invalid numbers and construction code no longer appear in the paper or supplement. Its exclusion and supporting evidence remain in this audit.
+- Consolidated triaxial reporting around the current full-array factorial. Removed the superseded MAG grid and subset-provenance tables from the supplement; neither invalid subset decoding nor incompatible subset normalization results enter the final scientific claims. Historical source comparisons remain under internal verification.
+- Updated Figure 1F to the six current Soft-HFC decoding cells covering both tags and all partitions. All twelve raw/Soft-HFC cells are in Table S7, and generated Table S8 gives the eight paired axis-minus-monolithic and axis-minus-random probe contrasts. Every paired interval spans zero; the null is not interpreted as equivalence.
+- Generated decoding range endpoints and classical means/intervals directly from participant records. Replaced older-grid prose with the current estimates and stated that classical features give one measurement per filtering regime.
+- Removed batch-weighting and subset-normalization bookkeeping from submitted prose while retaining the complete trial-weighting and source-integrity checks internally. Preserved the narrow title, references, geometry consistency correction, matched-query limitation, artifact-sensitive endpoint caveat and raw-data replay limitation.
+- Updated table numbering and verification to cover the current eight supplement tables, all six figure decoding rows and all twelve decoding cells. Added guards against reintroducing superseded grids or withdrawn-task narration.
