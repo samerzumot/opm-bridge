@@ -1,0 +1,95 @@
+{
+  "subject": "sub-101",
+  "native_event_correction": -1,
+  "seconds": -0.0008333333333333334,
+  "shape": [
+    84,
+    176,
+    512
+  ],
+  "class_counts": [
+    42,
+    42
+  ],
+  "matched_source_hashes": true,
+  "rows": [
+    {
+      "condition": "Monolithic",
+      "metric": "Reconstruction PCC",
+      "old": 0.282822767361289,
+      "corrected": 0.2834600330818267,
+      "delta": 0.0006372657205377386
+    },
+    {
+      "condition": "Monolithic",
+      "metric": "Probe balanced accuracy",
+      "old": 0.40694444444444444,
+      "corrected": 0.4416666666666666,
+      "delta": 0.034722222222222154
+    },
+    {
+      "condition": "Axis-partitioned",
+      "metric": "Reconstruction PCC",
+      "old": 0.410971645798002,
+      "corrected": 0.4087468112508456,
+      "delta": -0.0022248345471563846
+    },
+    {
+      "condition": "Axis-partitioned",
+      "metric": "Probe balanced accuracy",
+      "old": 0.3555555555555555,
+      "corrected": 0.3583333333333333,
+      "delta": 0.002777777777777768
+    },
+    {
+      "condition": "Classical raw",
+      "metric": "Balanced accuracy",
+      "old": 0.4930555555555555,
+      "corrected": 0.4930555555555555,
+      "delta": 0.0
+    },
+    {
+      "condition": "Classical softhfc",
+      "metric": "Balanced accuracy",
+      "old": 0.5069444444444444,
+      "corrected": 0.5069444444444444,
+      "delta": 0.0
+    }
+  ],
+  "old_axis_advantage": 0.12814887843671302,
+  "corrected_axis_advantage": 0.1252867781690189,
+  "delta_axis_advantage": -0.002862100267694123,
+  "historical_comparisons": {
+    "monolithic": {
+      "reported_pcc": 0.2828227494444166,
+      "old_replay_minus_reported_pcc": 1.7916872374623694e-08,
+      "corrected_minus_reported_pcc": 0.0006372836374101132,
+      "reported_probe_bacc": 0.40694444444444444,
+      "old_replay_probe_bacc": 0.40694444444444444,
+      "corrected_probe_bacc": 0.4416666666666666
+    },
+    "axis_partitioned": {
+      "reported_pcc": 0.41097164686237064,
+      "old_replay_minus_reported_pcc": -1.0643686487732396e-09,
+      "corrected_minus_reported_pcc": -0.0022248356115250334,
+      "reported_probe_bacc": 0.3555555555555555,
+      "old_replay_probe_bacc": 0.3555555555555555,
+      "corrected_probe_bacc": 0.3583333333333333
+    }
+  },
+  "test_count": 30,
+  "tests_passed": true,
+  "cohort_results_overwritten": false,
+  "limits": [
+    "Paired sensitivity in sub-101 only. No cohort confidence interval, sign-flip p-value or generalization conclusion follows.",
+    "Model analyses use MAG with Soft-HFC. Random partitions, other seeds, GRAD and other participants were not rerun.",
+    "Historical cohort tables retain their original timing and need a full corrected rerun before replacement.",
+    "Accuracy estimates use identical stratified five-fold splits and settings. No hyperparameters were retuned."
+  ],
+  "files_sha256": {
+    "src/opm_bridge/data/nottingham_opm.py": "763654940f9b2abf946b9f49d77ba73dad225b27f4be2a211024262cc6218b62",
+    "scripts/stream_nottingham_zenodo.py": "1db69fc5ea75931f7ca587b0dfb855183a9757219b4ba477cd9a5a51da076ac4",
+    "scripts/compare_nottingham_timing.py": "f0c706ffa7c518ea6e5992f03090383cb7fd50ea043d0673934389849f342a6b",
+    "results/summary_phase4_nottingham_factorial_and_seeds.json": "22fd5468c71f0cc8b2fedac3c96c33e526b37ed2f70230bacf2a27c34755e561"
+  }
+}

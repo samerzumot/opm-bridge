@@ -1,0 +1,377 @@
+{
+  "date": "2026-11-11",
+  "verdict": "No HFC-fix effect in representative replays; Nottingham source cohort operators identical; event-index issue remains",
+  "versions": {
+    "mne": "1.13.2",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "torch": "2.15.0"
+  },
+  "checkpoint": {
+    "repo": "OpenTSLab/BrainOmni",
+    "revision": "9a4d3c70495370397ccfbfd6d2496f25647545a5",
+    "sha256": "62c67ba6a84ea0625e67a3b5e7463fe3930bfee88a612a225e9062a052542ffc"
+  },
+  "representatives": {
+    "FACE-DEC": {
+      "subject": "sub-01",
+      "run": "run-01",
+      "trials": 256,
+      "channels": 60,
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "model_input_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "pcc_by_tag": {
+        "1_monolithic": {
+          "old": 0.2324586933827959,
+          "new": 0.2324586933827959,
+          "delta": 0.0
+        },
+        "2_monolithic": {
+          "old": 0.3607459821505472,
+          "new": 0.3607459821505472,
+          "delta": 0.0
+        }
+      },
+      "historical_comparison": "Not an exact reproduction of the reported 21-subject, 50-channel aligned analysis; representative replay retains 60 channels"
+    },
+    "Nottingham": {
+      "subject": "sub-101",
+      "trials": 84,
+      "channels": 176,
+      "classes": [
+        42,
+        42
+      ],
+      "source_zip_crc32": "ee310249",
+      "source_uncompressed_bytes": 579156480,
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "model_input_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "historical_comparisons": {
+        "monolithic": {
+          "replay_pcc": 0.282822767361289,
+          "historical_pcc": 0.2828227494444166,
+          "replay_minus_historical": 1.7916872374623694e-08,
+          "max_abs_per_trial_difference": 8.940696716308594e-08,
+          "old_qr_vs_new_svd_delta": 0.0
+        },
+        "axis_partitioned": {
+          "replay_pcc": 0.410971645798002,
+          "historical_pcc": 0.41097164686237064,
+          "replay_minus_historical": -1.0643686487732396e-09,
+          "max_abs_per_trial_difference": 8.940696716308594e-08,
+          "old_qr_vs_new_svd_delta": 0.0
+        }
+      }
+    }
+  },
+  "nottingham_cohort_geometry": {
+    "sub-101": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.733870967184098,
+          7.672206991932019,
+          7.571293134986673
+        ],
+        "rank_tolerance": 3.0223852092712305e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 176,
+      "reported_n_channels": 176,
+      "source_sha256": "c840c43a9f3371b74d50befd66ba91a3ca48dca6bae7faa3896ef2ee81b5ffb0",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-102": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.613450056690209,
+          7.531023753223244,
+          7.437678365099632
+        ],
+        "rank_tolerance": 2.873893366922199e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 170,
+      "reported_n_channels": 170,
+      "source_sha256": "86ed9d5650847292076dbabc9ba083390cab4a155faad4102bd83e9c89deb026",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-103": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.680568481164333,
+          7.660411465049036,
+          7.505129178920926
+        ],
+        "rank_tolerance": 2.967446101559621e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 174,
+      "reported_n_channels": 174,
+      "source_sha256": "3a680c93d6451120850a648b7846509c3baba9a2a0523de61bd4e47026aeff71",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-104": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.615190890238319,
+          7.594860359368088,
+          7.438209719208688
+        ],
+        "rank_tolerance": 2.891459610034347e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 171,
+      "reported_n_channels": 171,
+      "source_sha256": "b1c8687e7203457e3a6602e6d1439183f1de25b9e3c480e793ae071ff5c1d0a3",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-105": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.279500901935881,
+          7.258230089691576,
+          7.0941498845041675
+        ],
+        "rank_tolerance": 2.5215432868419486e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 156,
+      "reported_n_channels": 156,
+      "source_sha256": "b0820d4c6710f461eecf92fec85eaf0a8e383b52e82c677d596fa6f84872cb5f",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-106": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.279500901935881,
+          7.258230089691576,
+          7.0941498845041675
+        ],
+        "rank_tolerance": 2.5215432868419486e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 156,
+      "reported_n_channels": 156,
+      "source_sha256": "b0820d4c6710f461eecf92fec85eaf0a8e383b52e82c677d596fa6f84872cb5f",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-107": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.40439798727813,
+          7.340029142116619,
+          7.23179525697944
+        ],
+        "rank_tolerance": 2.6470116675265194e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 161,
+      "reported_n_channels": 161,
+      "source_sha256": "c7009e735ce6b6c8ea3a1920586ed268e6929c8e802ac7ae1f7f3c61bf94da5e",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-108": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.27170935843955,
+          7.257514230117328,
+          7.03212131621939
+        ],
+        "rank_tolerance": 2.502697939017762e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 155,
+      "reported_n_channels": 155,
+      "source_sha256": "92be699a41219b2ec8d2e5a32598eab98735a5b011353b3a843f038c9054ae74",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-109": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.279500902037949,
+          7.25823007036908,
+          7.094149904168833
+        ],
+        "rank_tolerance": 2.5215432868773037e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 156,
+      "reported_n_channels": 156,
+      "source_sha256": "439a0969d43aa734c2f3b6610e3e7dff054b4aca38f11133b949f304951de63b",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    },
+    "sub-110": {
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          7.279500902037949,
+          7.25823007036908,
+          7.094149904168833
+        ],
+        "rank_tolerance": 2.5215432868773037e-13,
+        "zero_orientation_indices": []
+      },
+      "n_channels": 156,
+      "reported_n_channels": 156,
+      "source_sha256": "439a0969d43aa734c2f3b6610e3e7dff054b4aca38f11133b949f304951de63b",
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      }
+    }
+  },
+  "timing_issue": {
+    "stimulus_count": 84,
+    "sample_minus_rounded_onset_times_sfreq": [
+      1.0
+    ],
+    "implemented_epoch_shift_sec": 0.0008333333333333334,
+    "status": "one_sample_late_relative_to_onset_column"
+  },
+  "face_edge_check": {
+    "annotations": [],
+    "segments": {
+      "0": {
+        "trim_seconds_each_end": 0,
+        "median_shielding_db": {
+          "1": -7.661771051175387,
+          "2": -15.645413994845903,
+          "3": -6.369415777621436,
+          "10": 0.01352924742710003,
+          "44": -7.2891917463596165,
+          "50": 15.010527238091555,
+          "100": 15.188659345139703
+        },
+        "std_before": 1.1400269311212064e-10,
+        "std_after": 4.609790060305927e-11
+      },
+      "5": {
+        "trim_seconds_each_end": 5,
+        "median_shielding_db": {
+          "1": 3.484304737298271,
+          "2": 0.3897495651181174,
+          "3": 0.04294645412239216,
+          "10": 0.011365694206827303,
+          "44": 9.629731586543048,
+          "50": 34.10515142551296,
+          "100": 32.88344236699202
+        },
+        "std_before": 1.1084394693222148e-10,
+        "std_after": 7.065722003855556e-13
+      },
+      "10": {
+        "trim_seconds_each_end": 10,
+        "median_shielding_db": {
+          "1": 3.4944205544113833,
+          "2": 0.39199674838686716,
+          "3": 0.044792075073822726,
+          "10": 0.011409343314741437,
+          "44": 9.749624890146666,
+          "50": 34.10021774696196,
+          "100": 32.88805136121292
+        },
+        "std_before": 1.1082236398939246e-10,
+        "std_after": 7.065993498826072e-13
+      },
+      "20": {
+        "trim_seconds_each_end": 20,
+        "median_shielding_db": {
+          "1": 3.5123526478792764,
+          "2": 0.38723934558588957,
+          "3": 0.0447564646922455,
+          "10": 0.01142533888861886,
+          "44": 9.810417402978079,
+          "50": 34.078393341938465,
+          "100": 32.853211067927816
+        },
+        "std_before": 1.1080850570450915e-10,
+        "std_after": 7.045355515158555e-13
+      }
+    },
+    "epoch_overlap_check": {
+      "edge_seconds": 5,
+      "first_event_seconds": 15.262,
+      "last_event_seconds": 315.705,
+      "recording_duration_seconds": 325.34,
+      "overlapping_epoch_indices": [],
+      "conclusion": "Whole-record spectral increases disappear when excluding edges; no retained trial overlaps these five-second edge regions"
+    }
+  },
+  "test_result": {
+    "passed": 23,
+    "failed": 0,
+    "environment": "Project .venv with global pytest appended, plugin autoload disabled"
+  },
+  "limitations": [
+    "Full 21-subject FACE-DEC alignment, decoding and cohort confidence intervals were not rerun.",
+    "Only sub-101 raw data and two MAG reconstruction modes were replayed for Nottingham; all ten source geometries were checked.",
+    "Identical float32 HFC operators imply unchanged downstream outputs for matching inputs and deterministic execution. Historical geometry bytes were not archived; current source retained-channel counts match every participant.",
+    "Zero old/new input differences allowed deterministic reconstruction to be reused instead of redundant identical inference.",
+    "Positive shielding and visible evoked responses do not prove neural-signal preservation; Soft-HFC changes condition-average waveforms.",
+    "Nottingham event samples are one greater than rounded onset times 1200 for all 84 stimulus events. This replay preserves historical indexing to isolate the HFC change.",
+    "The source Nottingham MEG JSON reports DigitizedLandmarks=false, while the adapter sets has_digitized_landmarks=True. This metadata flag needs correction or justification; it is not consumed by the HFC operator."
+  ],
+  "historical_results_sha256": "22fd5468c71f0cc8b2fedac3c96c33e526b37ed2f70230bacf2a27c34755e561"
+}

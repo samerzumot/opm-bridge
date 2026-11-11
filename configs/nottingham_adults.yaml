@@ -5,9 +5,9 @@ dataset:
   archive: Adults.zip
   n_subjects: 26
   sfreq_target: 256.0
-  bandpass_hz: [1.0, 96.0]
+  bandpass_hz: [1.0, 45.0]
   notch_hz: [50.0, 100.0]
-  epoch_window_sec: [0.0, 2.0]  # 2.0s window = 512 samples at 256 Hz
+  epoch_window_sec: [-0.2, 1.8]  # 2.0s window = 512 samples at 256 Hz
   coord_frame: head
   is_triaxial: true
   candidate_tasks:

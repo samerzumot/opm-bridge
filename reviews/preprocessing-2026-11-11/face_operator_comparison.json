@@ -1,0 +1,36 @@
+{
+  "scope": "Representative full recordings; historical cohort caches unavailable",
+  "device": "cpu",
+  "subjects": {
+    "ds005107": {
+      "subject": "sub-01",
+      "shape": [
+        256,
+        60,
+        512
+      ],
+      "cache_sha256": "2c27a909e8908039fd65f85b3b72d306207cd888b2ca148fb90f0306c754da75",
+      "geometry": {
+        "rank": 3,
+        "singular_values": [
+          5.007554613429457,
+          4.82017148916502,
+          3.419114448005803
+        ],
+        "rank_tolerance": 6.67140291467677e-14,
+        "zero_orientation_indices": []
+      },
+      "operator_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "model_input_difference": {
+        "bitwise_equal": true,
+        "max_abs": 0.0,
+        "relative_l2": 0.0
+      },
+      "reconstruction": {}
+    }
+  }
+}

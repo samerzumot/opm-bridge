@@ -1,0 +1,202 @@
+{
+  "sub-101": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.733870967184098,
+        7.672206991932019,
+        7.571293134986673
+      ],
+      "rank_tolerance": 3.0223852092712305e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 176,
+    "reported_n_channels": 176,
+    "source_sha256": "c840c43a9f3371b74d50befd66ba91a3ca48dca6bae7faa3896ef2ee81b5ffb0",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-102": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.613450056690209,
+        7.531023753223244,
+        7.437678365099632
+      ],
+      "rank_tolerance": 2.873893366922199e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 170,
+    "reported_n_channels": 170,
+    "source_sha256": "86ed9d5650847292076dbabc9ba083390cab4a155faad4102bd83e9c89deb026",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-103": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.680568481164333,
+        7.660411465049036,
+        7.505129178920926
+      ],
+      "rank_tolerance": 2.967446101559621e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 174,
+    "reported_n_channels": 174,
+    "source_sha256": "3a680c93d6451120850a648b7846509c3baba9a2a0523de61bd4e47026aeff71",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-104": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.615190890238319,
+        7.594860359368088,
+        7.438209719208688
+      ],
+      "rank_tolerance": 2.891459610034347e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 171,
+    "reported_n_channels": 171,
+    "source_sha256": "b1c8687e7203457e3a6602e6d1439183f1de25b9e3c480e793ae071ff5c1d0a3",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-105": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.279500901935881,
+        7.258230089691576,
+        7.0941498845041675
+      ],
+      "rank_tolerance": 2.5215432868419486e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 156,
+    "reported_n_channels": 156,
+    "source_sha256": "b0820d4c6710f461eecf92fec85eaf0a8e383b52e82c677d596fa6f84872cb5f",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-106": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.279500901935881,
+        7.258230089691576,
+        7.0941498845041675
+      ],
+      "rank_tolerance": 2.5215432868419486e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 156,
+    "reported_n_channels": 156,
+    "source_sha256": "b0820d4c6710f461eecf92fec85eaf0a8e383b52e82c677d596fa6f84872cb5f",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-107": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.40439798727813,
+        7.340029142116619,
+        7.23179525697944
+      ],
+      "rank_tolerance": 2.6470116675265194e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 161,
+    "reported_n_channels": 161,
+    "source_sha256": "c7009e735ce6b6c8ea3a1920586ed268e6929c8e802ac7ae1f7f3c61bf94da5e",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-108": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.27170935843955,
+        7.257514230117328,
+        7.03212131621939
+      ],
+      "rank_tolerance": 2.502697939017762e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 155,
+    "reported_n_channels": 155,
+    "source_sha256": "92be699a41219b2ec8d2e5a32598eab98735a5b011353b3a843f038c9054ae74",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-109": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.279500902037949,
+        7.25823007036908,
+        7.094149904168833
+      ],
+      "rank_tolerance": 2.5215432868773037e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 156,
+    "reported_n_channels": 156,
+    "source_sha256": "439a0969d43aa734c2f3b6610e3e7dff054b4aca38f11133b949f304951de63b",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  },
+  "sub-110": {
+    "geometry": {
+      "rank": 3,
+      "singular_values": [
+        7.279500902037949,
+        7.25823007036908,
+        7.094149904168833
+      ],
+      "rank_tolerance": 2.5215432868773037e-13,
+      "zero_orientation_indices": []
+    },
+    "n_channels": 156,
+    "reported_n_channels": 156,
+    "source_sha256": "439a0969d43aa734c2f3b6610e3e7dff054b4aca38f11133b949f304951de63b",
+    "operator_difference": {
+      "bitwise_equal": true,
+      "max_abs": 0.0,
+      "relative_l2": 0.0
+    }
+  }
+}

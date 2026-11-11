@@ -28,18 +28,18 @@ This rank deficiency creates singular covariance matrices in downstream estimato
 ### S1.2 Soft Homogeneous Field Correction (Soft-HFC)
 To maintain numerical stability and preserve full rank, we implement Soft-HFC parameterized by a continuous shrinkage coefficient $\alpha \in [0, 1)$:
 $$\mathbf{P}_{\text{soft}}(\alpha) = \mathbf{I}_C - \alpha \mathbf{Q}_R \mathbf{Q}_R^T$$
-where $\mathbf{Q} = \mathbf{Q}_R \mathbf{R}$ represents the thin QR decomposition of the orientation matrix $\mathbf{Q}$, with $\mathbf{Q}_R \in \mathbb{R}^{C \times 3}$ satisfying $\mathbf{Q}_R^T \mathbf{Q}_R = \mathbf{I}_3$.
+where $\mathbf{Q}_R \in \mathbb{R}^{C \times r}$ spans the orientation subspace, with $r = \mathrm{rank}(\mathbf{Q})$ and $\mathbf{Q}_R^T \mathbf{Q}_R = \mathbf{I}_r$. The current implementation uses a rank-aware SVD. Historical results used thin QR and have not been recomputed after this correction.
 
 **Properties of $\mathbf{P}_{\text{soft}}(\alpha)$:**
 1. **Full Rank Preservation:** The eigenvalues of $\mathbf{P}_{\text{soft}}(\alpha)$ are:
-   $$\lambda_i = \begin{cases} 1 - \alpha, & \text{for } 3 \text{ eigenvectors spanning } \text{col}(\mathbf{Q}) \\ 1, & \text{for } C - 3 \text{ eigenvectors in } \text{null}(\mathbf{Q}^T) \end{cases}$$
+   $$\lambda_i = \begin{cases} 1 - \alpha, & \text{for } r \text{ eigenvectors spanning } \text{col}(\mathbf{Q}) \\ 1, & \text{for } C - r \text{ eigenvectors in } \text{null}(\mathbf{Q}^T) \end{cases}$$
    For any $\alpha < 1.0$, all eigenvalues are strictly positive ($\lambda_i > 0$), guaranteeing:
    $$\text{rank}(\mathbf{P}_{\text{soft}}(\alpha)) = C$$
 2. **Predictable Field Attenuation:** Setting $\alpha = 0.25$ attenuates signals in the uniform field subspace by a factor of $(1 - \alpha) = 0.75$ in amplitude (a 25% shrinkage), corresponding to a fractional power reduction of:
    $$1 - (1 - \alpha)^2 = 1 - 0.75^2 = 43.75\%$$
 3. **Orthogonal Distortion-Free Subspace:** Neural magnetic fields orthogonal to the homogeneous subspace $\text{col}(\mathbf{Q})$ satisfy $\mathbf{Q}_R^T \mathbf{s}_{\text{neural}} = \mathbf{0}$, yielding:
    $$\mathbf{P}_{\text{soft}}(\alpha) \mathbf{s}_{\text{neural}} = \mathbf{s}_{\text{neural}}$$
-   leaving dipolar neural topographies completely unperturbed. Any neural signal component that happens to project onto $\text{col}(\mathbf{Q})$ experiences the same 25% amplitude shrinkage.
+   leaving only components in that orthogonal subspace unperturbed. Any neural signal component that happens to project onto $\text{col}(\mathbf{Q})$ experiences the same 25% amplitude shrinkage.
 
 ---
 

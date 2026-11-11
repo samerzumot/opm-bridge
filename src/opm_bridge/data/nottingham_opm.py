@@ -113,12 +113,30 @@ def extract_nottingham_sensor_metadata(channels_tsv_path: str | Path) -> Tuple[S
     return meta, good_indices
 
 
-def parse_nottingham_braille_events(events_tsv_path: str | Path) -> Dict[str, np.ndarray]:
-    """Extract `Start_index` (label=0) and `Start_pinky` (label=1) sample onsets."""
+def parse_nottingham_braille_events(
+    events_tsv_path: str | Path, sfreq: float | None = None,
+) -> Dict[str, np.ndarray]:
+    """Return zero-based stimulus indices from this release's one-based samples.
+
+    When sfreq is supplied, verify the conversion against the onset column.
+    This convention is specific to Zenodo 11126593, not generic BIDS events.
+    """
     df = pd.read_csv(events_tsv_path, sep="\t")
     type_col = "type" if "type" in df.columns else "trial_type"
+    df = df[df[type_col].astype(str).str.startswith(("Start_index", "Start_pinky"))]
     types = df[type_col].astype(str)
-    samps = np.round(df["sample"].to_numpy(dtype=np.float64)).astype(np.int64)
+    source_samples = df["sample"].to_numpy(dtype=np.float64)
+    if (not np.isfinite(source_samples).all() or (source_samples < 1).any()
+            or not np.equal(source_samples, np.rint(source_samples)).all()):
+        raise ValueError("Nottingham stimulus samples must be positive one-based integers")
+    samps = source_samples.astype(np.int64) - 1
+    if sfreq is not None:
+        if not np.isfinite(sfreq) or sfreq <= 0:
+            raise ValueError("sfreq must be positive and finite")
+        onsets = df["onset"].to_numpy(dtype=np.float64)
+        if (not np.isfinite(onsets).all() or (onsets < 0).any()
+                or not np.array_equal(np.rint(onsets * sfreq), samps)):
+            raise ValueError("Nottingham sample-minus-one indices disagree with onset times")
 
     idx_mask = types.str.startswith("Start_index").to_numpy()
     pnk_mask = types.str.startswith("Start_pinky").to_numpy()

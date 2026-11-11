@@ -9,6 +9,7 @@ requests without downloading the 12.24 GB archive to disk.
 from __future__ import annotations
 
 import argparse
+import json
 import io
 import tempfile
 import time
@@ -27,6 +28,11 @@ from opm_bridge.data.nottingham_opm import (
     parse_nottingham_braille_events,
 )
 from opm_bridge.preprocessing.sensor_mapping import normalize_sensor_positions
+
+from opm_bridge.preprocessing.validation import (
+    FILTER_KWARGS, PIPELINE_VERSION, SETTINGS, TUTORIAL, compare_spectra,
+    epoch_checks, geometry_checks, provenance, sha256_bytes, spectral_summary, write_report,
+)
 
 ZENODO_ADULTS_ZIP_URL = "https://zenodo.org/api/records/11126593/files/Adults.zip/content"
 
@@ -93,6 +99,16 @@ def stream_nottingham_subjects(
     out_dir_p.mkdir(parents=True, exist_ok=True)
     saved: List[Path] = []
 
+    settings = SETTINGS["nottingham_adults"]
+    for subject in subjects:
+        existing = out_dir_p / f"{subject}_ses-001_task-braille_run-001_256hz.pt"
+        if existing.exists() and not overwrite:
+            sidecar = existing.with_suffix(".qc.json")
+            old = json.loads(sidecar.read_text()) if sidecar.exists() else {}
+            if (old.get("provenance", {}).get("pipeline_version") != PIPELINE_VERSION
+                    or old["provenance"].get("stream_seconds") != stream_seconds
+                    or old["provenance"].get("event_sample_offset") != -1):
+                raise ValueError(f"Legacy or mismatched cache: {existing}. Rebuild with --overwrite.")
     pending = [
         s
         for s in subjects
@@ -130,19 +146,25 @@ def stream_nottingham_subjects(
                 ev_p.write_bytes(zf.read(f"{prefix}_events.tsv"))
                 ri_p.write_bytes(zf.read(f"{prefix}_meg_read_info.txt"))
 
+                meg_json = json.loads(zf.read(f"{prefix}_meg.json"))
+                sfreq = float(meg_json["SamplingFrequency"])
+                if not np.isfinite(sfreq) or sfreq <= 2 * max(settings["notch_hz"]):
+                    raise ValueError("Invalid sampling frequency or notch above Nyquist")
                 meta, good_idx = extract_nottingham_sensor_metadata(ch_p)
-                ev_dict = parse_nottingham_braille_events(ev_p)
+                ev_dict = parse_nottingham_braille_events(ev_p, sfreq=sfreq)
                 (n_rows, n_cols), dt, _ = parse_meg_read_info(ri_p)
 
                 if stream_seconds is not None:
-                    n_samp_stream = min(n_cols, int(1200 * stream_seconds))
+                    n_samp_stream = min(n_cols, int(sfreq * stream_seconds))
                 else:
                     n_samp_stream = n_cols
-                n_bytes = n_rows * n_samp_stream * 8
+                n_bytes = n_rows * n_samp_stream * dt.itemsize
                 info = zf.getinfo(f"{prefix}_meg.dat")
                 with zf.open(info) as zstream:
                     raw_bytes = zstream.read(n_bytes)
 
+                if len(raw_bytes) != n_bytes:
+                    raise ValueError("Truncated Nottingham binary recording")
                 raw_1d = np.frombuffer(raw_bytes, dtype=dt)
                 n_actual_cols = len(raw_1d) // n_rows
                 mat = (
@@ -152,15 +174,18 @@ def stream_nottingham_subjects(
                 )
                 mat_good = mat[good_idx, :]  # (C_good, n_samples) in fT
 
+                before = spectral_summary(mat_good, sfreq, meta.ch_names, "fT")
                 mat_filt = mne.filter.notch_filter(
-                    mat_good, Fs=1200.0, freqs=[50.0, 100.0], verbose=False
+                    mat_good, Fs=sfreq, freqs=settings["notch_hz"], **FILTER_KWARGS, verbose=False
                 )
                 mat_filt = mne.filter.filter_data(
-                    mat_filt, sfreq=1200.0, l_freq=1.0, h_freq=45.0, verbose=False
+                    mat_filt, sfreq=sfreq, l_freq=settings["bandpass_hz"][0],
+                    h_freq=settings["bandpass_hz"][1], **FILTER_KWARGS, verbose=False
                 )
 
-                ep_list, y_list = [], []
-                pre_s, post_s = int(0.2 * 1200), int(1.8 * 1200)
+                after = spectral_summary(mat_filt, sfreq, meta.ch_names, "fT")
+                ep_list, y_list, kept_events, dropped_events = [], [], [], []
+                pre_s, post_s = round(-settings["epoch_window_sec"][0] * sfreq), round(settings["epoch_window_sec"][1] * sfreq)
                 for lbl, samps in [
                     (0, ev_dict["index_samples"]),
                     (1, ev_dict["pinky_samples"]),
@@ -171,16 +196,41 @@ def stream_nottingham_subjects(
                             ep = ep - ep[:, :pre_s].mean(axis=1, keepdims=True)
                             ep_list.append(ep)
                             y_list.append(lbl)
+                            kept_events.append(dict(sample=int(s_idx), label=lbl))
+                        else:
+                            dropped_events.append(dict(sample=int(s_idx), label=lbl, reason="outside_recording"))
 
+                if not ep_list:
+                    raise ValueError("No complete stimulus epochs in recording")
                 ep_arr = np.stack(ep_list, axis=0)  # (N_trials, C_good, 2400)
                 ep_256 = mne.filter.resample(
-                    ep_arr, down=1200.0 / 256.0, npad="auto", axis=-1
+                    ep_arr, down=sfreq / settings["sfreq_target"], npad="auto", axis=-1
                 )[:, :, :512].astype(np.float32)
 
                 pos_def, st_def, _ = normalize_sensor_positions(meta, "default")
+                qc = dict(tutorial=TUTORIAL, status="requires_scientific_review",
+                          provenance=provenance("nottingham_adults", {
+                              f"{prefix}_meg.dat:read_prefix": sha256_bytes(raw_bytes),
+                              f"{prefix}_channels_proc.tsv": sha256_bytes(ch_p.read_bytes()),
+                              f"{prefix}_events.tsv": sha256_bytes(ev_p.read_bytes()),
+                              f"{prefix}_meg_read_info.txt": sha256_bytes(ri_p.read_bytes()),
+                              f"{prefix}_meg.json": sha256_bytes(zf.read(f"{prefix}_meg.json"))},
+                              archive=ZENODO_ADULTS_ZIP_URL, stream_seconds=stream_seconds,
+                              sfreq_raw=sfreq, unit_assumption="fT", baseline_sec=[-.2, 0.],
+                              sample_index_convention="one-based source samples converted to zero-based, verified against onset",
+                              event_sample_offset=-1, event_onset_validation="passed",
+                              soft_hfc_alpha=None, order=["channel_selection", "temporal_filters", "epoch_baseline", "resample"]),
+                          retained_channels=meta.ch_names, retained_channel_indices=good_idx.tolist(),
+                          excluded_channel_indices=sorted(set(range(n_rows)) - set(good_idx.tolist())),
+                          retained_events=kept_events, dropped_events=dropped_events,
+                          artifact_epoch_rejection="not_implemented; boundary checks only",
+                          reference_regression="not_applied", geometry=geometry_checks(meta.ori_3d),
+                          before=before, after=after, comparison=compare_spectra(before, after),
+                          epochs=epoch_checks(ep_256, y_list))
                 torch.save(
                     {
                         "subject_id": sub,
+                        "preprocessing": qc["provenance"],
                         "x_raw_ft": torch.from_numpy(ep_256),
                         "labels": torch.tensor(y_list, dtype=torch.long),
                         "meta": meta,
@@ -189,6 +239,7 @@ def stream_nottingham_subjects(
                     },
                     out_pt,
                 )
+                write_report(out_pt.with_suffix(".qc.json"), qc)
                 saved.append(out_pt)
                 print(
                     f"Cached {sub} in {time.time() - t0:.1f}s: "

@@ -7,7 +7,7 @@ dataset:
   sfreq_raw: 1000.0
   sfreq_target: 256.0
   bandpass_hz: [1.0, 96.0]
-  notch_hz: [44.0, 50.0, 100.0]
+  notch_hz: [44.0, 50.0, 100.0, 150.0, 200.0]
   proj_latency_sec: 0.033
   epoch_window_sec: [-0.2, 1.8]  # 2.0s window = 512 samples at 256 Hz
   coord_frame: approx_elekta

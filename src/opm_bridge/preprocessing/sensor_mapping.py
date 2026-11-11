@@ -267,11 +267,11 @@ def compute_soft_hfc_projector(
     Sensor responses are given by the projection onto sensitive axes Q in R^{C x 3}.
 
     Hard HFC projects orthogonally away from col(Q):
-        P_hard = I - Q (Q^T Q)^{-1} Q^T
-    which removes 3 degrees of freedom and creates a rank-deficient covariance matrix.
+        P_hard = I - Q Q^+
+    which removes rank(Q) degrees of freedom (at most 3).
 
-    Soft-HFC (Tierney et al. 2021 / Mellor et al. 2022) introduces shrinkage alpha in [0, 1]:
-        P_soft(alpha) = I - alpha * Q (Q^T Q)^{-1} Q^T
+    Our soft variant of HFC introduces shrinkage alpha in [0, 1]:
+        P_soft(alpha) = I - alpha * Q Q^+
 
     When alpha in [0, 1), all eigenvalues of P_soft are strictly in (0, 1], guaranteeing:
       1. Full numerical rank rank(P_soft) == C (no singular covariance matrices or zero eigenvalues).
@@ -280,8 +280,9 @@ def compute_soft_hfc_projector(
       3. Partial shrinkage of any neural signals projecting onto col(Q), with zero distortion of
          neural signals in the orthogonal complement subspace.
 
-    Uses QR decomposition Q = Q_R R where Q_R has orthonormal columns (Q_R^T Q_R = I),
-    yielding P_soft = I - alpha * Q_R Q_R^T without explicit matrix inversion.
+    Uses an SVD basis Q_R retaining singular values above
+    max(Q.shape) * float64 epsilon * largest singular value. This avoids the
+    arbitrary extra directions produced by reduced QR for deficient geometries.
 
     Args:
         orientations: Sensor orientation matrix [C, 3] or [C, 6] (if pos_ori is passed).
@@ -297,11 +298,13 @@ def compute_soft_hfc_projector(
     q = np.asarray(orientations, dtype=np.float64)
     if q.ndim != 2:
         raise ValueError(f"orientations must be 2D [C, 3], got shape {q.shape}")
-    if q.shape[1] > 3:
+    if q.shape[1] == 6:
         # If pos_ori [C, 6] was passed, extract orientation slice [:, 3:6]
         q = q[:, 3:6]
     if q.shape[1] != 3:
         raise ValueError(f"orientations must have 3 columns, got {q.shape[1]}")
+    if not np.isfinite(q).all():
+        raise ValueError("orientations must be finite")
 
     c = q.shape[0]
     if alpha == 0.0 or c == 0:
@@ -313,12 +316,14 @@ def compute_soft_hfc_projector(
     if not valid_mask.any():
         return np.eye(c, dtype=np.float32)
 
-    # QR decomposition on valid orientations to get orthonormal basis Q_R
+    # Rank-aware basis on valid orientations only.
     # If some sensors have zero orientation (e.g. EEG in hybrid setup), project only MEG channels
     q_valid = q[valid_mask] / np.maximum(norms[valid_mask], 1e-8)
-    qr_basis, _ = np.linalg.qr(q_valid, mode="reduced")  # [C_valid, k <= 3]
+    u, singular_values, _ = np.linalg.svd(q_valid, full_matrices=False)
+    tolerance = max(q_valid.shape) * np.finfo(np.float64).eps * singular_values[0]
+    basis = u[:, singular_values > tolerance]
 
-    p_valid = np.eye(q_valid.shape[0], dtype=np.float64) - alpha * (qr_basis @ qr_basis.T)
+    p_valid = np.eye(q_valid.shape[0], dtype=np.float64) - alpha * (basis @ basis.T)
 
     p_full = np.eye(c, dtype=np.float64)
     valid_indices = np.where(valid_mask)[0]

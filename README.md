@@ -128,3 +128,5 @@ If you use this benchmark, code, or findings in your research, please cite:
 ## License
 
 This project is licensed under the MIT License. Upstream model architectures adapt code from OpenTSLab/BrainOmni under the MIT License.
+
+Preprocessing validation, cache QC reports, and historical-result limitations are documented in [Dataset Specifications and Harmonization Protocols](docs/datasets.md#3-reproducible-preprocessing-validation).
