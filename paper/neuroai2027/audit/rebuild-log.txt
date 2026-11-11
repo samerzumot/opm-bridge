@@ -1,4 +1,5 @@
-$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 generate_figures.py
+$ /opt/anaconda3/bin/python3 generate_figures.py
+Matplotlib is building the font cache; this may take a moment.
 Generated factorial_values.tex and audit/factorial-results.json from 560 trial records.
 single_axis_remap: delta=+0.1318 [+0.1275, +0.1360] consistent=21/21 p_exact=9.54e-07
 raw_mag_grouping: delta=+0.1120 [+0.1048, +0.1208] consistent=10/10 p_exact=1.95e-03
@@ -26,9 +27,9 @@ decoding GRAD axis: probe=51.88 classical=54.50 classical_leads=7/10
 Wrote figures/transfer_overview.{pdf,png} and transfer_overview_values.json.
 
 exit_status=0
-$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 make_supplement.py
+$ /opt/anaconda3/bin/python3 make_supplement.py
 Generated factorial_values.tex and audit/factorial-results.json from 560 trial records.
-wrote /Users/marziehzare/Desktop/papers/opm-bridge-latest/paper/neuroai2027/supplement_tables.tex (180 lines)
+wrote /Users/marziehzare/Desktop/papers/done/opm-bridge-latest/paper/neuroai2027/supplement_tables.tex (180 lines)
 
 exit_status=0
 $ pdflatex -interaction=nonstopmode -halt-on-error -output-directory=build short_paper.tex
@@ -118,7 +119,7 @@ sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
 sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
 ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
 /texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
-Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Output written on build/short_paper.pdf (4 pages, 250853 bytes).
 Transcript written on build/short_paper.log.
 
 exit_status=0
@@ -216,7 +217,7 @@ sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
 sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
 ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
 /texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
-Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Output written on build/short_paper.pdf (4 pages, 250853 bytes).
 Transcript written on build/short_paper.log.
 
 exit_status=0
@@ -307,7 +308,7 @@ sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb>
 sr/local/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmb.pfb></usr/l
 ocal/texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr/local
 /texlive/2026basic/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
-Output written on build/short_paper.pdf (4 pages, 249788 bytes).
+Output written on build/short_paper.pdf (4 pages, 250853 bytes).
 Transcript written on build/short_paper.log.
 
 exit_status=0
@@ -645,7 +646,7 @@ Output written on build/supplement.pdf (6 pages, 238373 bytes).
 Transcript written on build/supplement.log.
 
 exit_status=0
-$ /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 audit/verify.py
+$ /opt/anaconda3/bin/python3 audit/verify.py
 PASS: 8 unique references; both compiled bibliographies match their citations, and new citations have full-text support records and scoped attribution.
 PASS: paper has 4 total pages; references begin on page 4 and content fits four pages. PDF text is anonymous and references resolve.
 PASS: final scientific narrative uses the current full-array factorial; 560 trial records, all factorial estimates, interactions, seed robustness, weighting scope, full-array decoding, figure sidecar, generated macros, supplement, anonymity and build logs verified.

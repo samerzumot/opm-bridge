@@ -155,3 +155,10 @@ Four requested experiments are not addressed because each needs model inference:
 - Generated decoding range endpoints and classical means/intervals directly from participant records. Replaced older-grid prose with the current estimates and stated that classical features give one measurement per filtering regime.
 - Removed batch-weighting and subset-normalization bookkeeping from submitted prose while retaining the complete trial-weighting and source-integrity checks internally. Preserved the narrow title, references, geometry consistency correction, matched-query limitation, artifact-sensitive endpoint caveat and raw-data replay limitation.
 - Updated table numbering and verification to cover the current eight supplement tables, all six figure decoding rows and all twelve decoding cells. Added guards against reintroducing superseded grids or withdrawn-task narration.
+
+
+## Revision 14: interaction wording aligned with the preprint
+
+- Replaced the two places where the workshop paper read the Soft-HFC interaction as overlapping effects. The abstract now states that the grouping advantage is smaller under the GRAD tag, and the conclusion that the grouping advantage depends on the sensor tag in this factorial. Both sentences now match the submitted arXiv version, which had already been narrowed. The results paragraph, identical in both documents, is unchanged.
+- No estimate, table, figure or reference changed. The claim moved from a statement about shared mechanism, which this 2x3 grid cannot test, to a statement about magnitude under a condition, which the paired interval supports.
+- `figures/transfer_overview.pdf` was regenerated during the rebuild under a newer matplotlib than the committed build and then restored, so the figure stays byte-identical to the one inside the submitted arXiv archive. Plotted values were unchanged either way; the sidecar JSON did not move. Both PDFs were recompiled against the restored figure and re-verified.
