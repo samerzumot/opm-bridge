@@ -29,7 +29,7 @@ Run `python3 build.py` from this directory. The script checks numerical assets a
 
 ## Author-controlled items before public release
 
-- The confirmed author order is Samer Zumot first (1), Marzieh Zare second (1,2). Affiliation 1: NeuroGenis Inc. Toronto, Canada. Affiliation 2: Université Laval, School of Psychology, Quebec City, QC, Canada. The affiliation update does not change the author order. Obtain agreement to the final scientific text from both authors.
+- The confirmed author order is Samer Zumot first (1), Marzieh Zare second (2). Affiliation 1: Independent NeuroTech Researcher, Toronto, ON, Canada. Affiliation 2: Université Laval, School of Psychology, Quebec City, QC, Canada. The affiliation update does not change the author order. Obtain agreement to the final scientific text from both authors.
 - Supply applicable funding, competing-interest, and secondary-use ethics/consent/license statements. Missing statements are unresolved information, not a finding of misconduct or a claim that new approval is required.
 - Review the AI-assistance statement against the full history of the work. It currently describes assistance documented in this repository and this preparation.
 - Confirm the repository is publicly accessible with the intended code and saved results. Its URL is inherited from the manuscript; anonymous public access was not established here.
