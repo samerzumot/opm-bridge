@@ -2,8 +2,8 @@ Role: scientific editor. Draft metadata, not submitted.
 
 Title: Sensor Metadata and Axis-Aware Tokenization Shape Zero-Shot Reconstruction in OPM-MEG
 Authors: Samer Zumot; Marzieh Zare
-Affiliations: 1. Independent NeuroTech Researcher, Toronto, ON, Canada; 2. Université Laval, School of Psychology, Quebec City, QC, Canada
-Author affiliations: Samer Zumot (1); Marzieh Zare (2)
+Affiliations: 1. NeuroGenis Inc. Toronto, Canada; 2. Université Laval, School of Psychology, Quebec City, QC, Canada
+Author affiliations: Samer Zumot (1); Marzieh Zare (1,2)
 Suggested primary category: cs.LG
 Possible cross-list: q-bio.NC
 Comments: Includes supplementary methods and tables.
