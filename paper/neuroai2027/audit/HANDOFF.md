@@ -109,14 +109,55 @@ and should be labelled as such.
 - **Trial vs batch weighting**: differences are +/-0.0006. The sentence "Trial-weighted
   aggregation is a reproducibility check we have not run" can be replaced with the result.
 
-### 5. One discrepancy to resolve before citing the new file
+### 5. Resolved: the channel-subset discrepancy is normalization scope
 
 The four full-array conditions replicate the existing summary exactly (monolithic raw .3726,
 monolithic Soft-HFC .3461, axis raw .5130, axis Soft-HFC .4849, batch-weighted). The two
-channel-subset conditions do **not**: radial .4944 old against .5100 new, tangential .4446
-old against .4368 new. Subject ids match. Likely a different subset definition in
-`scripts/run_nottingham_tag_partition_factorial.py`. Check before quoting either number;
-the subset rows are not load-bearing, but the paper currently quotes the old values.
+channel-subset conditions did **not**: radial .4944 old against .5100 new, tangential .4446
+old against .4368 new, both batch-weighted cohort means, with per-participant gaps up to
+.031 and .035.
+
+The cause is the scope of the normalizations, not the subset definition, and the earlier
+guess in this section was wrong. Channel membership is identical in both runs: 60, 58 and 59
+radial and 116, 112 and 115 tangential channels for the first three participants, and
+`verify.py` asserts this for all ten. The difference is where the normalizations are
+computed:
+
+- `run_nottingham_full_benchmark.py` slices the raw array first and then calls
+  `sensortype_wise_normalize` on the retained channels.
+- `run_nottingham_tag_partition_factorial.py` normalized all 176 channels once per
+  (filter, tag) cell and sliced afterwards.
+
+`sensortype_wise_normalize` subtracts a common-average reference across the channels it is
+given and divides by one scalar standard deviation over that block. Slicing its output
+therefore leaves a reference term built from the discarded axes inside the retained signal.
+Measured on the one locally cached participant, sub-101, the two radial-only inputs
+correlate .9650 with a scale ratio of .969, and the two tangential-only inputs correlate
+.9903 with a ratio of 1.018. The radial input is the more distorted of the two, which is the
+order of the two discrepancies.
+
+Positions carry the same scope. `normalize_sensor_positions` centers and scales positions
+over the channels it is given, so for radial the old run used `mapping_mode="radial_only"`
+and recomputed them, while the factorial run sliced the full-array coordinates: a maximum
+difference of .0091 in normalized units. The old run's tangential path sliced them, so the
+old run was not internally consistent either.
+
+Fixed in `renormalize_channel_subset` (`src/opm_bridge/preprocessing/sensor_mapping.py`),
+which refers a subset's positions to its own retained channels and reproduces
+`mapping_mode="radial_only"` to float32 precision, and in the factorial script, where both
+subset arms now recompute the waveform normalization, the positions and the classical
+features on the retained channels. A subset arm stands for an array built from those
+channels alone, so that is the defined behaviour; neither stored subset number was produced
+under it.
+
+Two consequences. The stored subset rows in both files are superseded and should not be
+quoted; regenerating them needs the ten cached participant tensors, which are not in this
+checkout (only sub-101, under `data/cache/validation/nottingham`). And `verify.py` currently
+asserts that each subset arm's `classical_bandpower` equals the monolithic one, which was
+true of the defect and documents it; that assertion describes the stored artifact and will
+need updating when a corrected run lands. No paper claim is affected: no submitted source
+quotes a subset estimate, and `factorial_values.tex` defines no subset macro. The four
+full-array conditions, which carry every published number, are untouched.
 
 ## The decision this forces
 

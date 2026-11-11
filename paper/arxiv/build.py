@@ -68,7 +68,8 @@ def main():
         clean = Path(folder)
         with tarfile.open(archive) as tar:
             tar.extractall(clean, filter="data")
-        for i in (1, 2):
+        # Three passes: with the current bibliography two leave labels unsettled.
+        for i in (1, 2, 3):
             run(["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "main.tex"],
                 clean, BUILD / f"archive-pass{i}.txt")
         clean_log = (clean / "main.log").read_text()

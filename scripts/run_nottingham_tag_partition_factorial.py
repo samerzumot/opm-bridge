@@ -34,6 +34,7 @@ from opm_bridge.models.wrapper import load_brainomni_backbone
 from opm_bridge.preprocessing.sensor_mapping import (
     apply_soft_hfc,
     normalize_sensor_positions,
+    renormalize_channel_subset,
     sensortype_wise_normalize,
 )
 
@@ -168,9 +169,26 @@ def run_benchmark():
                     else:
                         sel_idx = list(range(x_norm.shape[1]))
 
-                    x_mode = x_norm[:, sel_idx, :]
-                    pos_mode = pos_ori_base[sel_idx]
                     st_mode = st_current[sel_idx]
+                    if mode in ("radial_only_z", "tangential_only_xy"):
+                        # A channel subset stands for an array built from those channels
+                        # alone, so every normalization is recomputed on the retained
+                        # channels. sensortype_wise_normalize subtracts a common-average
+                        # reference and divides by one scalar std over the channels it is
+                        # given, so slicing its full-array output leaves the discarded
+                        # axes inside the retained signal; positions and the classical
+                        # features carry the same scope.
+                        x_sub = x_filtered[:, sel_idx, :]
+                        x_mode = np.stack(
+                            [sensortype_wise_normalize(x_sub[i], st_mode) for i in range(n_trials)],
+                            axis=0,
+                        )
+                        pos_mode = renormalize_channel_subset(pos_ori_base[sel_idx], st_mode)
+                        bp_mode = dec.extract_features(x_mode[:, :, 64:268])
+                    else:
+                        x_mode = x_norm[:, sel_idx, :]
+                        pos_mode = pos_ori_base[sel_idx]
+                        bp_mode = bp_X
                     
                     # Compute PCC & latents in batches
                     all_trial_pccs: List[float] = []
@@ -259,7 +277,7 @@ def run_benchmark():
                         for arm_name, feat_mat in [
                             ("pretrained_linear_probe", emb_pt),
                             ("control_a_linear_probe", emb_rand),
-                            ("classical_bandpower", bp_X),
+                            ("classical_bandpower", bp_mode),
                         ]:
                             m = eval_linear_probe_from_embeddings(feat_mat[tr_idx], y[tr_idx], feat_mat[te_idx], y[te_idx], seed=42)
                             fold_scores[arm_name].append(m["balanced_accuracy"])

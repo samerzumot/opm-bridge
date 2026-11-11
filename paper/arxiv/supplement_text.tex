@@ -14,15 +14,14 @@ $\mathbf{Q}^{\top}$:
 \]
 When $\mathbf{Q}$ has full column rank, $\mathrm{rank}(\mathbf{P}_{\mathrm{hard}}) = C - 3$, making the projected channel covariance rank-deficient.
 
+The reference implementation of this correction is \texttt{mne.preprocessing.compute\_proj\_hfc} in MNE-Python \citep{mneopmtutorial}, whose \texttt{order} argument selects the homogeneous field alone or a higher-order harmonic basis \citep{tierney2022harmonic}. \citet{seymour2022interference} survey the interference-suppression options available for OPM arrays. We did not use that implementation: the variant evaluated here applies partial rather than full projection and is defined next.
+
 \subsection{Soft variant}
 The cited method uses full projection. Here we evaluate a soft shrinkage variant parameterized by $\alpha \in [0,1)$:
 \[
 \mathbf{P}_{\mathrm{soft}}(\alpha) = \mathbf{I}_{C} - \alpha\,\mathbf{Q}_{R}\mathbf{Q}_{R}^{\top},
 \]
-where $\mathbf{Q} = \mathbf{Q}_{R}\mathbf{R}$ is a thin QR decomposition and
-$\mathbf{Q}_{R}^{\top}\mathbf{Q}_{R} = \mathbf{I}_{3}$. Its eigenvalues are $1-\alpha$
-on the three directions spanning $\mathrm{col}(\mathbf{Q})$ and $1$ on the remaining
-$C-3$, so for any $\alpha < 1$ the operator has full rank $C$.
+where $\mathbf{Q}_{R}$ is an orthonormal basis of $\mathrm{col}(\mathbf{Q})$, of dimension $r=\mathrm{rank}(\mathbf{Q})\leq 3$. Its eigenvalues are $1-\alpha$ on those $r$ directions and $1$ on the remaining $C-r$, so for any $\alpha < 1$ the operator has full rank $C$. The current implementation uses a rank-aware SVD to avoid extra QR directions for rank-deficient arrays. Historical results used thin QR and have not been recomputed after this correction.
 
 The coefficient $\alpha = 0.25$ is an analysis choice here, not a value established by \citet{tierney2021hfc}. At this value, components lying in the uniform-field subspace
 are scaled by $0.75$ in amplitude, a power reduction of $1 - 0.75^{2} = 43.75\%$.

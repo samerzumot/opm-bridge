@@ -1,86 +1,146 @@
 {
-  "scope": "Three additions and the existing BrainOmni citation in rewritten passages; existing dataset citation checks retained from prior audit.",
-  "access_date": "2026-11-09",
-  "entries": [
-    {
-      "key": "jiang2024labram",
-      "status": "supported",
-      "claim": "LaBraM learns reusable EEG representations through channel patches and masked neural-code prediction.",
-      "locations": [
-        "short_paper.tex:Introduction opening sentence"
-      ],
-      "sources": [
-        "https://proceedings.iclr.cc/paper_files/paper/2024/file/47393e8594c82ce8fd83adc672cf9872-Paper-Conference.pdf",
-        "https://proceedings.iclr.cc/paper_files/paper/2024/hash/47393e8594c82ce8fd83adc672cf9872-Abstract-Conference.html"
-      ],
-      "source_locators": [
-        "Section 2.1, printed pages 3-4: channel patch architecture",
-        "Section 2.2, printed pages 5-6: neural tokenizer",
-        "Section 2.3, printed page 6: masked neural-code pretraining"
-      ],
-      "basis": "Primary conference full text and official metadata.",
-      "limits": "EEG method context only; no claim of OPM evaluation or superiority over BrainOmni.",
-      "status_check": "No correction or retraction notice found on official proceedings entry or author arXiv record; targeted title search found none. No comprehensive Crossmark check."
-    },
-    {
-      "key": "rea2022triaxial",
-      "status": "supported",
-      "claim": "Unlike fixed cryogenic SQUID arrays, OPMs permit flexible near-scalp placement; triaxial sensors measure three orthogonal field components.",
-      "locations": [
-        "short_paper.tex:Introduction hardware sentence"
-      ],
-      "sources": [
-        "https://nyaspubs.onlinelibrary.wiley.com/doi/full/10.1111/nyas.14890"
-      ],
-      "source_locators": [
-        "Introduction, first paragraph: cryogenics and adaptable near-scalp placement",
-        "Introduction, triaxial discussion and Figure 1A: orthogonal components",
-        "Methods, System overview: wearable sensor array"
-      ],
-      "basis": "Publisher full text, independently checked by hardware reviewer.",
-      "limits": "Does not establish our tokenizer grouping benefits, exact physical co-location, or the removed sensor-distance values.",
-      "status_check": "No correction or retraction notice on publisher full-text page or targeted DOI search; Crossmark not independently obtained."
-    },
-    {
-      "key": "tierney2021hfc",
-      "status": "supported",
-      "claim": "Conventional HFC approximates distant interference as spatially homogeneous and removes its orientation-defined subspace.",
-      "locations": [
-        "short_paper.tex:Model, Endpoint and Interventions",
-        "supplement.tex:S1 setup and soft-variant distinction"
-      ],
-      "sources": [
-        "https://discovery.ucl.ac.uk/id/eprint/10134967/1/1-s2.0-S1053811921007576-main.pdf",
-        "https://doi.org/10.1016/j.neuroimage.2021.118484"
-      ],
-      "source_locators": [
-        "PDF page 2, Section 2.1, equations 4-7: orientation matrix and homogeneous approximation",
-        "PDF page 2, Section 2.2, equation 8: hard projection I-NN+",
-        "PDF page 3, Section 3.2: possible attenuation of neural signals"
-      ],
-      "basis": "Published full-text PDF in institutional repository, independently checked by methods reviewer. Author list verified on PDF because repository metadata repeats authors.",
-      "limits": "Our inverse expression assumes full column rank. Soft-HFC and alpha=0.25 are evaluated analysis choices, not established in this source.",
-      "status_check": "No correction or retraction notice found in UCL/PubMed records or targeted DOI search. Publisher access blocked for reviewer; comprehensive Crossmark status not verified."
-    },
-    {
-      "key": "xiao2025brainomni",
-      "status": "supported",
-      "claim": "BrainOmni combines sensor-conditioned tokenization, residual vector quantization and masked-token learning for EEG and MEG.",
-      "locations": [
-        "short_paper.tex:Introduction model sentence",
-        "supplement.tex:Model Architecture tokenizer sentence"
-      ],
-      "sources": [
-        "https://arxiv.org/html/2505.18185v2",
-        "https://proceedings.neurips.cc/paper_files/paper/2025/hash/3aef4a18c2646b9d11d9ab4d9bec72c8-Abstract-Conference.html"
-      ],
-      "source_locators": [
-        "Section 2.2, Sensor Encoder, Channel Compression and Quantisation",
-        "Section 2.3, masked-token model"
-      ],
-      "basis": "Author full text read; conference metadata confirms identity. Conference PDF endpoint timed out.",
-      "limits": "Cited only for shared architecture. Checkpoint-specific sensor integers and mask ratio are grounded in local code, not copied from the publication. No field-wide corpus composition or sensor-distance claim remains.",
-      "status_check": "No correction notice visible in consulted official metadata/author version; no full renewed correction-status audit of all existing dataset references."
-    }
-  ]
+ "scope": "Three additions and the existing BrainOmni citation in rewritten passages; existing dataset citation checks retained from prior audit. Three further additions on 2026-11-11 for the Soft-HFC practice sentence, verified at metadata and documentation level only, as each entry's basis and limits state.",
+ "access_date": "2026-11-09",
+ "entries": [
+  {
+   "key": "jiang2024labram",
+   "status": "supported",
+   "claim": "LaBraM learns reusable EEG representations through channel patches and masked neural-code prediction.",
+   "locations": [
+    "short_paper.tex:Introduction opening sentence"
+   ],
+   "sources": [
+    "https://proceedings.iclr.cc/paper_files/paper/2024/file/47393e8594c82ce8fd83adc672cf9872-Paper-Conference.pdf",
+    "https://proceedings.iclr.cc/paper_files/paper/2024/hash/47393e8594c82ce8fd83adc672cf9872-Abstract-Conference.html"
+   ],
+   "source_locators": [
+    "Section 2.1, printed pages 3-4: channel patch architecture",
+    "Section 2.2, printed pages 5-6: neural tokenizer",
+    "Section 2.3, printed page 6: masked neural-code pretraining"
+   ],
+   "basis": "Primary conference full text and official metadata.",
+   "limits": "EEG method context only; no claim of OPM evaluation or superiority over BrainOmni.",
+   "status_check": "No correction or retraction notice found on official proceedings entry or author arXiv record; targeted title search found none. No comprehensive Crossmark check."
+  },
+  {
+   "key": "rea2022triaxial",
+   "status": "supported",
+   "claim": "Unlike fixed cryogenic SQUID arrays, OPMs permit flexible near-scalp placement; triaxial sensors measure three orthogonal field components.",
+   "locations": [
+    "short_paper.tex:Introduction hardware sentence"
+   ],
+   "sources": [
+    "https://nyaspubs.onlinelibrary.wiley.com/doi/full/10.1111/nyas.14890"
+   ],
+   "source_locators": [
+    "Introduction, first paragraph: cryogenics and adaptable near-scalp placement",
+    "Introduction, triaxial discussion and Figure 1A: orthogonal components",
+    "Methods, System overview: wearable sensor array"
+   ],
+   "basis": "Publisher full text, independently checked by hardware reviewer.",
+   "limits": "Does not establish our tokenizer grouping benefits, exact physical co-location, or the removed sensor-distance values.",
+   "status_check": "No correction or retraction notice on publisher full-text page or targeted DOI search; Crossmark not independently obtained."
+  },
+  {
+   "key": "tierney2021hfc",
+   "status": "supported",
+   "claim": "Conventional HFC approximates distant interference as spatially homogeneous and removes its orientation-defined subspace.",
+   "locations": [
+    "short_paper.tex:Model, Endpoint and Interventions",
+    "supplement.tex:S1 setup and soft-variant distinction"
+   ],
+   "sources": [
+    "https://discovery.ucl.ac.uk/id/eprint/10134967/1/1-s2.0-S1053811921007576-main.pdf",
+    "https://doi.org/10.1016/j.neuroimage.2021.118484"
+   ],
+   "source_locators": [
+    "PDF page 2, Section 2.1, equations 4-7: orientation matrix and homogeneous approximation",
+    "PDF page 2, Section 2.2, equation 8: hard projection I-NN+",
+    "PDF page 3, Section 3.2: possible attenuation of neural signals"
+   ],
+   "basis": "Published full-text PDF in institutional repository, independently checked by methods reviewer. Author list verified on PDF because repository metadata repeats authors.",
+   "limits": "Our inverse expression assumes full column rank. Soft-HFC and alpha=0.25 are evaluated analysis choices, not established in this source.",
+   "status_check": "No correction or retraction notice found in UCL/PubMed records or targeted DOI search. Publisher access blocked for reviewer; comprehensive Crossmark status not verified."
+  },
+  {
+   "key": "xiao2025brainomni",
+   "status": "supported",
+   "claim": "BrainOmni combines sensor-conditioned tokenization, residual vector quantization and masked-token learning for EEG and MEG.",
+   "locations": [
+    "short_paper.tex:Introduction model sentence",
+    "supplement.tex:Model Architecture tokenizer sentence"
+   ],
+   "sources": [
+    "https://arxiv.org/html/2505.18185v2",
+    "https://proceedings.neurips.cc/paper_files/paper/2025/hash/3aef4a18c2646b9d11d9ab4d9bec72c8-Abstract-Conference.html"
+   ],
+   "source_locators": [
+    "Section 2.2, Sensor Encoder, Channel Compression and Quantisation",
+    "Section 2.3, masked-token model"
+   ],
+   "basis": "Author full text read; conference metadata confirms identity. Conference PDF endpoint timed out.",
+   "limits": "Cited only for shared architecture. Checkpoint-specific sensor integers and mask ratio are grounded in local code, not copied from the publication. No field-wide corpus composition or sensor-distance claim remains.",
+   "status_check": "No correction notice visible in consulted official metadata/author version; no full renewed correction-status audit of all existing dataset references."
+  },
+  {
+   "key": "mneopmtutorial",
+   "status": "metadata_and_documentation_verified",
+   "claim": "MNE-Python implements conventional homogeneous field correction, and its order argument selects the homogeneous field alone or a higher-order harmonic basis.",
+   "locations": [
+    "short_paper.tex:Model, Endpoint and Interventions, Soft-HFC sentence",
+    "supplement.tex:Soft Homogeneous Field Correction, Setup"
+   ],
+   "sources": [
+    "https://mne.tools/stable/auto_tutorials/preprocessing/80_opm_processing.html",
+    "https://mne.tools/stable/generated/mne.preprocessing.compute_proj_hfc.html"
+   ],
+   "source_locators": [
+    "compute_proj_hfc API page: order argument description and its two cited references",
+    "OPM tutorial page: compute_proj_hfc called with order=2, projectors applied with add_proj().apply_proj()"
+   ],
+   "basis": "Official project documentation for the cited behaviour. Pages read 2026-11-11; MNE-Python is a locked dependency of this repository at 1.13.2.",
+   "limits": "Cited for the existence and options of the reference implementation only. We did not run it; Soft-HFC here is this repository's own partial-projection variant.",
+   "status_check": "Documentation page, no retraction concept. Version-dated URL not pinned; the stable URL may move with releases."
+  },
+  {
+   "key": "seymour2022interference",
+   "status": "metadata_verified_not_full_text",
+   "claim": "Interference suppression for OPM arrays has published review coverage.",
+   "locations": [
+    "short_paper.tex:Model, Endpoint and Interventions, Soft-HFC sentence",
+    "supplement.tex:Soft Homogeneous Field Correction, Setup"
+   ],
+   "sources": [
+    "https://doi.org/10.1016/j.neuroimage.2021.118834",
+    "https://api.crossref.org/works/10.1016/j.neuroimage.2021.118834"
+   ],
+   "source_locators": [
+    "Crossref record: NeuroImage 247, 118834, 2022; title 'Interference suppression techniques for OPM-based MEG: Opportunities and challenges'",
+    "Cited as the single reference of the MNE OPM preprocessing tutorial"
+   ],
+   "basis": "Crossref metadata and the MNE tutorial's reference list. Full text not read.",
+   "limits": "Used only as a pointer to a review. No result, number or recommendation from it is asserted. Promote to supported before any claim about its findings.",
+   "status_check": "No retraction notice seen in the Crossref record; not independently checked."
+  },
+  {
+   "key": "tierney2022harmonic",
+   "status": "metadata_verified_not_full_text",
+   "claim": "The homogeneous-field model generalizes to a higher-order spherical-harmonic basis for multi-axis OPMs.",
+   "locations": [
+    "short_paper.tex:Model, Endpoint and Interventions, Soft-HFC sentence",
+    "supplement.tex:Soft Homogeneous Field Correction, Setup"
+   ],
+   "sources": [
+    "https://doi.org/10.1016/j.neuroimage.2022.119338",
+    "https://api.crossref.org/works/10.1016/j.neuroimage.2022.119338"
+   ],
+   "source_locators": [
+    "Crossref record: NeuroImage 258, 119338, 2022; title 'Spherical harmonic based noise rejection and neuronal sampling with multi-axis OPMs'",
+    "compute_proj_hfc API page: cited for the harmonic field case, order > 1"
+   ],
+   "basis": "Crossref metadata and the MNE API page's attachment of this reference to the harmonic option. Full text not read.",
+   "limits": "Cited for the existence of the harmonic generalization, at the level the title and the MNE documentation state. No quantitative claim from it is asserted.",
+   "status_check": "No retraction notice seen in the Crossref record; not independently checked."
+  }
+ ]
 }

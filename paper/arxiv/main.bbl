@@ -1,4 +1,4 @@
-\begin{thebibliography}{11}
+\begin{thebibliography}{14}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -36,6 +36,14 @@ Wei-Bang Jiang, Li-Ming Zhao, and Bao-Liang Lu.
 \newblock URL
   \url{https://proceedings.iclr.cc/paper_files/paper/2024/hash/47393e8594c82ce8fd83adc672cf9872-Abstract-Conference.html}.
 
+\bibitem[{MNE-Python Developers}(n.d.)]{mneopmtutorial}
+{MNE-Python Developers}.
+\newblock Preprocessing optically pumped magnetometer ({OPM}) {MEG} data.
+\newblock
+  \url{https://mne.tools/stable/auto_tutorials/preprocessing/80_opm_processing.html},
+  n.d.
+\newblock MNE-Python documentation. Accessed November 11, 2026.
+
 \bibitem[{OpenNeuroDatasets}(n.d.)]{facedecdocs}
 {OpenNeuroDatasets}.
 \newblock {FACE-DEC}: Dataset ds005107 documentation.
@@ -65,6 +73,16 @@ Lukas Rier, Natalie Rhodes, Daisie Pakenham, Elena Boto, Niall Holmes, Ryan~M.
 \newblock URL \url{https://zenodo.org/records/11126593}.
 \newblock Dataset, version 1.0.0.
 
+\bibitem[Seymour et~al.(2022)Seymour, Alexander, Mellor, O'Neill, Tierney,
+  Barnes, and Maguire]{seymour2022interference}
+Robert~A. Seymour, Nicholas Alexander, Stephanie Mellor, George~C. O'Neill,
+  Tim~M. Tierney, Gareth~R. Barnes, and Eleanor~A. Maguire.
+\newblock Interference suppression techniques for {OPM}-based {MEG}:
+  Opportunities and challenges.
+\newblock \emph{NeuroImage}, 247:\penalty0 118834, 2022.
+\newblock \doi{10.1016/j.neuroimage.2021.118834}.
+\newblock URL \url{https://doi.org/10.1016/j.neuroimage.2021.118834}.
+
 \bibitem[Tierney et~al.(2021)Tierney, Alexander, Mellor, Holmes, Seymour,
   O'Neill, Maguire, and Barnes]{tierney2021hfc}
 Tim~M. Tierney, Nicholas Alexander, Stephanie Mellor, Niall Holmes, Robert
@@ -74,6 +92,16 @@ Tim~M. Tierney, Nicholas Alexander, Stephanie Mellor, Niall Holmes, Robert
 \newblock \emph{NeuroImage}, 244:\penalty0 118484, 2021.
 \newblock \doi{10.1016/j.neuroimage.2021.118484}.
 \newblock URL \url{https://doi.org/10.1016/j.neuroimage.2021.118484}.
+
+\bibitem[Tierney et~al.(2022)Tierney, Mellor, O'Neill, Timms, and
+  Barnes]{tierney2022harmonic}
+Tim~M. Tierney, Stephanie Mellor, George~C. O'Neill, Ryan~C. Timms, and
+  Gareth~R. Barnes.
+\newblock Spherical harmonic based noise rejection and neuronal sampling with
+  multi-axis {OPMs}.
+\newblock \emph{NeuroImage}, 258:\penalty0 119338, 2022.
+\newblock \doi{10.1016/j.neuroimage.2022.119338}.
+\newblock URL \url{https://doi.org/10.1016/j.neuroimage.2022.119338}.
 
 \bibitem[Wakeman and Henson(2015)]{wakeman2015}
 Daniel~G. Wakeman and Richard~N. Henson.

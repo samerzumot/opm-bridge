@@ -228,6 +228,34 @@ def sensortype_wise_normalize(
     return out.astype(np.float32)
 
 
+def renormalize_channel_subset(
+    pos_ori: np.ndarray,
+    sensor_type: np.ndarray,
+) -> np.ndarray:
+    """Refer a channel subset's positions to the retained channels.
+
+    `normalize_sensor_positions` centers and scales positions over the channels it is
+    given, so slicing its full-array output leaves coordinates referred to an array that
+    is no longer being fed to the model. Passing the sliced arrays here restores the
+    upstream convention for the retained channels alone, which is what an array built
+    from only those channels would supply. Orientation vectors are unit length and are
+    returned unchanged. The input is not modified.
+    """
+    out = pos_ori.copy().astype(np.float32)
+    pos = out[:, :3]
+    for mask in (
+        sensor_type == int(SensorType.EEG),
+        (sensor_type == int(SensorType.MAG)) | (sensor_type == int(SensorType.GRAD)),
+    ):
+        if not mask.any():
+            continue
+        pos[mask] -= np.mean(pos[mask], axis=0, keepdims=True)
+        scale = np.sqrt(3.0 * np.mean(np.sum(pos[mask] ** 2, axis=1)))
+        if scale > 1e-8:
+            pos[mask] /= scale
+    return out
+
+
 def compute_soft_hfc_projector(
     orientations: np.ndarray,
     alpha: float = 0.25,

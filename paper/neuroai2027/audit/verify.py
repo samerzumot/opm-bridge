@@ -386,6 +386,16 @@ reviewed = {entry["key"]: entry for entry in citation_review["entries"]}
 for key in new_keys:
     assert reviewed[key]["status"] == "supported"
     assert reviewed[key]["source_locators"] and reviewed[key]["sources"]
+# The 2026-11-11 Soft-HFC practice citations were verified at documentation and metadata
+# level, not against full text, and are cited only for the existence of a reference
+# implementation and of the harmonic generalization. Pin that so the weaker basis is not
+# later reported as full-text support.
+practice_keys = {"mneopmtutorial", "seymour2022interference", "tierney2022harmonic"}
+assert practice_keys <= set(bib_keys)
+for key in practice_keys:
+    assert reviewed[key]["status"] in {"metadata_and_documentation_verified",
+                                       "metadata_verified_not_full_text"}
+    assert reviewed[key]["source_locators"] and reviewed[key]["sources"] and reviewed[key]["limits"]
 for name, document in (("short_paper", TEX_SOURCE), ("supplement", SUPP)):
     citations = {key.strip() for group in re.findall(r"\\cite[pt]?\*?(?:\[[^\]]*\])*\{([^}]+)\}", document) for key in group.split(",")}
     assert citations <= set(bib_keys), (name, citations-set(bib_keys))
@@ -406,7 +416,7 @@ assert "we approximate distant magnetic interference" in SUPP
 assert "full column rank" in SUPP and "In the evaluated configuration" in SUPP
 for unsupported in ("trained almost entirely", "more than four to one", r"20--40\,mm", r"roughly 5\,mm", "at one coordinate"):
     assert unsupported not in TEX_SOURCE, unsupported
-print(f"PASS: {len(bib_keys)} unique references; both compiled bibliographies match their citations, and new citations have full-text support records and scoped attribution.")
+print(f"PASS: {len(bib_keys)} unique references; both compiled bibliographies match their citations, and every added citation has an audit record at the level its entry states.")
 
 # Page budget and visible PDF text, in addition to TeX source checks.
 paper_pages = subprocess.check_output(["pdftotext", str(BASE / "build/short_paper.pdf"), "-"], text=True).split("\f")

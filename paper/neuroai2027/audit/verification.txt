@@ -1,3 +1,3 @@
-PASS: 8 unique references; both compiled bibliographies match their citations, and new citations have full-text support records and scoped attribution.
+PASS: 11 unique references; both compiled bibliographies match their citations, and every added citation has an audit record at the level its entry states.
 PASS: paper has 4 total pages; references begin on page 4 and content fits four pages. PDF text is anonymous and references resolve.
 PASS: final scientific narrative uses the current full-array factorial; 560 trial records, all factorial estimates, interactions, seed robustness, weighting scope, full-array decoding, figure sidecar, generated macros, supplement, anonymity and build logs verified.
