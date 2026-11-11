@@ -1,0 +1,91 @@
+\section{Soft Homogeneous Field Correction}\label{sec:soft-hfc}
+
+\subsection{Setup}
+Following \citet{tierney2021hfc}, we approximate distant magnetic interference as a spatially uniform field $\mathbf{B}_{\mathrm{ext}} \in \mathbb{R}^{3}$. A sensor $c$ with unit
+sensitive orientation $\mathbf{u}_{c}$ measures the projection
+$m_{c} = \mathbf{u}_{c}^{\top}\mathbf{B}_{\mathrm{ext}}$, so across an array of $C$
+channels the induced measurement is $\mathbf{m}_{\mathrm{ext}} = \mathbf{Q}\mathbf{B}_{\mathrm{ext}}$,
+where row $c$ of $\mathbf{Q} \in \mathbb{R}^{C \times 3}$ is $\mathbf{u}_{c}^{\top}$.
+
+Conventional homogeneous field correction \citep{tierney2021hfc} projects onto the null space of
+$\mathbf{Q}^{\top}$:
+\[
+\mathbf{P}_{\mathrm{hard}} = \mathbf{I}_{C} - \mathbf{Q}(\mathbf{Q}^{\top}\mathbf{Q})^{-1}\mathbf{Q}^{\top}.
+\]
+When $\mathbf{Q}$ has full column rank, $\mathrm{rank}(\mathbf{P}_{\mathrm{hard}}) = C - 3$, making the projected channel covariance rank-deficient.
+
+\subsection{Soft variant}
+The cited method uses full projection. Here we evaluate a soft shrinkage variant parameterized by $\alpha \in [0,1)$:
+\[
+\mathbf{P}_{\mathrm{soft}}(\alpha) = \mathbf{I}_{C} - \alpha\,\mathbf{Q}_{R}\mathbf{Q}_{R}^{\top},
+\]
+where $\mathbf{Q} = \mathbf{Q}_{R}\mathbf{R}$ is a thin QR decomposition and
+$\mathbf{Q}_{R}^{\top}\mathbf{Q}_{R} = \mathbf{I}_{3}$. Its eigenvalues are $1-\alpha$
+on the three directions spanning $\mathrm{col}(\mathbf{Q})$ and $1$ on the remaining
+$C-3$, so for any $\alpha < 1$ the operator has full rank $C$.
+
+The coefficient $\alpha = 0.25$ is an analysis choice here, not a value established by \citet{tierney2021hfc}. At this value, components lying in the uniform-field subspace
+are scaled by $0.75$ in amplitude, a power reduction of $1 - 0.75^{2} = 43.75\%$.
+
+\subsection{What this does to neural signal}
+A neural component orthogonal to $\mathrm{col}(\mathbf{Q})$ satisfies
+$\mathbf{Q}_{R}^{\top}\mathbf{s} = \mathbf{0}$ and is returned unchanged. This is not a
+claim that neural signal is preserved. A dipolar field pattern is not in general
+orthogonal to the uniform-field subspace, and whatever part of it does project onto
+$\mathrm{col}(\mathbf{Q})$ receives the same $25\%$ amplitude shrinkage as the
+interference. Soft-HFC is therefore a lossy operation on signal as well as noise,
+which is why the main paper holds filtering constant within every contrast rather
+than treating it as a neutral preprocessing step.
+
+\section{Single-Axis Metadata Interventions}
+
+All conditions share channel selection, trials and Soft-HFC. Only the metadata handed
+to the tokenizer differs, so any difference between columns of
+Table~\ref{tab:s-single-per-subject} is a property of the learned embedding rather than
+of the recording. Table~\ref{tab:s-single-contrasts} gives the paired tests.
+
+The dataset documentation states that FACE-DEC sensor coordinates were approximated
+from an Elekta layout for topographic display and are not measured OPM positions. The
+geometry rows should therefore be read as sensitivity to supplied metadata, not as
+evidence about forward-field accuracy.
+
+\section{Tag by Partition Factorial}
+The experiment crosses MAG/GRAD tags, raw/Soft-HFC inputs and monolithic/random/axis partitions. Random group sizes match each participant's $Z$, $X$ and $Y$ counts exactly in the generating script, with seeds 42 and 101--109. Saved group assignments are unavailable for an independent metadata-level check. We average seeds within participant before paired inference, retaining ten independent participants. Tables~\ref{tab:s-factorial-cohort}--\ref{tab:s-factorial-seeds} report the full-array reconstruction results.
+
+PCC is averaged over channels and temporal windows within each trial, then over trials within participant. Each participant contributes equally to cohort estimates.
+
+The tag effect is configuration-dependent. The raw monolithic contrast is $\FxRawTagMonolithicMean$ ($\FxRawTagMonolithicCI$, $p=\FxRawTagMonolithicP$), while axis grouping retains its advantage under both tags. The paired change in the grouping advantage under GRAD is $\FxRawInteractionMean$ raw and $\FxSofthfcInteractionMean$ with Soft-HFC, both negative in every participant. This interaction does not by itself identify a shared mechanism. Under Soft-HFC, the monolithic-to-random contrast accounts for $\FxSofthfcMagMonoToRandomPercent\%$ under MAG and $\FxSofthfcGradMonoToRandomPercent\%$ under GRAD of the respective axis-over-monolithic gains. These are descriptive partition components: random partitioning changes attention composition as well as query budget, so a capacity contribution cannot be isolated. Tests are exploratory and unadjusted for multiple comparisons.
+
+\section{Decoding}
+In the supplied factorial implementation, the classical features, pretrained features and random-initialization features are all evaluated using the same scikit-learn \texttt{LogisticRegression} helper, with $L_2$ regularization, $C=0.01$, balanced class weights and a maximum of 500 iterations. A \texttt{StandardScaler} is fitted on each training fold and applied to its held-out fold. Five-fold stratified cross-validation uses shuffling with seed 42 within each participant. The regularization value is fixed rather than selected on held-out folds. These details are verified from the supplied code; the saved scores do not independently record the original fitted estimator settings. The sensor-type codes are checkpoint-specific integers, \texttt{MAG=1} and \texttt{GRAD=2} in the released tiny configuration, and any reuse of this intervention must read them from the checkpoint rather than assume them.
+
+
+Table~\ref{tab:s-factorial-decoding} gives all twelve full-array configurations and three decoders, evaluated with five-fold cross-validation within participant. Random-partition decoding uses seed 42 with group sizes matched to the axes, while reconstruction averages ten seeds. Every pretrained-probe interval includes chance. Table~\ref{tab:s-decoding-contrasts} gives the paired axis-minus-monolithic and axis-minus-random probe contrasts; every interval includes zero. These are exploratory tests without multiplicity correction, not evidence of equivalence.
+
+The classical features are six log band powers spanning nominal bands between 1 and 96\,Hz plus four temporal window means per channel, computed from samples 64 through 267 of each cached trial. Because the caching script applies a 45 Hz low-pass, the higher nominal bands include frequencies attenuated during preprocessing. They depend on filtering but not on sensor tag or tokenizer partition. The six classical rows within each filtering regime therefore share one underlying measurement. The Soft-HFC interval excludes chance, while the interval without additional Soft-HFC does not. The classical cohort mean exceeds the pretrained probe in every configuration, but this ordering alone does not establish a significant paired advantage or rule out a task-level noise floor.
+
+\section{Model Architecture}
+
+The pretrained BrainOmni tiny configuration is evaluated with frozen weights.
+The tokenizer conditions on sensor position, unit orientation, and a discrete
+sensor type, and uses residual vector quantization \citep{xiao2025brainomni}. In the evaluated configuration, the sequence backbone is
+bidirectional (\texttt{causal=False}) and uses masked-token prediction over
+codebook entries with a mask ratio of $0.25$. Attention operates within trials,
+not across trials. The number of learned spatial queries is loaded from the
+checkpoint.
+
+\noindent
+Axis partitioning is an inference-time reorganization only. The $X$, $Y$ and $Z$ groups
+pass separately through the same frozen tokenizer and the reconstructions are
+reassembled, giving three spatial-attention passes instead of one. No weights change.
+
+\section{Dataset Details}\label{sec:datasets}
+FACE-DEC, OpenNeuro \texttt{ds005107} v1.0.0, DOI \texttt{10.18112/openneuro.ds005107.v1.0.0},
+21 participants and the 50 channels matched across participants by rounded position and
+orientation metadata. Triaxial OPM, Zenodo record \texttt{10.5281/zenodo.11126593}, the
+10 adult participants, 84 cached trials each, 155 to 176 retained channels. SQUID diagnostic,
+OpenNeuro \texttt{ds000117} v1.0.4, participant \texttt{sub-01}, run \texttt{01}.
+
+
+\section{Supplementary Tables}
+\input{supplement_tables}

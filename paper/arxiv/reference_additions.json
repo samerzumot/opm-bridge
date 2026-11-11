@@ -1,0 +1,38 @@
+{
+  "role": "scientific editor",
+  "date": "2026-11-10",
+  "scope": "Three targeted introduction citations; no changes to scientific results or author order.",
+  "bibliography_count_before": 8,
+  "bibliography_count_after": 11,
+  "entries": [
+    {
+      "key": "boto2017opm",
+      "source": "https://tf.nist.gov/general/pdf/2843.pdf",
+      "doi": "10.1016/j.neuroimage.2017.01.034",
+      "checked": "Published PDF title page, abstract and introduction, pages 404-405.",
+      "supports": "Near-scalp OPM measurements of evoked and induced somatosensory activity without cryogenic cooling.",
+      "limits": "Does not establish transfer of foundation models or a general quantitative OPM advantage."
+    },
+    {
+      "key": "boto2018wearable",
+      "source": "https://doi.org/10.1038/nature26147",
+      "additional_source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6063354/",
+      "checked": "Publisher-indexed title, author list, bibliographic metadata and abstract; indexed primary full-text snippets corroborate the wearable measurement. Direct full-page requests met access redirects.",
+      "supports": "Wearable MEG recording during natural head movement.",
+      "limits": "Citation limited to the explicit abstract-level demonstration; no detailed numerical or mechanistic claim is imported."
+    },
+    {
+      "key": "yang2023biot",
+      "source": "https://proceedings.neurips.cc/paper_files/paper/2023/file/f6b30f3e2dd9cb53bbf2024402d02295-Paper-Conference.pdf",
+      "metadata_source": "https://papers.neurips.cc/paper_files/paper/2023/hash/f6b30f3e2dd9cb53bbf2024402d02295-Abstract-Conference.html",
+      "checked": "Official proceedings and PDF abstract, introduction and Sections 2-2.1. Full author name from PDF title page.",
+      "supports": "Cross-data biosignal learning with channel-wise tokens, channel/time embeddings, mismatched channels, variable lengths and missing values.",
+      "limits": "Context for heterogeneous biosignal representation, not evidence of SQUID-to-OPM transfer or validation of axis partitioning."
+    }
+  ],
+  "policy_context": {
+    "source": "https://info.arxiv.org/help/submit/index.html",
+    "finding": "Official submission guidance emphasizes topical, refereeable scientific contributions and contains no numerical bibliography threshold. Reference count is not a substitute for relevant coverage."
+  },
+  "validation": "13 pages; 11 cited bibliography entries; all 8 supplementary tables retained; source archive compiles independently; numerical assets unchanged."
+}

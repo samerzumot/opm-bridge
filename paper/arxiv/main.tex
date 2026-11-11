@@ -1,0 +1,40 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+\usepackage{placeins}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\emergencystretch}{2em}
+\frenchspacing
+\title{Sensor Metadata and Axis-Aware Tokenization Shape Zero-Shot Reconstruction in OPM-MEG}
+\author{Samer Zumot\textsuperscript{1} and Marzieh Zare\textsuperscript{1,2}\\[0.5em]
+\small\textsuperscript{1}NeuroGenis Inc. Toronto, Canada\\
+\small\textsuperscript{2}Universit\'e Laval, School of Psychology, Quebec City, QC, Canada}
+\date{November 11, 2026}
+\hypersetup{pdftitle={Sensor Metadata and Axis-Aware Tokenization Shape Zero-Shot Reconstruction in OPM-MEG},pdfauthor={Samer Zumot and Marzieh Zare}}
+\input{factorial_values}
+\begin{document}
+\maketitle
+\input{main_text}
+\FloatBarrier
+\bibliographystyle{plainnat}
+\bibliography{references}
+\clearpage
+\appendix
+\setcounter{section}{0}
+\setcounter{table}{0}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\theHtable}{supp.\arabic{table}}
+\section*{Supplementary Material}
+\setlength{\tabcolsep}{5pt}
+\input{supplement_text}
+\end{document}
