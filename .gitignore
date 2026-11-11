@@ -11,3 +11,7 @@ __pycache__/
 *.dat
 *.zip
 .DS_Store
+
+# LaTeX build artifacts
+paper/neuroai2027/build/
+

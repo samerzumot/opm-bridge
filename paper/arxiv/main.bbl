@@ -1,0 +1,115 @@
+\begin{thebibliography}{11}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Boto et~al.(2017)Boto, Meyer, Shah, Alem, Knappe, Kruger, Fromhold,
+  Lim, Glover, Morris, Bowtell, Barnes, and Brookes]{boto2017opm}
+Elena Boto, Sofie~S. Meyer, Vishal Shah, Orang Alem, Svenja Knappe, Peter
+  Kruger, T.~Mark Fromhold, Mark Lim, Paul~M. Glover, Peter~G. Morris, Richard
+  Bowtell, Gareth~R. Barnes, and Matthew~J. Brookes.
+\newblock A new generation of magnetoencephalography: Room temperature
+  measurements using optically-pumped magnetometers.
+\newblock \emph{NeuroImage}, 149:\penalty0 404--414, 2017.
+\newblock \doi{10.1016/j.neuroimage.2017.01.034}.
+\newblock URL \url{https://doi.org/10.1016/j.neuroimage.2017.01.034}.
+
+\bibitem[Boto et~al.(2018)Boto, Holmes, Leggett, Roberts, Shah, Meyer, {Duque
+  Mu{\~n}oz}, Mullinger, Tierney, Bestmann, Barnes, Bowtell, and
+  Brookes]{boto2018wearable}
+Elena Boto, Niall Holmes, James Leggett, Gillian Roberts, Vishal Shah, Sofie~S.
+  Meyer, Leonardo {Duque Mu{\~n}oz}, Karen~J. Mullinger, Tim~M. Tierney, Sven
+  Bestmann, Gareth~R. Barnes, Richard Bowtell, and Matthew~J. Brookes.
+\newblock Moving magnetoencephalography towards real-world applications with a
+  wearable system.
+\newblock \emph{Nature}, 555:\penalty0 657--661, 2018.
+\newblock \doi{10.1038/nature26147}.
+\newblock URL \url{https://doi.org/10.1038/nature26147}.
+
+\bibitem[Jiang et~al.(2024)Jiang, Zhao, and Lu]{jiang2024labram}
+Wei-Bang Jiang, Li-Ming Zhao, and Bao-Liang Lu.
+\newblock Large brain model for learning generic representations with
+  tremendous {EEG} data in {BCI}.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
+\newblock URL
+  \url{https://proceedings.iclr.cc/paper_files/paper/2024/hash/47393e8594c82ce8fd83adc672cf9872-Abstract-Conference.html}.
+
+\bibitem[{OpenNeuroDatasets}(n.d.)]{facedecdocs}
+{OpenNeuroDatasets}.
+\newblock {FACE-DEC}: Dataset ds005107 documentation.
+\newblock \url{https://github.com/OpenNeuroDatasets/ds005107}, n.d.
+\newblock Accessed November 4, 2026.
+
+\bibitem[Rea et~al.(2022)Rea, Boto, Holmes, Hill, Osborne, Rhodes, Leggett,
+  Rier, Bowtell, Shah, and Brookes]{rea2022triaxial}
+Molly Rea, Elena Boto, Niall Holmes, Ryan Hill, James Osborne, Natalie Rhodes,
+  James Leggett, Lukas Rier, Richard Bowtell, Vishal Shah, and Matthew~J.
+  Brookes.
+\newblock A 90-channel triaxial magnetoencephalography system using optically
+  pumped magnetometers.
+\newblock \emph{Annals of the New York Academy of Sciences}, 1517\penalty0
+  (1):\penalty0 107--124, 2022.
+\newblock \doi{10.1111/nyas.14890}.
+\newblock URL \url{https://doi.org/10.1111/nyas.14890}.
+
+\bibitem[Rier et~al.(2024)Rier, Rhodes, Pakenham, Boto, Holmes, Hill,
+  Reina~Rivero, Shah, Doyle, Osborne, Bowtell, Taylor, and
+  Brookes]{rier2024dataset}
+Lukas Rier, Natalie Rhodes, Daisie Pakenham, Elena Boto, Niall Holmes, Ryan~M.
+  Hill, Gonzalo Reina~Rivero, Vishal Shah, Cody Doyle, James Osborne, Richard
+  Bowtell, Margot Taylor, and Matthew Brookes.
+\newblock Tracking the neurodevelopmental trajectory of beta band oscillations
+  with {OPM-MEG}, 2024.
+\newblock URL \url{https://zenodo.org/records/11126593}.
+\newblock Dataset, version 1.0.0.
+
+\bibitem[Tierney et~al.(2021)Tierney, Alexander, Mellor, Holmes, Seymour,
+  O'Neill, Maguire, and Barnes]{tierney2021hfc}
+Tim~M. Tierney, Nicholas Alexander, Stephanie Mellor, Niall Holmes, Robert
+  Seymour, George~C. O'Neill, Eleanor~A. Maguire, and Gareth~R. Barnes.
+\newblock Modelling optically pumped magnetometer interference in {MEG} as a
+  spatially homogeneous magnetic field.
+\newblock \emph{NeuroImage}, 244:\penalty0 118484, 2021.
+\newblock \doi{10.1016/j.neuroimage.2021.118484}.
+\newblock URL \url{https://doi.org/10.1016/j.neuroimage.2021.118484}.
+
+\bibitem[Wakeman and Henson(2015)]{wakeman2015}
+Daniel~G. Wakeman and Richard~N. Henson.
+\newblock A multi-subject, multi-modal human neuroimaging dataset.
+\newblock \emph{Scientific Data}, 2:\penalty0 150001, 2015.
+\newblock \doi{10.1038/sdata.2015.1}.
+
+\bibitem[Xiao et~al.(2025)Xiao, Cui, Zhang, Chen, Wu, Thwaites, Woolgar, Zhou,
+  and Zhang]{xiao2025brainomni}
+Qinfan Xiao, Ziyun Cui, Chi Zhang, Siqi Chen, Wen Wu, Andrew Thwaites,
+  Alexandra Woolgar, Bowen Zhou, and Chao Zhang.
+\newblock {BrainOmni}: A brain foundation model for unified {EEG} and {MEG}
+  signals.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2025.
+\newblock URL
+  \url{https://papers.neurips.cc/paper_files/paper/2025/file/3aef4a18c2646b9d11d9ab4d9bec72c8-Paper-Conference.pdf}.
+
+\bibitem[Xu et~al.(2024)Xu, Lyu, Ru, Li, Gu, Ma, Zheng, Li, Liao, Cheng, Yang,
+  Song, Jin, Li, He, and Gao]{xu2024face}
+Wei Xu, Bingjiang Lyu, Xingyu Ru, Dongxu Li, Wenyu Gu, Xiao Ma, Fufu Zheng,
+  Tingyue Li, Pan Liao, Hao Cheng, Rui Yang, Jingqi Song, Zeyu Jin, Congcong
+  Li, Kaiyan He, and Jia-Hong Gao.
+\newblock Decoding the temporal structures and interactions of multiple face
+  dimensions using optically pumped magnetometer magnetoencephalography
+  ({OPM-MEG}).
+\newblock \emph{Journal of Neuroscience}, 44\penalty0 (47):\penalty0
+  e2237232024, 2024.
+\newblock \doi{10.1523/JNEUROSCI.2237-23.2024}.
+\newblock URL \url{https://pmc.ncbi.nlm.nih.gov/articles/PMC11580774/}.
+
+\bibitem[Yang et~al.(2023)Yang, Westover, and Sun]{yang2023biot}
+Chaoqi Yang, M.~Brandon Westover, and Jimeng Sun.
+\newblock {BIOT}: Biosignal transformer for cross-data learning in the wild.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~36, 2023.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper_files/paper/2023/file/f6b30f3e2dd9cb53bbf2024402d02295-Paper-Conference.pdf}.
+
+\end{thebibliography}

@@ -1,0 +1,182 @@
+{
+  "single_axis_contrasts": [
+    {
+      "row": "Gradiometer tag",
+      "mean": 0.13178867598374686,
+      "ci_low": 0.1275264937608015,
+      "ci_high": 0.13595043892661732,
+      "consistent": 21,
+      "direction": "positive",
+      "n": 21
+    },
+    {
+      "row": "Zero orientation",
+      "mean": -0.014160946721122378,
+      "ci_low": -0.016022107448606264,
+      "ci_high": -0.012436385239873613,
+      "consistent": 21,
+      "direction": "negative",
+      "n": 21
+    },
+    {
+      "row": "Reversed orientation",
+      "mean": -0.016108959913253784,
+      "ci_low": -0.018268112341562906,
+      "ci_high": -0.013877158168525926,
+      "consistent": 21,
+      "direction": "negative",
+      "n": 21
+    },
+    {
+      "row": "Scrambled geometry",
+      "mean": -0.01708907527582986,
+      "ci_low": -0.022456913122109005,
+      "ci_high": -0.011476612268459245,
+      "consistent": 19,
+      "direction": "negative",
+      "n": 21
+    }
+  ],
+  "triaxial_contrasts": [
+    {
+      "row": "MAG, Soft-HFC",
+      "mean": 0.10714238225881542,
+      "ci_low": 0.10021247330937712,
+      "ci_high": 0.11432330600141236,
+      "consistent": 10,
+      "direction": "positive",
+      "n": 10
+    },
+    {
+      "row": "MAG, raw",
+      "mean": 0.11196380327854838,
+      "ci_low": 0.1047702786415993,
+      "ci_high": 0.12084559155051554,
+      "consistent": 10,
+      "direction": "positive",
+      "n": 10
+    },
+    {
+      "row": "GRAD, Soft-HFC",
+      "mean": 0.07453575141727928,
+      "ci_low": 0.06560400815618536,
+      "ci_high": 0.08330945495560414,
+      "consistent": 10,
+      "direction": "positive",
+      "n": 10
+    },
+    {
+      "row": "GRAD, raw",
+      "mean": 0.06875566327146121,
+      "ci_low": 0.05674753403743461,
+      "ci_high": 0.08046947840503636,
+      "consistent": 10,
+      "direction": "positive",
+      "n": 10
+    }
+  ],
+  "decoding": [
+    {
+      "row": "MAG mono",
+      "probe": 49.06944444444444,
+      "probe_ci": [
+        44.888888888888886,
+        52.791666666666664
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 8,
+      "n": 10
+    },
+    {
+      "row": "MAG rand",
+      "probe": 50.13888888888889,
+      "probe_ci": [
+        45.09722222222223,
+        54.541666666666664
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 6,
+      "n": 10
+    },
+    {
+      "row": "MAG axis",
+      "probe": 50.19444444444444,
+      "probe_ci": [
+        43.70833333333333,
+        56.36111111111111
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 8,
+      "n": 10
+    },
+    {
+      "row": "GRAD mono",
+      "probe": 50.31944444444444,
+      "probe_ci": [
+        44.93055555555556,
+        55.45833333333333
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 6,
+      "n": 10
+    },
+    {
+      "row": "GRAD rand",
+      "probe": 50.875,
+      "probe_ci": [
+        45.93055555555556,
+        55.43055555555556
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 7,
+      "n": 10
+    },
+    {
+      "row": "GRAD axis",
+      "probe": 51.875,
+      "probe_ci": [
+        46.98576388888888,
+        56.51388888888889
+      ],
+      "classical": 54.5,
+      "classical_ci": [
+        51.02777777777778,
+        57.65277777777777
+      ],
+      "consistent": 7,
+      "n": 10
+    }
+  ],
+  "squid_control": {
+    "mag_102ch": 0.4104951669772466,
+    "grad_204ch": 0.4473156879345576,
+    "mag_as_grad": 0.7129924893379211
+  },
+  "slopegraph_means": {
+    "single_axis_default": 0.2500615041880381,
+    "single_axis_opm_as_grad": 0.3818501801717849,
+    "triaxial_monolithic_softhfc": 0.3456330592433612,
+    "triaxial_random_softhfc": 0.3784552121428507,
+    "triaxial_axis_split": 0.48559759440166606
+  }
+}
