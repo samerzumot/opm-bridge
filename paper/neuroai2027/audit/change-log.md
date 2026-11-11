@@ -162,3 +162,10 @@ Four requested experiments are not addressed because each needs model inference:
 - Replaced the two places where the workshop paper read the Soft-HFC interaction as overlapping effects. The abstract now states that the grouping advantage is smaller under the GRAD tag, and the conclusion that the grouping advantage depends on the sensor tag in this factorial. Both sentences now match the submitted arXiv version, which had already been narrowed. The results paragraph, identical in both documents, is unchanged.
 - No estimate, table, figure or reference changed. The claim moved from a statement about shared mechanism, which this 2x3 grid cannot test, to a statement about magnitude under a condition, which the paired interval supports.
 - `figures/transfer_overview.pdf` was regenerated during the rebuild under a newer matplotlib than the committed build and then restored, so the figure stays byte-identical to the one inside the submitted arXiv archive. Plotted values were unchanged either way; the sidecar JSON did not move. Both PDFs were recompiled against the restored figure and re-verified.
+
+
+## Revision 15: results-paragraph interaction sentence
+
+- Replaced the last reading of the Soft-HFC interaction as overlapping effects. The triaxial results paragraph now states that grouping survives under both tags, that its advantage is smaller under GRAD, and that the two effects are therefore not additive on this scale. Non-additivity is what a nonzero paired interaction measures; overlap of mechanism is not, and this grid cannot test it.
+- The same replacement was made in the arXiv preprint, so the two documents remain identical in this paragraph. The preprint requires a replacement upload to carry the change.
+- No estimate, table, figure or reference changed. The figure stays byte-identical across both documents.
